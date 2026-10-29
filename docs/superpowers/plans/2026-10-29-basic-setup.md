@@ -18,6 +18,33 @@ with `@ionic/react-router` (react-router v5), `vite-plugin-pwa`, Vitest + Testin
 **Spec:** `docs/superpowers/specs/2026-10-29-intern-platform-design.md` (sections 2, 8, 10 apply to
 this phase; the rest is phase 2+).
 
+## Execution record
+
+**Status: done**, merged in PR #1 (merge commit `7204f2d`, 2026-10-29). Executed inline; the final
+whole-branch review found no Critical/Important issues. The task text below is the original plan;
+these deviations apply and the code is authoritative:
+
+- **Layout (user decision mid-run):** Go module moved to `backend/` (`github.com/ffneumarkt/intern/backend`,
+  `cmd/intern/main.go`, `internal/server/frontend.go` with exported `RegisterFrontend`,
+  `ui/embed.go` exporting `Dist()`); Vite builds into `../backend/ui/dist`. Paths like `main.go`,
+  `server.go`, `web/embed.go`, `web/dist` below refer to the old layout.
+- **Logging (user request):** `internal/logging` with charmbracelet/log; `LOG_LEVEL` env.
+- PocketBase v0.40.6 (newest tag; v0.41.x does not exist yet).
+- react-router 6 instead of 5 (required by `@ionic/react-router` 9).
+- Tests find Ionic elements by visible text via `web/src/test/ionic.ts` and drive inputs with
+  `fireEvent`: jsdom does not model Ionic's shadow DOM roles and focus. `document.elementFromPoint` is
+  stubbed in `src/test/setup.ts`.
+- "Code manuell eingeben" and "Erfasst von" are native inputs; retired items use a show/hide button
+  instead of `IonToggle` (does not fire in jsdom).
+- Sketch level can also be set by URL: `?ansicht=public|use|check|manage`.
+- Scaffold's oxlint removed. Final image `distroless/static` (root) instead of `:nonroot`.
+- `packages: write` only on the `image` job (review finding).
+- Added after the review on user request: item detail preselects the item in record use
+  (`paths.recordUseFor(id)`), live code suggestions (`searchItems` in `sketch/mockData.ts`), and the
+  GHCR source label in the Dockerfile.
+
+Deferred minors are listed in `docs/superpowers/STATUS.md`.
+
 ## Global Constraints
 
 - Repo layout exactly as spec section 2: `main.go`, `internal/`, `migrations/`, `web/`, `Dockerfile`,
