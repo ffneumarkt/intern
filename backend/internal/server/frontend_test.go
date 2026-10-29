@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"net/http"
@@ -21,7 +21,7 @@ func frontendScenario(name, url string, status int) tests.ApiScenario {
 		URL:            url,
 		ExpectedStatus: status,
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
-			registerFrontend(e, testDist)
+			RegisterFrontend(e, testDist)
 		},
 	}
 }

@@ -7,8 +7,9 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 
-	"github.com/ffneumarkt/intern/web"
-	_ "github.com/ffneumarkt/intern/migrations"
+	"github.com/ffneumarkt/intern/backend/internal/server"
+	_ "github.com/ffneumarkt/intern/backend/migrations"
+	"github.com/ffneumarkt/intern/backend/ui"
 )
 
 func main() {
@@ -20,7 +21,7 @@ func main() {
 	})
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
-		registerFrontend(se, web.Dist())
+		server.RegisterFrontend(se, ui.Dist())
 		return se.Next()
 	})
 

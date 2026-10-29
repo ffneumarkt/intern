@@ -1,5 +1,5 @@
-// Package web embeds the built frontend (web/dist).
-package web
+// Package ui embeds the built frontend; web/ (Vite) builds into ui/dist.
+package ui
 
 import (
 	"embed"

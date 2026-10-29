@@ -8,7 +8,7 @@ Design: `docs/superpowers/specs/2026-10-29-intern-platform-design.md`
 ## Development
 
 ```sh
-go run . serve              # backend on http://127.0.0.1:8090, admin UI at /_/
-npm --prefix web run dev    # frontend dev server, proxies /api and /_ to the backend
-make image                  # build the Docker image
+(cd backend && go run ./cmd/intern serve)   # backend on http://127.0.0.1:8090, admin UI at /_/
+npm --prefix web run dev                    # frontend dev server, proxies /api and /_ to the backend
+make image                                  # build the Docker image
 ```

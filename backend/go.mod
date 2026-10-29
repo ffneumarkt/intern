@@ -1,4 +1,4 @@
-module github.com/ffneumarkt/intern
+module github.com/ffneumarkt/intern/backend
 
 go 1.27.3
 
