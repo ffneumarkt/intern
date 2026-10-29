@@ -8,10 +8,13 @@ Design: `docs/superpowers/specs/2026-10-29-intern-platform-design.md`
 ## Development
 
 ```sh
-(cd backend && go run ./cmd/intern serve)   # backend on http://127.0.0.1:8090, admin UI at /_/
-npm --prefix web run dev                    # frontend dev server, proxies /api and /_ to the backend
+make dev-api                                # backend on http://127.0.0.1:8090, admin UI at /_/
+make dev-web                                # frontend dev server, proxies /api and /_ to the backend
+make test                                   # go vet + go test, typecheck, vitest
 make image                                  # build the Docker image
 ```
+
+The UI sketch can be opened at a permission level with `?ansicht=public|use|check|manage`.
 
 The backend logs with `charmbracelet/log`; set `LOG_LEVEL` (`debug`, `info`, `warn`, `error`; default `info`).
 
