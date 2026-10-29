@@ -1,22 +1,17 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import App from './App'
 import { paths } from './routes'
+import { findIon, ionTab } from './test/ionic'
 
 function renderAt(path: string, level?: string) {
   if (level) localStorage.setItem('sketch.level', level)
   return render(<App initialPath={path} />)
 }
 
-// Ionic moves aria attributes into the shadow DOM, so tabs are found by their visible label.
-const tab = (name: string) =>
-  [...document.querySelectorAll('ion-tab-button')].find((b) => b.textContent?.trim() === name) ?? null
-const findTab = (name: string) => waitFor(() => {
-  const t = tab(name)
-  if (!t) throw new Error(`tab ${name} not found`)
-  return t
-})
+const tab = ionTab
+const findTab = (name: string) => findIon(() => ionTab(name))
 
 describe('App shell', () => {
   it('shows public tabs only', async () => {
@@ -45,5 +40,15 @@ describe('App shell', () => {
     await userEvent.click(await screen.findByLabelText('Verwaltung'))
     expect(localStorage.getItem('sketch.level')).toBe('manage')
     expect(await findTab('Material')).toBeInTheDocument()
+  })
+})
+
+describe('sketch level from url', () => {
+  it('uses ?ansicht= over stored level', async () => {
+    localStorage.setItem('sketch.level', 'public')
+    window.history.replaceState(null, '', '/?ansicht=use')
+    render(<App initialPath={paths.start} />)
+    expect(await findTab('Material')).toBeInTheDocument()
+    window.history.replaceState(null, '', '/')
   })
 })

@@ -3,7 +3,17 @@ import { IonReactMemoryRouter, IonReactRouter } from '@ionic/react-router'
 import { constructOutline, documentTextOutline, homeOutline, settingsOutline } from 'ionicons/icons'
 import type { ReactElement, ReactNode } from 'react'
 import { Navigate, Route } from 'react-router-dom'
-import Page from './components/Page'
+import CategoryPage from './pages/CategoryPage'
+import DueListPage from './pages/DueListPage'
+import ItemPage from './pages/ItemPage'
+import LabelPage from './pages/LabelPage'
+import LoginPage from './pages/LoginPage'
+import ManagePage from './pages/ManagePage'
+import RecordCheckPage from './pages/RecordCheckPage'
+import RecordUsePage from './pages/RecordUsePage'
+import SettingsPage from './pages/SettingsPage'
+import StartPage from './pages/StartPage'
+import TransportDocumentPage from './pages/TransportDocumentPage'
 import { paths } from './routes'
 import { atLeast, SketchSessionProvider, useSketchSession } from './sketch/session'
 
@@ -21,17 +31,17 @@ function Tabs() {
   return (
     <IonTabs>
       <IonRouterOutlet>
-        <Route path={paths.start} element={<Page title="Start" />} />
-        <Route path={paths.login} element={<Page title="Anmelden" />} />
-        <Route path={paths.transportDocument} element={<Page title="Beförderungspapier" />} />
-        {material(paths.dueList, <Page title="Fällig" />)}
-        {material(paths.category(), <Page title="Kategorie" back={paths.dueList} />)}
-        {material(paths.item(), <Page title="Gerät" back={paths.dueList} />)}
-        {material(paths.recordUse, <Page title="Verwendung erfassen" back={paths.dueList} />)}
-        {material(paths.recordCheck(), <Page title="Prüfung erfassen" back={paths.dueList} />)}
-        {material(paths.label(), <Page title="Etikett" back={paths.dueList} />)}
-        {material(paths.manage, <Page title="Verwalten" back={paths.dueList} />)}
-        {material(paths.settings, <Page title="Einstellungen" />)}
+        <Route path={paths.start} element={<StartPage />} />
+        <Route path={paths.login} element={<LoginPage />} />
+        <Route path={paths.transportDocument} element={<TransportDocumentPage />} />
+        {material(paths.dueList, <DueListPage />)}
+        {material(paths.category(), <CategoryPage />)}
+        {material(paths.item(), <ItemPage />)}
+        {material(paths.recordUse, <RecordUsePage />)}
+        {material(paths.recordCheck(), <RecordCheckPage />)}
+        {material(paths.label(), <LabelPage />)}
+        {material(paths.manage, <ManagePage />)}
+        {material(paths.settings, <SettingsPage />)}
       </IonRouterOutlet>
       <IonTabBar slot="bottom">
         <IonTabButton tab="start" href={paths.start} aria-label="Start">

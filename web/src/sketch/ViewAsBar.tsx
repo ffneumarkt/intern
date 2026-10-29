@@ -11,11 +11,11 @@ const labels: Record<SketchLevel, string> = {
 export default function ViewAsBar() {
   const { level, setLevel } = useSketchSession()
   return (
-    <IonToolbar color="light">
+    <IonToolbar color="light" className="view-as">
       <IonLabel slot="start" className="ion-padding-start">
         Ansicht als
       </IonLabel>
-      <IonSegment value={level}>
+      <IonSegment value={level} scrollable>
         {(Object.keys(labels) as SketchLevel[]).map((l) => (
           <IonSegmentButton key={l} value={l} onClick={() => setLevel(l)} aria-label={labels[l]}>
             <IonLabel>{labels[l]}</IonLabel>

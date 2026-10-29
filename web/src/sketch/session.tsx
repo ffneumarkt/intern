@@ -11,6 +11,9 @@ export function atLeast(level: SketchLevel, required: Exclude<SketchLevel, 'publ
 }
 
 function readLevel(): SketchLevel {
+  // ?ansicht=manage opens the sketch at a level, e.g. for shared review links and screenshots.
+  const fromUrl = new URLSearchParams(window.location.search).get('ansicht')
+  if (fromUrl && order.includes(fromUrl as SketchLevel)) return fromUrl as SketchLevel
   try {
     const stored = localStorage.getItem(storageKey)
     if (stored && order.includes(stored as SketchLevel)) return stored as SketchLevel
