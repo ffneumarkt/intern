@@ -1,6 +1,8 @@
 # Internal tools platform `intern.ffneumarkt.at`: design
 
-Status: design approved section by section on 2026-10-29; spec awaiting review.
+Status: approved 2026-10-29. Phase 1 (skeleton + UI sketch) merged in PR #1; see
+`docs/superpowers/STATUS.md` for the current state and next steps. Updated 2026-10-29 with the
+decisions made during phase 1 (layout, logging, versions, record use details).
 
 ## 1. Goal
 
@@ -41,7 +43,7 @@ Cloudflare ── tunnel ── cloudflared container
                               │ http://intern:8090
                         intern container (one Go binary)
                         ├─ PocketBase core: auth, REST API, collection rules, admin UI (/_/), cron
-                        ├─ embedded frontend (go:embed web/dist), served at /
+                        ├─ embedded frontend (go:embed backend/ui/dist), served at /
                         ├─ internal/passkey   WebAuthn registration and login → PocketBase auth token
                         ├─ internal/due       due date calculation (pure functions, no DB access)
                         ├─ internal/notify    daily job: due items × notification settings → messages
@@ -54,12 +56,18 @@ Cloudflare ── tunnel ── cloudflared container
 
 ### Stack
 
-- **Backend:** Go, with PocketBase (v0.41.x or newer) imported as a library and extended with own code.
-  SQLite is the only database. Web Push via `github.com/SherClockHolmes/webpush-go`, WebAuthn via
+- **Backend:** Go 1.27, with PocketBase imported as a library and extended with own code (v0.40.6 is
+  the newest published tag as of 2026-10-29; the docs site already shows v0.41.1). SQLite is the only
+  database. Web Push via `github.com/SherClockHolmes/webpush-go`, WebAuthn via
   `github.com/go-webauthn/webauthn`.
-- **Frontend:** Ionic React, Vite, `vite-plugin-pwa` (Workbox), PocketBase JS SDK, pdf-lib (generator),
-  `barcode-detector` (scanning).
-- The frontend is built to `web/dist` and embedded in the binary. `CGO_ENABLED=0`.
+- **Logging:** `github.com/charmbracelet/log` (user requirement), created in `internal/logging` with
+  `ReportCaller: true`, `ReportTimestamp: true`, `TimeFormat: "15:04:05.00"`, level from the
+  `LOG_LEVEL` env var (`debug|info|warn|error`, default `info`). All own code logs through it.
+  PocketBase's own logs are not routed through it yet (open follow-up).
+- **Frontend:** React 19, Ionic React 9 with `@ionic/react-router` and **react-router 6** (Ionic 9
+  requires `>=6.4 <7`), Vite 8, TypeScript 7, `vite-plugin-pwa` (Workbox), Vitest + Testing Library,
+  PocketBase JS SDK, pdf-lib (generator), `barcode-detector` (scanning). UI text is **German only**.
+- Vite builds the frontend into `backend/ui/dist`, which `backend/ui` embeds. `CGO_ENABLED=0`.
 
 ### Unit responsibilities
 
@@ -74,15 +82,28 @@ Cloudflare ── tunnel ── cloudflared container
 
 ### Repository layout
 
+Chosen by the user: Go code in `backend/`, frontend in `web/`, only tooling at the root.
+
 ```
-main.go              # PocketBase app setup, route and cron registration, subcommands
-internal/            # due, notify, push, passkey, snapshot
-migrations/          # PocketBase Go migrations
-web/                 # Ionic React + Vite app, built to web/dist
-Dockerfile
+backend/
+  go.mod             # module github.com/ffneumarkt/intern/backend
+  cmd/intern/        # main.go: PocketBase app setup, route and cron registration, subcommands
+  internal/server/   # RegisterFrontend: SPA serving next to /api and /_/
+  internal/logging/  # charmbracelet/log setup
+  internal/          # due, notify, push, passkey, snapshot
+  migrations/        # PocketBase Go migrations
+  ui/                # embed.go + dist/ (Vite output; dist/.gitkeep keeps the embed valid)
+web/                 # Ionic React + Vite app
+  src/pages/         # one file per screen
+  src/components/    # shared components (Page, ItemRow, DueStateBadge)
+  src/sketch/        # sketch-only code (mock data, "Ansicht als" session); deleted in phase 2
+  src/test/          # Vitest setup and Ionic test helpers
+Dockerfile           # node → go → distroless/static, source label links the GHCR package
 compose.yaml         # reference compose file for the VPS
-deploy/              # systemd units, backup wrapper script, authorized_keys example
-.github/workflows/
+Makefile             # dev-api, dev-web, test, build, image, run
+deploy/              # (later) systemd units, backup wrapper script, authorized_keys example
+.github/workflows/   # ci.yml
+docs/superpowers/    # specs, plans, STATUS.md
 ```
 
 ## 3. Data model
@@ -220,9 +241,9 @@ Ionic tabs; tabs appear only when they apply to the logged-in user.
 | Start | everyone | Tool tiles: Beförderungspapier (always), Material (logged in); login |
 | Beförderungspapier | public, offline | Generator rebuilt with Ionic components; `calc.ts`, `fillForm.ts` and their tests are copied unchanged from `ffneumarkt-web/src/components/features/transportDocument/` |
 | Due list | `use`+ | Home of the material tool: overdue, due today, due soon across permitted categories; category filter |
-| Category → items | `use`+ | Items with state badge; retired items behind a toggle |
+| Category → items | `use`+ | Items with state badge; retired items hidden behind a show/hide button |
 | Item detail | `use`+ | Due date per check type, end of life, combined history of checks and uses; actions by level |
-| Record use | `use`+ | Scan loop (section 9), then one form: date (today), kind, "recorded by" (remembered per device), note; saves one use per item |
+| Record use | `use`+ | Scan loop (section 9), then one form: date (today), kind, "recorded by" (remembered per device), note; saves one use per item. Opened from an item's detail page via `/material/verwendung?geraet=<id>`, it starts with that item in the list |
 | Record check | `check`+ | Check type, date, result, note |
 | Manage | `manage` | Create and edit items (incl. "last checked on" per check type) and check types |
 | QR label | `manage` | Printable QR label for an item; if the item has no barcode, one is generated from its ID and saved |
@@ -247,6 +268,11 @@ Ionic tabs; tabs appear only when they apply to the logged-in user.
 - Record use flow: scan → item found → added to the list (vibration where supported) → "Scan another?"
   → … → "Done" → form. A code already in the list is ignored. An unknown code shows "Not found"; users
   with `manage` level can assign it to an item.
+- **Live suggestions while typing a code manually:** as soon as text is entered, a list shows active
+  (not retired) items whose code or name contains the text, case-insensitive, excluding items already
+  in the list (e.g. `M-00` offers Maske 01–05). Tapping a suggestion adds the item and clears the
+  input. Enter with an exact code still adds directly. Open question for phase 2: cap the list (e.g. 8
+  entries) and whether matching names should stay in.
 - Scanning from the material tab works as quick search and opens the item.
 
 ## 10. Build, deploy, backup
@@ -254,9 +280,14 @@ Ionic tabs; tabs appear only when they apply to the logged-in user.
 ### CI (GitHub Actions)
 
 - Pull requests: `vitest`, `tsc --noEmit`, `go vet`, `go test ./...`, image build without push.
-- `main`: multi-stage Dockerfile (Node build → Go build → `gcr.io/distroless/static`), pushed to GHCR
-  as a **public** image `ghcr.io/ffneumarkt/intern` with tags `latest` and the commit SHA. The image
-  contains no secrets.
+- Changes that only touch `docs/**`, `*.md` files or `LICENSE` skip CI entirely (`paths-ignore` on
+  both triggers), so docs PRs show no checks and docs commits on `main` build no new image.
+- `main`: multi-stage Dockerfile (Node build → Go build → `gcr.io/distroless/static`, runs as root so
+  the bind-mounted `./data` needs no special ownership), pushed to GHCR as `ghcr.io/ffneumarkt/intern`
+  with tags `latest` and the commit SHA. `packages: write` is granted only to the `image` job. The image
+  contains no secrets, only the binary with the embedded frontend.
+- The package is **public** (switched on 2026-10-29; anonymous pull verified) and linked to the repo
+  via the `org.opencontainers.image.source` label, so the VPS pulls without a login.
 
 ### VPS
 

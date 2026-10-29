@@ -3,7 +3,7 @@
 Internal tools of FF Neumarkt at `intern.ffneumarkt.at`: Beförderungspapier (public, offline) and
 material check intervals. Go + PocketBase backend with an embedded Ionic React frontend.
 
-Design: `docs/superpowers/specs/2026-10-29-intern-platform-design.md`
+Design: `docs/superpowers/specs/2026-10-29-intern-platform-design.md` · Status and next steps: `docs/superpowers/STATUS.md`
 
 ## Development
 
