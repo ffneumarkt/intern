@@ -1,0 +1,7 @@
+.git
+.superpowers
+**/pb_data
+web/node_modules
+backend/ui/dist/*
+!backend/ui/dist/.gitkeep
+docs

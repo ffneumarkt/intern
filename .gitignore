@@ -1,0 +1,7 @@
+/backend/intern
+pb_data/
+.superpowers/
+web/node_modules/
+backend/ui/dist/*
+!backend/ui/dist/.gitkeep
+.env

@@ -1,0 +1,103 @@
+/* Fire brigade red as primary colour. */
+:root {
+  --ion-color-primary: #b71c1c;
+  --ion-color-primary-rgb: 183, 28, 28;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #a11919;
+  --ion-color-primary-tint: #be3333;
+}
+
+/* The toolbar already shows the title; the heading is kept for screen readers and tests. */
+.page-heading {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.badge-outline {
+  --background: transparent;
+  --color: var(--ion-color-warning-shade);
+  border: 1px solid var(--ion-color-warning);
+}
+
+.scanner-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  aspect-ratio: 4 / 3;
+  max-height: 40vh;
+  width: 100%;
+  background: #222;
+  color: #bbb;
+  font-size: 2rem;
+}
+
+.scanner-placeholder span {
+  font-size: 0.9rem;
+}
+
+.code-input {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 10px;
+  font-size: 1rem;
+  border: 1px solid var(--ion-color-medium);
+  border-radius: 6px;
+  background: var(--ion-background-color, #fff);
+  color: inherit;
+}
+
+.stacked-label {
+  display: block;
+  width: 100%;
+  padding: 8px 0;
+}
+
+.label-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 50mm;
+  margin: 16px auto;
+  padding: 8px;
+  border: 1px dashed var(--ion-color-medium);
+}
+
+.qr-placeholder {
+  display: grid;
+  place-items: center;
+  width: 30mm;
+  height: 30mm;
+  background: repeating-linear-gradient(45deg, #000 0 4px, #fff 4px 8px);
+  color: #fff;
+  font-weight: bold;
+}
+
+/* Keep the sketch bar within the viewport on phones. */
+.view-as {
+  overflow: hidden;
+}
+
+.view-as ion-segment {
+  max-width: 100%;
+}
+
+.view-as ion-label {
+  position: relative;
+  z-index: 1;
+  padding-right: 8px;
+  background: var(--ion-color-light);
+}
+
+.suggestions {
+  margin-top: 4px;
+  border: 1px solid var(--ion-color-light-shade);
+  border-radius: 6px;
+}
