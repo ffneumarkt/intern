@@ -1,0 +1,18 @@
+/* Fire brigade red as primary colour. */
+:root {
+  --ion-color-primary: #b71c1c;
+  --ion-color-primary-rgb: 183, 28, 28;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #a11919;
+  --ion-color-primary-tint: #be3333;
+}
+
+/* The toolbar already shows the title; the heading is kept for screen readers and tests. */
+.page-heading {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
