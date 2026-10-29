@@ -16,6 +16,7 @@ COPY --from=web /src/backend/ui/dist ./ui/dist
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /intern ./cmd/intern
 
 FROM gcr.io/distroless/static
+LABEL org.opencontainers.image.source=https://github.com/ffneumarkt/intern
 COPY --from=backend /intern /intern
 VOLUME /pb_data
 EXPOSE 8090
