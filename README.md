@@ -12,3 +12,6 @@ Design: `docs/superpowers/specs/2026-10-29-intern-platform-design.md`
 npm --prefix web run dev                    # frontend dev server, proxies /api and /_ to the backend
 make image                                  # build the Docker image
 ```
+
+The backend logs with `charmbracelet/log`; set `LOG_LEVEL` (`debug`, `info`, `warn`, `error`; default `info`).
+

@@ -1,18 +1,21 @@
 package main
 
 import (
-	"log"
+	"os"
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 
+	"github.com/ffneumarkt/intern/backend/internal/logging"
 	"github.com/ffneumarkt/intern/backend/internal/server"
 	_ "github.com/ffneumarkt/intern/backend/migrations"
 	"github.com/ffneumarkt/intern/backend/ui"
 )
 
 func main() {
+	logger := logging.New(os.Getenv("LOG_LEVEL"))
+
 	app := pocketbase.New()
 
 	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
@@ -26,6 +29,6 @@ func main() {
 	})
 
 	if err := app.Start(); err != nil {
-		log.Fatal(err)
+		logger.Fatal("app stopped", "err", err)
 	}
 }
