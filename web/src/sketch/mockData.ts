@@ -97,3 +97,15 @@ export const history: HistoryEntry[] = [
 ]
 
 export const findByBarcode = (code: string) => items.find((i) => i.barcode === code)
+
+// Live suggestions while typing a code: active items whose code or name contains the text.
+export const searchItems = (text: string, excludeIds: string[] = []) => {
+  const q = text.trim().toLowerCase()
+  if (!q) return []
+  return items.filter(
+    (i) =>
+      i.status !== 'retired' &&
+      !excludeIds.includes(i.id) &&
+      (i.barcode?.toLowerCase().includes(q) || i.name.toLowerCase().includes(q)),
+  )
+}

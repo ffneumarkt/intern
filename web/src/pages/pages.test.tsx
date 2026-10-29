@@ -79,6 +79,54 @@ describe('record use', () => {
   })
 })
 
+describe('record use from item detail', () => {
+  it('opens record use with the item preselected', async () => {
+    renderAt(paths.item('m01'), 'use')
+    fireEvent.click(await findIon(() => ionButton('Verwendung erfassen')))
+    const list = await screen.findByRole('list', { name: 'Gescannte Geräte' })
+    await waitFor(() => expect(within(list).getByText('Maske 01')).toBeInTheDocument())
+  })
+
+  it('starts with the preselected item in the list', async () => {
+    renderAt(paths.recordUseFor('m03'), 'use')
+    const list = await screen.findByRole('list', { name: 'Gescannte Geräte' })
+    await waitFor(() => expect(within(list).getByText('Maske 03')).toBeInTheDocument())
+  })
+})
+
+describe('code suggestions', () => {
+  it('suggests active items matching the typed code', async () => {
+    renderAt(paths.recordUse, 'use')
+    const input = await screen.findByLabelText('Code manuell eingeben')
+    fireEvent.change(input, { target: { value: 'm-00' } })
+    const suggestions = await screen.findByRole('list', { name: 'Vorschläge' })
+    for (const n of ['01', '02', '03', '04', '05']) {
+      expect(within(suggestions).getByText(`Maske ${n}`)).toBeInTheDocument()
+    }
+    expect(within(suggestions).queryByText('Maske 06')).not.toBeInTheDocument()
+    expect(within(suggestions).queryByText('LA 01')).not.toBeInTheDocument()
+  })
+
+  it('adds a suggestion on click and clears the input', async () => {
+    renderAt(paths.recordUse, 'use')
+    const input = await screen.findByLabelText('Code manuell eingeben')
+    fireEvent.change(input, { target: { value: 'M-00' } })
+    fireEvent.click(within(await screen.findByRole('list', { name: 'Vorschläge' })).getByText('Maske 03'))
+    const list = screen.getByRole('list', { name: 'Gescannte Geräte' })
+    await waitFor(() => expect(within(list).getByText('Maske 03')).toBeInTheDocument())
+    expect(input).toHaveValue('')
+    expect(screen.queryByRole('list', { name: 'Vorschläge' })).not.toBeInTheDocument()
+  })
+
+  it('does not suggest items already in the list', async () => {
+    renderAt(paths.recordUseFor('m01'), 'use')
+    const input = await screen.findByLabelText('Code manuell eingeben')
+    fireEvent.change(input, { target: { value: 'M-00' } })
+    const suggestions = await screen.findByRole('list', { name: 'Vorschläge' })
+    expect(within(suggestions).queryByText('Maske 01')).not.toBeInTheDocument()
+  })
+})
+
 describe('category', () => {
   it('hides retired items until toggled', async () => {
     renderAt(paths.category('masken'), 'use')

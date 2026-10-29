@@ -25,7 +25,7 @@ export default function ItemPage() {
         </IonCardContent>
       </IonCard>
       <div className="ion-margin-bottom">
-        <IonButton routerLink={paths.recordUse}>Verwendung erfassen</IonButton>
+        <IonButton routerLink={paths.recordUseFor(item.id)}>Verwendung erfassen</IonButton>
         {atLeast(level, 'check') && <IonButton routerLink={paths.recordCheck(item.id)}>Prüfung erfassen</IonButton>}
         {atLeast(level, 'check') && <IonButton color="medium" fill="outline">Ausscheiden</IonButton>}
         {atLeast(level, 'manage') && <IonButton fill="outline" routerLink={paths.manage}>Bearbeiten</IonButton>}

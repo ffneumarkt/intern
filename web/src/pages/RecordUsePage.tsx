@@ -14,10 +14,11 @@ import {
   IonToggle,
 } from '@ionic/react'
 import { cameraOutline, closeCircleOutline } from 'ionicons/icons'
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
+import { useLocation } from 'react-router-dom'
 import Page from '../components/Page'
 import { paths } from '../routes'
-import { findByBarcode, type Item } from '../sketch/mockData'
+import { findByBarcode, items, searchItems, type Item } from '../sketch/mockData'
 import { atLeast, useSketchSession } from '../sketch/session'
 
 export default function RecordUsePage() {
@@ -26,6 +27,23 @@ export default function RecordUsePage() {
   const [code, setCode] = useState('')
   const [unknown, setUnknown] = useState<string | null>(null)
   const [step, setStep] = useState<'scan' | 'form'>('scan')
+  const preselectedId = new URLSearchParams(useLocation().search).get('geraet')
+
+  const add = (item: Item) => setScanned((list) => (list.some((i) => i.id === item.id) ? list : [...list, item]))
+
+  // Opened from an item's detail page: start with that item in the list.
+  useEffect(() => {
+    const item = items.find((i) => i.id === preselectedId)
+    if (item) add(item)
+  }, [preselectedId])
+
+  const suggestions = searchItems(code, scanned.map((i) => i.id))
+
+  const pick = (item: Item) => {
+    add(item)
+    setUnknown(null)
+    setCode('')
+  }
 
   const submitCode = (e: FormEvent) => {
     e.preventDefault()
@@ -33,7 +51,7 @@ export default function RecordUsePage() {
     if (!value) return
     const item = findByBarcode(value)
     setUnknown(item ? null : value)
-    if (item) setScanned((list) => (list.some((i) => i.id === item.id) ? list : [...list, item]))
+    if (item) add(item)
     setCode('')
   }
 
@@ -55,9 +73,26 @@ export default function RecordUsePage() {
               <form onSubmit={submitCode}>
                 <label>
                   Code manuell eingeben
-                  <input className="code-input" value={code} onChange={(e) => setCode(e.target.value)} />
+                  <input
+                    className="code-input"
+                    value={code}
+                    autoComplete="off"
+                    onChange={(e) => setCode(e.target.value)}
+                  />
                 </label>
               </form>
+              {suggestions.length > 0 && (
+                <IonList aria-label="Vorschläge" className="suggestions">
+                  {suggestions.map((i) => (
+                    <IonItem key={i.id} role="listitem" button detail={false} onClick={() => pick(i)}>
+                      <IonLabel>
+                        {i.name}
+                        <p>{i.barcode}</p>
+                      </IonLabel>
+                    </IonItem>
+                  ))}
+                </IonList>
+              )}
             </IonCardContent>
           </IonCard>
           {unknown && (

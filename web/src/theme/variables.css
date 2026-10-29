@@ -95,3 +95,9 @@
   padding-right: 8px;
   background: var(--ion-color-light);
 }
+
+.suggestions {
+  margin-top: 4px;
+  border: 1px solid var(--ion-color-light-shade);
+  border-radius: 6px;
+}
