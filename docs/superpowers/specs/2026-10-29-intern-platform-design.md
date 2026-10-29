@@ -280,6 +280,8 @@ Ionic tabs; tabs appear only when they apply to the logged-in user.
 ### CI (GitHub Actions)
 
 - Pull requests: `vitest`, `tsc --noEmit`, `go vet`, `go test ./...`, image build without push.
+- Changes that only touch `docs/**`, `*.md` files or `LICENSE` skip CI entirely (`paths-ignore` on
+  both triggers), so docs PRs show no checks and docs commits on `main` build no new image.
 - `main`: multi-stage Dockerfile (Node build → Go build → `gcr.io/distroless/static`, runs as root so
   the bind-mounted `./data` needs no special ownership), pushed to GHCR as `ghcr.io/ffneumarkt/intern`
   with tags `latest` and the commit SHA. `packages: write` is granted only to the `image` job. The image
