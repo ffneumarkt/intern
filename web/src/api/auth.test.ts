@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { currentUser, refresh } from './auth'
+import { currentUser, login, refresh } from './auth'
 import { pb } from './client'
+import { TooManyAttemptsError } from './errors'
 
 function token(): string {
   const payload = btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600, type: 'auth' }))
@@ -47,6 +48,13 @@ describe('refresh', () => {
     vi.stubGlobal('fetch', fetchMock)
     await refresh()
     expect(fetchMock).not.toHaveBeenCalled()
+  })
+})
+
+describe('login', () => {
+  it('recognises the rate limit', async () => {
+    respondWith(429)
+    await expect(login('a@example.com', 'x')).rejects.toBeInstanceOf(TooManyAttemptsError)
   })
 })
 

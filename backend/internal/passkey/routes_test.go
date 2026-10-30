@@ -53,12 +53,21 @@ func newHarness(t *testing.T) *harness {
 
 func (h *harness) post(path, token string, body any) (int, []byte) {
 	h.t.Helper()
+	return h.request(http.MethodPost, "/api/passkey/"+path, token, "", body)
+}
+
+// request goes through the full router. clientIP arrives the way Cloudflare passes it on.
+func (h *harness) request(method, path, token, clientIP string, body any) (int, []byte) {
+	h.t.Helper()
 	raw, err := json.Marshal(body)
 	if err != nil {
 		h.t.Fatal(err)
 	}
-	req := httptest.NewRequest(http.MethodPost, "/api/passkey/"+path, bytes.NewReader(raw))
+	req := httptest.NewRequest(method, path, bytes.NewReader(raw))
 	req.Header.Set("Content-Type", "application/json")
+	if clientIP != "" {
+		req.Header.Set("CF-Connecting-IP", clientIP)
+	}
 	if token != "" {
 		req.Header.Set("Authorization", token)
 	}
@@ -653,6 +662,82 @@ func TestPasswordWorksAgainAfterRemovingAllPasskeys(t *testing.T) {
 		t.Fatal(err)
 	}
 	h.register(h.w.Use, newDevice(h.w.Use))
+}
+
+func (h *harness) wrongPassword(clientIP string) int {
+	h.t.Helper()
+	status, _ := h.request(http.MethodPost, "/api/collections/users/auth-with-password", "", clientIP,
+		map[string]any{"identity": "use@example.com", "password": "wrong-password"})
+	return status
+}
+
+func TestPasswordLoginIsRateLimited(t *testing.T) {
+	h := newHarness(t)
+	for i := range 5 {
+		if status := h.wrongPassword("203.0.113.1"); status != http.StatusBadRequest {
+			t.Fatalf("attempt %d: %d", i, status)
+		}
+	}
+	if status := h.wrongPassword("203.0.113.1"); status != http.StatusTooManyRequests {
+		t.Errorf("status = %d", status)
+	}
+}
+
+func TestConfirmFinishIsRateLimited(t *testing.T) {
+	h := newHarness(t)
+	token := testenv.Token(h.t, h.w.Use)
+	confirm := func() int {
+		status, _ := h.request(http.MethodPost, "/api/passkey/confirm/finish", token, "203.0.113.1", map[string]any{"password": "wrong-password"})
+		return status
+	}
+	for i := range 5 {
+		if status := confirm(); status != http.StatusForbidden {
+			t.Fatalf("attempt %d: %d", i, status)
+		}
+	}
+	if status := confirm(); status != http.StatusTooManyRequests {
+		t.Errorf("status = %d", status)
+	}
+}
+
+func TestPublicPasskeyRoutesAreRateLimited(t *testing.T) {
+	h := newHarness(t)
+	begin := func() int {
+		status, _ := h.request(http.MethodPost, "/api/passkey/login/begin", "", "203.0.113.1", map[string]any{})
+		return status
+	}
+	for i := range 30 {
+		if status := begin(); status != http.StatusOK {
+			t.Fatalf("attempt %d: %d", i, status)
+		}
+	}
+	if status := begin(); status != http.StatusTooManyRequests {
+		t.Errorf("status = %d", status)
+	}
+}
+
+// Behind the tunnel every request comes from cloudflared, so clients must be told apart by header.
+func TestRateLimitCountsPerClient(t *testing.T) {
+	h := newHarness(t)
+	for range 6 {
+		h.wrongPassword("203.0.113.1")
+	}
+	if status := h.wrongPassword("203.0.113.2"); status != http.StatusBadRequest {
+		t.Errorf("another client: %d", status)
+	}
+}
+
+func TestRateLimitLeavesOtherRoutesAlone(t *testing.T) {
+	h := newHarness(t)
+	token := testenv.Token(h.t, h.w.Use)
+	for i := range 50 {
+		if status, _ := h.request(http.MethodGet, "/api/collections/items/records", token, "203.0.113.1", nil); status != http.StatusOK {
+			t.Fatalf("list %d: %d", i, status)
+		}
+		if status, _ := h.request(http.MethodPost, "/api/collections/users/auth-refresh", token, "203.0.113.1", nil); status != http.StatusOK {
+			t.Fatalf("refresh %d: %d", i, status)
+		}
+	}
 }
 
 func TestConfigFromEnv(t *testing.T) {

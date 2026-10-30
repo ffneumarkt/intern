@@ -1,5 +1,6 @@
 // In-memory stand-in for api/auth. The password 'richtig' logs in with the level of signInAs.
 import type { Level, User } from '../api/auth'
+import { TooManyAttemptsError } from '../api/errors'
 
 export type { Level, User }
 
@@ -42,6 +43,7 @@ export function onAuthChange(listener: () => void) {
 }
 
 export async function login(_email: string, password: string) {
+  if (password === 'zu-oft') throw new TooManyAttemptsError()
   if (password !== 'richtig') throw new Error('Failed to authenticate.')
   user = testUser
   levels = loginLevels

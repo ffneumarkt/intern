@@ -1,7 +1,7 @@
 import { startAuthentication, startRegistration } from '@simplewebauthn/browser'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { pb } from './client'
-import { PasskeyCancelledError, PasskeyExistsError, WrongPasswordError } from './errors'
+import { PasskeyCancelledError, PasskeyExistsError, TooManyAttemptsError, WrongPasswordError } from './errors'
 import { addPasskey, confirmWithPasskey, confirmWithPassword, listPasskeys, loginWithPasskey } from './passkeys'
 
 vi.mock('@simplewebauthn/browser', () => ({
@@ -75,6 +75,13 @@ describe('confirming', () => {
   it('recognises a wrong password', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{}', { status: 403 })))
     await expect(confirmWithPassword('falsch')).rejects.toBeInstanceOf(WrongPasswordError)
+  })
+
+  it('recognises the rate limit', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{}', { status: 429 })))
+    await expect(confirmWithPassword('geheim')).rejects.toBeInstanceOf(TooManyAttemptsError)
+    await expect(confirmWithPasskey()).rejects.toBeInstanceOf(TooManyAttemptsError)
+    await expect(loginWithPasskey()).rejects.toBeInstanceOf(TooManyAttemptsError)
   })
 
   it('exchanges a passkey assertion for a grant', async () => {

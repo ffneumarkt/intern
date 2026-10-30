@@ -2,7 +2,7 @@ import { IonButton, IonIcon, IonList, IonNote, IonText } from '@ionic/react'
 import { keyOutline } from 'ionicons/icons'
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { PasskeyCancelledError } from '../api/errors'
+import { PasskeyCancelledError, TooManyAttemptsError, tooManyAttemptsMessage } from '../api/errors'
 import { passkeysSupported } from '../api/passkeys'
 import { Field } from '../components/Field'
 import Page from '../components/Page'
@@ -17,16 +17,19 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [failed, setFailed] = useState(false)
   const [passkeyFailed, setPasskeyFailed] = useState(false)
+  const [tooMany, setTooMany] = useState(false)
   const { busy, once } = useBusy()
 
   const signInWithPasskey = async () => {
     setFailed(false)
     setPasskeyFailed(false)
+    setTooMany(false)
     try {
       await loginWithPasskey()
       navigate(paths.dueList, { replace: true })
     } catch (err) {
-      if (!(err instanceof PasskeyCancelledError)) setPasskeyFailed(true)
+      if (err instanceof TooManyAttemptsError) setTooMany(true)
+      else if (!(err instanceof PasskeyCancelledError)) setPasskeyFailed(true)
     }
   }
 
@@ -34,11 +37,13 @@ export default function LoginPage() {
     e.preventDefault()
     setFailed(false)
     setPasskeyFailed(false)
+    setTooMany(false)
     try {
       await login(email, password)
       navigate(paths.dueList, { replace: true })
-    } catch {
-      setFailed(true)
+    } catch (err) {
+      if (err instanceof TooManyAttemptsError) setTooMany(true)
+      else setFailed(true)
     }
   }
 
@@ -69,6 +74,7 @@ export default function LoginPage() {
           />
         </IonList>
         {failed && <IonText color="danger">Anmeldung fehlgeschlagen. E-Mail und Passwort prüfen.</IonText>}
+        {tooMany && <IonText color="danger">{tooManyAttemptsMessage}</IonText>}
         <IonButton expand="block" fill="outline" type="submit">
           Anmelden
         </IonButton>
