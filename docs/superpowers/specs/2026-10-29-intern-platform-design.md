@@ -1,9 +1,10 @@
 # Internal tools platform `intern.ffneumarkt.at`: design
 
-Status: approved 2026-10-29. Phase 1 (skeleton + UI sketch) merged in PR #1; see
+Status: approved 2026-10-29, implemented through phase 3; see
 `docs/superpowers/STATUS.md` for the current state and next steps. Updated 2026-10-29 with the
 decisions made during phase 1 (layout, logging, versions, record use details) and 2026-10-30 with
-those of phase 2 (settled rules, immutable history, member deactivation).
+those of phases 2 and 3 (settled rules, immutable history, member deactivation, passkey confirmation,
+rate limits, CI split).
 
 ## 1. Goal
 
@@ -47,6 +48,7 @@ Cloudflare ── tunnel ── cloudflared container
                         ├─ embedded frontend (go:embed backend/ui/dist), served at /
                         ├─ internal/passkey   WebAuthn registration and login → PocketBase auth token
                         ├─ internal/due       due date calculation (pure functions, no DB access)
+                        ├─ internal/material  record hooks and the due list route
                         ├─ internal/notify    daily job: due items × notification settings → messages
                         ├─ internal/push      Web Push sending (VAPID), removes expired subscriptions
                         ├─ internal/snapshot  consistent gzipped copy of data.db to stdout
@@ -67,7 +69,7 @@ Cloudflare ── tunnel ── cloudflared container
   PocketBase's own logs are not routed through it yet (open follow-up).
 - **Frontend:** React 19, Ionic React 9 with `@ionic/react-router` and **react-router 6** (Ionic 9
   requires `>=6.4 <7`), Vite 8, TypeScript 7, `vite-plugin-pwa` (Workbox), Vitest + Testing Library,
-  PocketBase JS SDK, pdf-lib (generator), `barcode-detector` (scanning). UI text is **German only**.
+  PocketBase JS SDK, `@simplewebauthn/browser` (passkeys), pdf-lib (generator), `barcode-detector` (scanning). UI text is **German only**.
 - Vite builds the frontend into `backend/ui/dist`, which `backend/ui` embeds. `CGO_ENABLED=0`.
 
 ### Unit responsibilities
@@ -75,6 +77,7 @@ Cloudflare ── tunnel ── cloudflared container
 | Unit | Does | Depends on |
 |---|---|---|
 | `internal/due` | Computes due dates for an item from its category, check types, checks and uses | nothing (plain structs in, structs out) |
+| `internal/material` | Record hooks (check status, default check type, validation, deactivation) and `GET /api/material/due` | PocketBase app, `due` |
 | `internal/notify` | Loads data, calls `due`, applies notification settings and timings, deduplicates, hands grouped messages to a sender | PocketBase app, `due`, a `Sender` interface |
 | `internal/push` | Implements `Sender` with Web Push; deletes subscriptions answered with 404/410 | `webpush-go`, VAPID keys from env |
 | `internal/passkey` | Custom routes for passkey registration and login | PocketBase app, `go-webauthn` |
@@ -89,6 +92,7 @@ Chosen by the user: Go code in `backend/`, frontend in `web/`, only tooling at t
 backend/
   go.mod             # module github.com/ffneumarkt/intern/backend
   cmd/intern/        # main.go: PocketBase app setup, route and cron registration, subcommands
+  cmd/seed/          # sample data for development, not part of the image
   internal/server/   # RegisterFrontend: SPA serving next to /api and /_/
   internal/logging/  # charmbracelet/log setup
   internal/          # due, material, notify, push, passkey, snapshot, devseed, testenv
