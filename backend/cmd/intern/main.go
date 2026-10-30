@@ -10,6 +10,7 @@ import (
 	"github.com/ffneumarkt/intern/backend/internal/due"
 	"github.com/ffneumarkt/intern/backend/internal/logging"
 	"github.com/ffneumarkt/intern/backend/internal/material"
+	"github.com/ffneumarkt/intern/backend/internal/passkey"
 	"github.com/ffneumarkt/intern/backend/internal/server"
 	_ "github.com/ffneumarkt/intern/backend/migrations"
 	"github.com/ffneumarkt/intern/backend/ui"
@@ -29,6 +30,9 @@ func main() {
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
 		material.RegisterRoutes(se, due.Today)
+		if err := passkey.Register(se, passkey.ConfigFromEnv(), logger); err != nil {
+			return err
+		}
 		server.RegisterFrontend(se, ui.Dist())
 		return se.Next()
 	})

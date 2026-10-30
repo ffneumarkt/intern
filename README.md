@@ -16,6 +16,9 @@ make test                                   # go vet + go test, typecheck, vites
 make image                                  # build the Docker image
 ```
 
+Passkeys only work at `http://localhost:5173`: WebAuthn does not accept an IP address such as `127.0.0.1`.
+Production needs no configuration; other sites set `PASSKEY_RP_ID` and `PASSKEY_ORIGIN` (comma separated).
+
 `make seed` fills `backend/pb_data` with sample data. Log in as `keine@`, `verwendung@`, `pruefung@` or
 `verwaltung@ffneumarkt.local` with the password `intern-dev-1234`, one user per permission level.
 
