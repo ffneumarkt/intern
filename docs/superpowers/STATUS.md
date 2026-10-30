@@ -58,6 +58,13 @@ From the phase 2 review:
   lose their field detail on the API.
 - `Loaded` reports every error as "Keine Verbindung", including server faults.
 
+From the phase 3 review:
+
+- An anonymous flood of `login/begin` evicts pending passkey ceremonies, including registrations; the
+  password still works. Needs a rate limit, at Cloudflare or in PocketBase.
+- Concurrent logins can lose a sign count update.
+- "angelegt am" shows the UTC date.
+
 ## Environment notes
 
 - Passkeys in a browser test: Chromium's `WebAuthn.addVirtualAuthenticator` over the DevTools protocol

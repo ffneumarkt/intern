@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -227,9 +228,13 @@ func (r *routes) verifyLogin(e *core.RequestEvent) (*core.Record, error) {
 	if err != nil {
 		return nil, err
 	}
+	// Checked here as well as by the auth hook, so the refusal is logged and writes nothing.
+	if user.GetBool("deactivated") {
+		return nil, fmt.Errorf("user %s is deactivated", user.Id)
+	}
 	// go-webauthn only reports a regression, it does not refuse.
 	if credential.Authenticator.CloneWarning {
-		return nil, errors.New("sign count regression")
+		return nil, fmt.Errorf("sign count regression for user %s", user.Id)
 	}
 
 	key, err := e.App.FindFirstRecordByData("passkeys", "credential_id", base64.RawURLEncoding.EncodeToString(credential.ID))

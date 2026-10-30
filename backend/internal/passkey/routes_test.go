@@ -28,6 +28,7 @@ type harness struct {
 	app *tests.TestApp
 	w   *testenv.World
 	mux http.Handler
+	logs *bytes.Buffer
 }
 
 func newHarness(t *testing.T) *harness {
@@ -39,14 +40,15 @@ func newHarness(t *testing.T) *harness {
 		t.Fatal(err)
 	}
 	se := &core.ServeEvent{App: app, Router: router}
-	if err := passkey.Register(se, passkey.Config{RPID: relyingParty.ID, Origins: []string{origin}}, log.New(&bytes.Buffer{})); err != nil {
+	logs := &bytes.Buffer{}
+	if err := passkey.Register(se, passkey.Config{RPID: relyingParty.ID, Origins: []string{origin}}, log.New(logs)); err != nil {
 		t.Fatal(err)
 	}
 	mux, err := router.BuildMux()
 	if err != nil {
 		t.Fatal(err)
 	}
-	return &harness{t: t, app: app, w: w, mux: mux}
+	return &harness{t: t, app: app, w: w, mux: mux, logs: logs}
 }
 
 func (h *harness) post(path, token string, body any) (int, []byte) {
@@ -251,6 +253,41 @@ func TestDeactivatedUser(t *testing.T) {
 	}
 	if status, body := h.login(d); status != http.StatusOK {
 		t.Errorf("after reactivation: %d %s", status, body)
+	}
+}
+
+func TestDeactivatedRefusalIsLoggedAndWritesNothing(t *testing.T) {
+	h := newHarness(t)
+	d := newDevice(h.w.Use)
+	h.register(h.w.Use, d)
+	h.w.Use.Set("deactivated", true)
+	if err := h.app.Save(h.w.Use); err != nil {
+		t.Fatal(err)
+	}
+	d.cred.Counter = 9
+	status, body := h.login(d)
+	wantRefused(t, status, body)
+	if got := h.passkeyOf(h.w.Use).GetInt("sign_count"); got != 0 {
+		t.Errorf("sign_count = %d", got)
+	}
+	if logged := h.logs.String(); !strings.Contains(logged, "deactivated") || !strings.Contains(logged, h.w.Use.Id) {
+		t.Errorf("log: %q", logged)
+	}
+}
+
+func TestRegressionLogNamesTheUser(t *testing.T) {
+	h := newHarness(t)
+	d := newDevice(h.w.Use)
+	h.register(h.w.Use, d)
+	key := h.passkeyOf(h.w.Use)
+	key.Set("sign_count", 100)
+	if err := h.app.Save(key); err != nil {
+		t.Fatal(err)
+	}
+	d.cred.Counter = 5
+	h.login(d)
+	if logged := h.logs.String(); !strings.Contains(logged, "sign count regression") || !strings.Contains(logged, h.w.Use.Id) {
+		t.Errorf("log: %q", logged)
 	}
 }
 
