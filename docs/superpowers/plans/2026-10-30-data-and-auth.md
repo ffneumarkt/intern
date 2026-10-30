@@ -10,6 +10,18 @@
 
 **Spec:** `docs/superpowers/specs/2026-10-29-intern-platform-design.md` (sections 3, 4, 5 password part, 6, 8; section 9 only for manual code entry and suggestions).
 
+## Execution record
+
+**Status: done** on branch `feature/data-and-auth`. Executed inline. The task text below is the plan as
+approved; these deviations apply and the code is authoritative:
+
+- Member deactivation was added on user request before Task 1 (already in the text below).
+- Forms use native inputs and selects through `components/Field.tsx` instead of `IonInput`/`IonSelect`,
+  which get no props under jsdom. `setIonValue` was dropped.
+- Logout lands on the login page, not Start: `RequireLogin` redirects first.
+- After a partly saved item, Manage stays open with the form cleared and a warning.
+- `ItemForm` gained `Notiz`, and `api/errors.ts` holds the errors screens explain.
+
 ## Global Constraints
 
 - UI text German only; code, comments and identifiers English.

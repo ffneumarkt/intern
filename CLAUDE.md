@@ -10,11 +10,14 @@ Internal tools for FF Neumarkt at `intern.ffneumarkt.at`. Start with `docs/super
 - Logging in Go: always `charmbracelet/log` via `internal/logging` (ReportCaller, ReportTimestamp,
   TimeFormat `15:04:05.00`, level from `LOG_LEVEL`). No `log`/`fmt.Print` for diagnostics.
 - UI text is German only; code, comments and identifiers are English.
-- Sketch-only code lives in `web/src/sketch/` and gets replaced by real data, not extended into it.
 - Routes are defined once in `web/src/routes.ts` (`paths`).
 - Frontend tests: Ionic components are found by visible text with `web/src/test/ionic.ts`
   (`ionButton`, `ionTab`, `findIon`) and inputs are driven with `fireEvent`; jsdom does not model
-  Ionic's shadow DOM roles or focus.
+  Ionic's shadow DOM roles or focus. `web/src/api/` is replaced by `test/fakeAuth.ts` and
+  `test/fakeMaterial.ts`.
+- Form fields are native inputs through `web/src/components/Field.tsx`, not `IonInput`/`IonSelect`.
+- Data pages load with `useResource`, not an effect: Ionic keeps pages mounted.
+- Go tests that use `internal/testenv` live in external `_test` packages.
 - TDD: write the failing test first, watch it fail, then implement.
 - Work on a branch, open a PR against `main`; the user merges.
 
