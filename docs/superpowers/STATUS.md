@@ -68,6 +68,15 @@ From the phase 3 review:
   full runs). 210 focused attempts did not reproduce it and the cause is unknown. Nothing is saved in
   that case; the click just has no visible effect.
 
+Known dependency findings, checked 2026-10-30 (`govulncheck`, `npm audit`):
+
+- `golang.org/x/crypto/openpgp` (GO-2026-5932): no fix exists, the package is unused here.
+- `react-router` 6.30.6 is the newest 6.x and Ionic 9 requires `<7`. GHSA-wrjc-x8rr-h8h6 needs an
+  attacker-controlled path in `<Link>` or `useNavigate`, but all paths come from `routes.ts` and record
+  ids. GHSA-337j-9hxr-rhxg needs server-side rendering, which the app does not use. Do not run
+  `npm audit fix --force`: it moves to react-router 8. Recheck when Ionic allows react-router 7.
+- Four low findings in `vite-plugin-pwa` and its build tooling, which do not ship to the browser.
+
 ## Environment notes
 
 - Passkeys in a browser test: Chromium's `WebAuthn.addVirtualAuthenticator` over the DevTools protocol
