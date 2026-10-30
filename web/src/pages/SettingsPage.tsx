@@ -1,7 +1,7 @@
 import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonNote, IonText } from '@ionic/react'
 import { addOutline, keyOutline } from 'ionicons/icons'
 import { useState } from 'react'
-import { PasskeyCancelledError, PasskeyExistsError, WrongPasswordError } from '../api/errors'
+import { PasskeyCancelledError, PasskeyExistsError, TooManyAttemptsError, tooManyAttemptsMessage, WrongPasswordError } from '../api/errors'
 import {
   addPasskey,
   confirmWithPasskey,
@@ -35,12 +35,14 @@ export default function SettingsPage() {
     try {
       setGrant(await confirmWithPasskey())
     } catch (err) {
-      if (!(err instanceof PasskeyCancelledError)) setError('Bestätigung fehlgeschlagen.')
+      if (err instanceof TooManyAttemptsError) setError(tooManyAttemptsMessage)
+      else if (!(err instanceof PasskeyCancelledError)) setError('Bestätigung fehlgeschlagen.')
     }
   }
 
   const addError = (err: unknown) => {
     if (err instanceof PasskeyCancelledError) return null
+    if (err instanceof TooManyAttemptsError) return tooManyAttemptsMessage
     if (err instanceof WrongPasswordError) return 'Passwort ist falsch.'
     if (err instanceof PasskeyExistsError) return 'Dieses Gerät hat bereits einen Passkey.'
     return 'Passkey konnte nicht angelegt werden.'

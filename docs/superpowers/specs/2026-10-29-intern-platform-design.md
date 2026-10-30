@@ -190,6 +190,9 @@ No roles. Each user has at most one permission per category:
   new one. Removing needs no confirmation and does not end sessions: tokens stay valid until they
   expire or the password changes.
 - User verification is left to the device (`preferred`); no second factor is forced.
+- Rate limits, per client IP (`CF-Connecting-IP` behind the tunnel; the container publishes no port, so
+  only Cloudflare can set it): 5 password logins and 5 `confirm/finish` per minute, each counted
+  separately, and 30 requests per minute on `/api/passkey/login/`. Only these routes are limited.
 - All login failures answer alike; the reason goes to the log. A user may remove their last passkey,
   since the password still works.
 - Flow: the admin creates the account with a password; the user logs in once with it and adds one or

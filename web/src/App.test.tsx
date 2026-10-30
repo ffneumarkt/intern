@@ -15,6 +15,8 @@ function renderAt(path: string, level: Level | null) {
 }
 
 const tab = ionTab
+
+const tooManyAttempts = 'Zu viele Versuche. Bitte eine Minute warten.'
 const findTab = (name: string) => findIon(() => ionTab(name))
 
 async function submitLogin(password: string) {
@@ -60,6 +62,20 @@ describe('login', () => {
     await submitLogin('falsch')
     expect(await screen.findByText('Anmeldung fehlgeschlagen. E-Mail und Passwort prüfen.')).toBeInTheDocument()
     expect(tab('Material')).not.toBeInTheDocument()
+  })
+
+  it('asks to wait after too many attempts instead of blaming the password', async () => {
+    renderAt(paths.login, null)
+    await submitLogin('zu-oft')
+    expect(await screen.findByText(tooManyAttempts)).toBeInTheDocument()
+    expect(screen.queryByText('Anmeldung fehlgeschlagen. E-Mail und Passwort prüfen.')).not.toBeInTheDocument()
+  })
+
+  it('asks to wait when passkey login is rate limited', async () => {
+    passkeyState.tooMany = true
+    renderAt(paths.login, null)
+    fireEvent.click(await findIon(() => ionButton('Mit Passkey anmelden')))
+    expect(await screen.findByText(tooManyAttempts)).toBeInTheDocument()
   })
 
   it('logs in with a passkey', async () => {
@@ -145,6 +161,20 @@ describe('passkeys in settings', () => {
     await add('Laptop')
     await screen.findByText('Laptop')
     expect(passkeyState.grants).toEqual(['grant-password'])
+  })
+
+  it('asks to wait after too many password attempts', async () => {
+    renderAt(paths.settings, 'use')
+    await add('Laptop', 'zu-oft')
+    expect(await screen.findByText(tooManyAttempts)).toBeInTheDocument()
+  })
+
+  it('asks to wait when a confirmation is rate limited', async () => {
+    passkeyState.items = [iPhone]
+    passkeyState.tooMany = true
+    renderAt(paths.settings, 'use')
+    fireEvent.click(await findIon(() => ionButton('Mit Passkey bestätigen')))
+    expect(await screen.findByText(tooManyAttempts)).toBeInTheDocument()
   })
 
   it('refuses a wrong password and keeps the form', async () => {

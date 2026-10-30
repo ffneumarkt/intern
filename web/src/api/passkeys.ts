@@ -1,7 +1,7 @@
 import { browserSupportsWebAuthn, startAuthentication, startRegistration } from '@simplewebauthn/browser'
 import { ClientResponseError } from 'pocketbase'
 import { pb } from './client'
-import { PasskeyCancelledError, PasskeyExistsError, WrongPasswordError } from './errors'
+import { explainRateLimit, PasskeyCancelledError, PasskeyExistsError, WrongPasswordError } from './errors'
 
 export interface Passkey {
   id: string
@@ -15,7 +15,13 @@ interface Begun {
   options: never
 }
 
-const post = <T>(path: string, body: object = {}) => pb.send<T>(`/api/passkey/${path}`, { method: 'POST', body })
+async function post<T>(path: string, body: object = {}): Promise<T> {
+  try {
+    return await pb.send<T>(`/api/passkey/${path}`, { method: 'POST', body })
+  } catch (err) {
+    throw explainRateLimit(err)
+  }
+}
 
 // The browser reports a closed dialog as NotAllowedError.
 async function ceremony<T>(start: () => Promise<T>): Promise<T> {

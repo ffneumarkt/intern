@@ -60,8 +60,8 @@ From the phase 2 review:
 
 From the phase 3 review:
 
-- An anonymous flood of `login/begin` evicts pending passkey ceremonies, including registrations; the
-  password still works. Needs a rate limit, at Cloudflare or in PocketBase.
+- Many clients together can still flood `login/begin` and evict pending passkey ceremonies, including
+  registrations; the limit of 30 per minute is per IP. The password still works.
 - Concurrent logins can lose a sign count update.
 - "angelegt am" shows the UTC date.
 - Adding a passkey on a device that already has one once showed no message in a browser test (1 of 9

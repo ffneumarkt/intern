@@ -1,5 +1,6 @@
 import { ClientResponseError } from 'pocketbase'
 import { pb } from './client'
+import { explainRateLimit } from './errors'
 
 export type Level = 'use' | 'check' | 'manage'
 
@@ -20,7 +21,11 @@ export function onAuthChange(listener: () => void): () => void {
 }
 
 export async function login(email: string, password: string): Promise<void> {
-  await pb.collection('users').authWithPassword(email, password)
+  try {
+    await pb.collection('users').authWithPassword(email, password)
+  } catch (err) {
+    throw explainRateLimit(err)
+  }
 }
 
 export function logout(): void {
