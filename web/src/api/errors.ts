@@ -4,3 +4,5 @@ export class BarcodeTakenError extends Error {}
 export class ItemPartlySavedError extends Error {}
 
 export class CheckTypeInUseError extends Error {}
+
+export class ItemHasHistoryError extends Error {}

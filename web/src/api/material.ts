@@ -1,7 +1,7 @@
 import { ClientResponseError } from 'pocketbase'
 import type { DueState } from '../components/DueStateBadge'
 import { pb } from './client'
-import { BarcodeTakenError, CheckTypeInUseError, ItemPartlySavedError } from './errors'
+import { BarcodeTakenError, CheckTypeInUseError, ItemHasHistoryError, ItemPartlySavedError } from './errors'
 
 export interface Category {
   id: string
@@ -230,8 +230,13 @@ export async function updateItem(itemId: string, input: Omit<ItemInput, 'categor
   }
 }
 
+// The server refuses this once an item has uses or checks.
 export async function deleteItem(itemId: string): Promise<void> {
-  await pb.collection('items').delete(itemId)
+  try {
+    await pb.collection('items').delete(itemId)
+  } catch (err) {
+    throw err instanceof ClientResponseError && err.status === 400 ? new ItemHasHistoryError() : err
+  }
 }
 
 export async function createCheckType(input: CheckTypeInput): Promise<void> {

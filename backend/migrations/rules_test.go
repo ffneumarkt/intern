@@ -166,7 +166,11 @@ func TestManageLevel(t *testing.T) {
 	e.run(t, "sets the default", request{as: w.Manage, method: "PATCH", url: record("check_types", w.CheckTypeA.Id), body: `{"is_default":true}`,
 		status: 200, contains: []string{`"is_default":true`}})
 	e.run(t, "deletes a check type", request{as: w.Manage, method: "DELETE", url: record("check_types", w.CheckTypeA.Id), status: 204})
-	e.run(t, "deletes an item", request{as: w.Manage, method: "DELETE", url: record("items", w.ItemA.Id), status: 204})
+	testenv.Create(t, e.app, "uses", map[string]any{"item": w.ItemA.Id, "date": "2026-10-01", "kind": "other", "created_by": w.Manage.Id})
+	e.run(t, "no delete with history", request{as: w.Manage, method: "DELETE", url: record("items", w.ItemA.Id), status: 400})
+	e.run(t, "retires instead", request{as: w.Manage, method: "PATCH", url: record("items", w.ItemA.Id), body: `{"status":"retired"}`, status: 200})
+	fresh := testenv.Create(t, e.app, "items", map[string]any{"category": w.CategoryA.Id, "name": "Frisch", "status": "active"})
+	e.run(t, "deletes an item without history", request{as: w.Manage, method: "DELETE", url: record("items", fresh.Id), status: 204})
 	e.run(t, "no delete elsewhere", request{as: w.Manage, method: "DELETE", url: record("items", w.ItemB.Id), status: 404})
 
 	for _, collection := range []string{"categories", "permissions"} {
@@ -266,7 +270,7 @@ func TestTransportDocumentSettingsArePublicToRead(t *testing.T) {
 
 func TestMigrationsRevert(t *testing.T) {
 	app := testenv.New(t)
-	if _, err := core.NewMigrationsRunner(app, core.AppMigrations).Down(3); err != nil {
+	if _, err := core.NewMigrationsRunner(app, core.AppMigrations).Down(4); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := app.FindCollectionByNameOrId("items"); err == nil {

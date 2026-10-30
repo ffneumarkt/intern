@@ -136,8 +136,8 @@ Items can also be retired by hand (level `check` or higher). Retired items keep 
 hidden from lists by default and take no new uses or checks, otherwise a `defect` check would bring
 one back. `status` changes by hand only to `retired`. An item's category cannot change through the
 API. Uses and checks cannot be edited or deleted through the API; superusers correct them in `/_/`.
-They cannot be dated in the future. Deleting an item deletes its history; the app states how many
-entries that takes before asking.
+They cannot be dated in the future. An item with uses or checks cannot be deleted, not even by a
+superuser, only retired; initial "last checked on" checks count as history.
 
 ## 4. Permissions
 
@@ -147,7 +147,7 @@ No roles. Each user has at most one permission per category:
 |---|---|
 | `use` | see the category's items, due dates and history; record uses |
 | `check` | `use` + record checks, retire items |
-| `manage` | `check` + create, edit and delete items and check types |
+| `manage` | `check` + create, edit and delete items (only without history) and check types |
 
 - No permission row means the category is invisible to that user.
 - The admin is a PocketBase **superuser** and manages users, categories, permissions, notification

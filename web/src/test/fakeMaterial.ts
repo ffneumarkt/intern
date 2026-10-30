@@ -1,5 +1,5 @@
 // In-memory stand-in for api/material. Tests read and change `data`; setup.ts resets it.
-import { BarcodeTakenError, CheckTypeInUseError, ItemPartlySavedError } from '../api/errors'
+import { BarcodeTakenError, CheckTypeInUseError, ItemHasHistoryError, ItemPartlySavedError } from '../api/errors'
 import type { CheckInput, CheckTypeInput, ItemInput, UseInput } from '../api/material'
 import { freshData } from './fixtures'
 
@@ -13,6 +13,7 @@ export const failing = {
   barcode: false,
   initialChecks: false,
   deleteCheckType: false,
+  deleteItem: false,
 }
 export const calls = { uses: [] as { itemId: string; input: UseInput }[], checks: [] as { itemId: string; input: CheckInput }[], retired: [] as string[], createdItems: [] as { input: ItemInput; lastChecked: Record<string, string> }[], updatedItems: [] as { itemId: string; input: Omit<ItemInput, 'categoryId'> }[], deletedItems: [] as string[], createdCheckTypes: [] as CheckTypeInput[], updatedCheckTypes: [] as { id: string; input: Omit<CheckTypeInput, 'categoryId'> }[] }
 
@@ -23,6 +24,7 @@ export function resetMaterial() {
   failing.barcode = false
   failing.initialChecks = false
   failing.deleteCheckType = false
+  failing.deleteItem = false
   calls.createdItems = []
   calls.updatedItems = []
   calls.deletedItems = []
@@ -82,6 +84,7 @@ export async function updateItem(itemId: string, input: Omit<ItemInput, 'categor
 }
 
 export async function deleteItem(itemId: string) {
+  if (failing.deleteItem) throw new ItemHasHistoryError()
   calls.deletedItems.push(itemId)
   data.items = data.items.filter((i) => i.id !== itemId)
 }
