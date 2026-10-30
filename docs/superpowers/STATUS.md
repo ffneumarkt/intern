@@ -10,11 +10,17 @@ Last updated: 2026-10-30. Read this first, then the spec
   Docker image, reference `compose.yaml`, Makefile, CI.
 - CI on `main` pushes `ghcr.io/ffneumarkt/intern:latest` and `:<sha>`. The package is **public** and
   linked to the repo; anonymous pull verified.
-- **Phase 2 done** (plan `plans/2026-10-30-data-and-auth.md`, branch `feature/data-and-auth`): all
-  collections and rules, password login, `/api/material/due` with `internal/due`, status hooks, member
-  deactivation, a default check type per category, every screen on real data, `web/src/sketch/` deleted, `make seed` for sample data.
-- **Phase 3 done** (plan `plans/2026-10-30-passkeys.md`, branch `feature/passkeys`): passkey login first
-  with password as fallback, passkeys managed under Einstellungen.
+- CI is one workflow per concern: `web.yml`, `go.yml`, `security.yml`, `image.yml`. On `main`,
+  `image.yml` runs the web and Go tests before pushing; security findings do not block a release. A
+  newer push cancels a running build of the same workflow and branch.
+- **Phase 2 done** (plan `plans/2026-10-30-data-and-auth.md`, PR #3): all collections and rules, password
+  login, `/api/material/due` with `internal/due`, status hooks, member deactivation, a default check type
+  per category, every screen on real data, `web/src/sketch/` deleted, `make seed` for sample data.
+- **Phase 3 done** (plan `plans/2026-10-30-passkeys.md`, PR #6): passkey login first with password as
+  fallback, passkeys managed under Einstellungen.
+- Since then: items with history can only be retired, not deleted (PR #4); adding a passkey needs the
+  password, or an existing passkey for further ones (PR #7, no fresh review was run on it); rate limits
+  on password checks and passkey login (PR #10). The licence is MIT (PR #8).
 - Nothing is deployed to the VPS yet. No `deploy/` files exist yet.
 
 ## How the process works here
@@ -33,7 +39,11 @@ line; work happens on branches with PRs against `main` (the user merges).
    (`calc.ts`, `fillForm.ts` + tests unchanged), config from `transport_document_settings`, offline.
 4. **Deploy:** `deploy/` (systemd update timer, backup wrapper, `authorized_keys` example),
    `intern snapshot` (spec §10), VPS setup with its own `cloudflared` and hostname
-   `intern.ffneumarkt.at`, restore test.
+   `intern.ffneumarkt.at`, restore test. After the first deploy, check what can't be tested locally:
+   passkeys on a real iPhone, Android phone and Windows device, including Safari with the two-tap
+   confirmation, and that rate limits count per client with real `CF-Connecting-IP` traffic. Everyone
+   at the station shares one IP and so one budget. The container must keep publishing no port, or that
+   header can be spoofed.
 5. **ffneumarkt-web follow-ups** (spec §12): revert #10 there now (production has no iOS icon), redirect
    and cleanup at go-live.
 
@@ -81,7 +91,11 @@ Known dependency findings, checked 2026-10-30 (`govulncheck`, `npm audit`):
 
 - Passkeys in a browser test: Chromium's `WebAuthn.addVirtualAuthenticator` over the DevTools protocol
   with `defaultBackupEligibility` and `defaultBackupState` behaves like a synced passkey.
-- Toolchain on the dev machine: Go 1.27, Node 26, Docker. `make test` runs everything.
+- Toolchain on the dev machine: Go 1.27, Node 26, Docker, `govulncheck`, `actionlint`. `make test` runs
+  the tests, not the security scans: run `govulncheck ./...` in `backend/` and `npm audit` in `web/`
+  by hand, and `actionlint` after changing a workflow.
+- Rate limits also apply in development, so repeated test logins from one machine can hit them. Browser
+  test scripts that log in often should use a fresh data dir and stay under 5 password checks a minute.
 - Screenshots for UI checks: Playwright's Chromium at
   `~/.cache/ms-playwright/chromium-1140/chrome-linux/chrome` with **`--headless=old`** (the new
   headless mode enforces a minimum width of 500 px), `--window-size=390,844`,

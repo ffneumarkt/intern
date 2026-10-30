@@ -12,7 +12,7 @@
 
 ## Execution record
 
-**Status: done** on branch `feature/data-and-auth`. Executed inline. The task text below is the plan as
+**Status: done**, merged in PR #3. Executed inline. The task text below is the plan as
 approved; these deviations apply and the code is authoritative:
 
 - Member deactivation was added on user request before Task 1 (already in the text below).
@@ -22,6 +22,10 @@ approved; these deviations apply and the code is authoritative:
 - After a partly saved item, Manage stays open with the form cleared and a warning.
 - `ItemForm` gained `Notiz`, and `api/errors.ts` holds the errors screens explain.
 - Added on user request after the review: a default check type per category (`check_types.is_default`).
+- Added from the final review: saves run once on a double tap (`useBusy`), permissions reload on page
+  entry and when the connection returns, and uses and checks cannot be dated in the future.
+- Reversed by PR #4: `uses.item` and `checks.item` no longer cascade. An item with history cannot be
+  deleted, only retired, so Task 2's cascade and its deletion test no longer apply.
 
 ## Global Constraints
 

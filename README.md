@@ -24,3 +24,6 @@ Production needs no configuration; other sites set `PASSKEY_RP_ID` and `PASSKEY_
 
 The backend logs with `charmbracelet/log`; set `LOG_LEVEL` (`debug`, `info`, `warn`, `error`; default `info`).
 
+## License
+
+MIT, see `LICENSE`.
