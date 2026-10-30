@@ -1,5 +1,5 @@
 // In-memory stand-in for api/passkeys. Tests set `passkeyState`; setup.ts resets it.
-import { PasskeyCancelledError, PasskeyExistsError } from '../api/errors'
+import { PasskeyCancelledError, PasskeyExistsError, WrongPasswordError } from '../api/errors'
 import type { Passkey } from '../api/passkeys'
 import { login } from './fakeAuth'
 
@@ -13,6 +13,10 @@ const fresh = () => ({
   loginFails: false,
   items: [] as Passkey[],
   added: [] as string[],
+  grants: [] as string[],
+  confirmFails: false,
+  confirmCancelled: false,
+  confirmations: 0,
 })
 
 export let passkeyState = fresh()
@@ -34,7 +38,20 @@ export async function listPasskeys() {
   return passkeyState.items
 }
 
-export async function addPasskey(name: string) {
+export async function confirmWithPassword(password: string) {
+  if (password !== 'richtig') throw new WrongPasswordError()
+  return 'grant-password'
+}
+
+export async function confirmWithPasskey() {
+  if (passkeyState.confirmCancelled) throw new PasskeyCancelledError()
+  if (passkeyState.confirmFails) throw new Error('nope')
+  passkeyState.confirmations += 1
+  return 'grant-passkey'
+}
+
+export async function addPasskey(name: string, grant: string) {
+  passkeyState.grants.push(grant)
   if (passkeyState.cancelled) throw new PasskeyCancelledError()
   if (passkeyState.exists) throw new PasskeyExistsError()
   if (passkeyState.failing) throw new Error('nope')

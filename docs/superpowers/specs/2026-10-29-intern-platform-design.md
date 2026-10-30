@@ -172,7 +172,11 @@ No roles. Each user has at most one permission per category:
 - **Passkeys first, email + password as fallback.** Deactivated users cannot log in by either way. PocketBase v0.41.1 has no WebAuthn support
   (checked 2026-10-29), so passkeys are custom code.
 - Routes in `internal/passkey`:
-  - `POST /api/passkey/register/begin` and `/finish` (authenticated): adds a credential to `passkeys`.
+  - `POST /api/passkey/confirm/begin` and `/finish` (authenticated): proves the user is at this session
+    and returns a single-use grant, valid 5 minutes. The first passkey needs the password; further ones
+    need an existing passkey, so a password alone never adds a second one. The server decides which.
+  - `POST /api/passkey/register/begin` and `/finish` (authenticated): `begin` needs a grant; adds a
+    credential to `passkeys`.
   - `POST /api/passkey/login/begin` and `/finish` (public): discoverable credentials, no username. On
     success it returns the same response as a password login (token + user record), so the JS SDK
     stores it in its auth store as usual.
@@ -182,6 +186,10 @@ No roles. Each user has at most one permission per category:
   local development runs on `http://localhost:5173`.
 - The backup flags are stored because go-webauthn compares them on every login: without them a synced
   iCloud or Google passkey fails on its second use.
+- A user who lost their only passkey removes it under Settings, after which the password confirms a
+  new one. Removing needs no confirmation and does not end sessions: tokens stay valid until they
+  expire or the password changes.
+- User verification is left to the device (`preferred`); no second factor is forced.
 - All login failures answer alike; the reason goes to the log. A user may remove their last passkey,
   since the password still works.
 - Flow: the admin creates the account with a password; the user logs in once with it and adds one or

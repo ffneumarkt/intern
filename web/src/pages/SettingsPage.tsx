@@ -1,8 +1,17 @@
-import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonText } from '@ionic/react'
+import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonNote, IonText } from '@ionic/react'
 import { addOutline, keyOutline } from 'ionicons/icons'
 import { useState } from 'react'
-import { PasskeyCancelledError, PasskeyExistsError } from '../api/errors'
-import { addPasskey, listPasskeys, passkeysSupported, removePasskey, renamePasskey, type Passkey } from '../api/passkeys'
+import { PasskeyCancelledError, PasskeyExistsError, WrongPasswordError } from '../api/errors'
+import {
+  addPasskey,
+  confirmWithPasskey,
+  confirmWithPassword,
+  listPasskeys,
+  passkeysSupported,
+  removePasskey,
+  renamePasskey,
+  type Passkey,
+} from '../api/passkeys'
 import { Field } from '../components/Field'
 import Loaded from '../components/Loaded'
 import Page from '../components/Page'
@@ -14,20 +23,43 @@ export default function SettingsPage() {
   const { user, logout } = useSession()
   const resource = useResource(listPasskeys)
   const [name, setName] = useState('')
+  const [password, setPassword] = useState('')
+  // From a confirmation with an existing passkey. Adding is a second tap, because Safari may refuse
+  // a second passkey dialog without a new tap.
+  const [grant, setGrant] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const { busy, once } = useBusy()
+
+  const confirm = async () => {
+    setError(null)
+    try {
+      setGrant(await confirmWithPasskey())
+    } catch (err) {
+      if (!(err instanceof PasskeyCancelledError)) setError('Bestätigung fehlgeschlagen.')
+    }
+  }
+
+  const addError = (err: unknown) => {
+    if (err instanceof PasskeyCancelledError) return null
+    if (err instanceof WrongPasswordError) return 'Passwort ist falsch.'
+    if (err instanceof PasskeyExistsError) return 'Dieses Gerät hat bereits einen Passkey.'
+    return 'Passkey konnte nicht angelegt werden.'
+  }
 
   const add = async () => {
     const trimmed = name.trim()
     if (!trimmed) return
     setError(null)
     try {
-      await addPasskey(trimmed)
+      await addPasskey(trimmed, grant ?? (await confirmWithPassword(password)))
       setName('')
+      setPassword('')
       resource.reload()
     } catch (err) {
-      if (err instanceof PasskeyCancelledError) return
-      setError(err instanceof PasskeyExistsError ? 'Dieses Gerät hat bereits einen Passkey.' : 'Passkey konnte nicht angelegt werden.')
+      setError(addError(err))
+    } finally {
+      // Each grant works once, whatever happened to the attempt.
+      setGrant(null)
     }
   }
 
@@ -49,6 +81,11 @@ export default function SettingsPage() {
   const remove = (key: Passkey) => {
     if (window.confirm(`Passkey „${key.name}“ entfernen?`)) void change(() => removePasskey(key.id))
   }
+
+  const hasPasskeys = (resource.data?.length ?? 0) > 0
+  const loaded = resource.data !== undefined
+  const needsConfirmation = passkeysSupported() && hasPasskeys && !grant
+  const canAdd = passkeysSupported() && loaded && !needsConfirmation
 
   return (
     <Page title="Einstellungen">
@@ -89,14 +126,28 @@ export default function SettingsPage() {
             )
           }
         </Loaded>
-        {passkeysSupported() && <Field label="Name des Geräts" value={name} onChange={setName} />}
+        {canAdd && <Field label="Name des Geräts" value={name} onChange={setName} />}
+        {canAdd && !hasPasskeys && (
+          <Field label="Passwort" type="password" autoComplete="current-password" value={password} onChange={setPassword} />
+        )}
       </IonList>
       {error && <IonText color="danger">{error}</IonText>}
-      {passkeysSupported() && (
+      {canAdd && (
         <IonButton expand="block" fill="outline" disabled={busy || !name.trim()} onClick={() => once(add)}>
           <IonIcon slot="start" icon={addOutline} aria-hidden />
           Passkey hinzufügen
         </IonButton>
+      )}
+      {needsConfirmation && (
+        <>
+          <IonButton expand="block" fill="outline" disabled={busy} onClick={() => once(confirm)}>
+            <IonIcon slot="start" icon={keyOutline} aria-hidden />
+            Mit Passkey bestätigen
+          </IonButton>
+          <IonNote className="ion-text-center ion-margin-vertical" style={{ display: 'block' }}>
+            Kein Zugriff auf den Passkey? Nach dem Entfernen genügt das Passwort.
+          </IonNote>
+        </>
       )}
       <IonButton expand="block" color="medium" fill="clear" onClick={logout}>
         Abmelden

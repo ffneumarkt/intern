@@ -50,6 +50,8 @@ func Register(se *core.ServeEvent, cfg Config, logger *log.Logger) error {
 	r := &routes{web: web, pending: newSessions(time.Now), logger: logger}
 
 	group := se.Router.Group("/api/passkey")
+	group.POST("/confirm/begin", r.confirmBegin).Bind(apis.RequireAuth("users"))
+	group.POST("/confirm/finish", r.confirmFinish).Bind(apis.RequireAuth("users"))
 	group.POST("/register/begin", r.registerBegin).Bind(apis.RequireAuth("users"))
 	group.POST("/register/finish", r.registerFinish).Bind(apis.RequireAuth("users"))
 	group.POST("/login/begin", r.loginBegin)
@@ -99,15 +101,89 @@ func toCredential(key *core.Record) (webauthn.Credential, error) {
 	}, nil
 }
 
-func (r *routes) begin(e *core.RequestEvent, options any, session *webauthn.SessionData, userID string) error {
-	id, err := r.pending.put(pending{Data: *session, UserID: userID})
+func (r *routes) begin(e *core.RequestEvent, options any, session *webauthn.SessionData, wanted purpose, userID string) error {
+	id, err := r.pending.put(pending{Purpose: wanted, Data: *session, UserID: userID})
 	if err != nil {
 		return err
 	}
 	return e.JSON(http.StatusOK, map[string]any{"sessionId": id, "options": options})
 }
 
+func (r *routes) confirmBegin(e *core.RequestEvent) error {
+	user, err := loadAccount(e.App, e.Auth)
+	if err != nil {
+		return err
+	}
+	if len(user.credentials) == 0 {
+		return e.BadRequestError("No passkey to confirm with.", nil)
+	}
+	assertion, session, err := r.web.BeginLogin(user)
+	if err != nil {
+		return err
+	}
+	return r.begin(e, assertion.Response, session, purposeConfirm, e.Auth.Id)
+}
+
+// confirmFinish proves the user is really at this session before a passkey is added: an existing
+// passkey if there is one, the password only for the first. The server decides which, so a password
+// alone can never add a second passkey. A user who lost their passkey removes it to fall back.
+func (r *routes) confirmFinish(e *core.RequestEvent) error {
+	var body struct {
+		Password   string          `json:"password"`
+		SessionID  string          `json:"sessionId"`
+		Credential json.RawMessage `json:"credential"`
+	}
+	if err := e.BindBody(&body); err != nil {
+		return e.BadRequestError("Invalid request.", err)
+	}
+	user, err := loadAccount(e.App, e.Auth)
+	if err != nil {
+		return err
+	}
+	if len(user.credentials) == 0 {
+		if !e.Auth.ValidatePassword(body.Password) {
+			return e.ForbiddenError("Confirmation failed.", nil)
+		}
+	} else if err := r.verifyConfirmation(e, user, body.SessionID, body.Credential); err != nil {
+		r.logger.Warn("passkey confirmation refused", "user", e.Auth.Id, "err", err)
+		return e.ForbiddenError("Confirmation failed.", nil)
+	}
+
+	grant, err := r.pending.put(pending{Purpose: purposeGrant, UserID: e.Auth.Id})
+	if err != nil {
+		return err
+	}
+	return e.JSON(http.StatusOK, map[string]any{"grant": grant})
+}
+
+func (r *routes) verifyConfirmation(e *core.RequestEvent, user *account, sessionID string, raw json.RawMessage) error {
+	session, ok := r.pending.take(sessionID, purposeConfirm)
+	if !ok || session.UserID != e.Auth.Id {
+		return errors.New("unknown session")
+	}
+	parsed, err := protocol.ParseCredentialRequestResponseBody(bytes.NewReader(raw))
+	if err != nil {
+		return err
+	}
+	credential, err := r.web.ValidateLogin(user, session.Data, parsed)
+	if err != nil {
+		return err
+	}
+	return recordUse(e.App, e.Auth.Id, credential)
+}
+
 func (r *routes) registerBegin(e *core.RequestEvent) error {
+	var body struct {
+		Grant string `json:"grant"`
+	}
+	if err := e.BindBody(&body); err != nil {
+		return e.BadRequestError("Invalid request.", err)
+	}
+	grant, ok := r.pending.take(body.Grant, purposeGrant)
+	if !ok || grant.UserID != e.Auth.Id {
+		return e.ForbiddenError("Confirmation required.", nil)
+	}
+
 	user, err := loadAccount(e.App, e.Auth)
 	if err != nil {
 		return err
@@ -124,7 +200,7 @@ func (r *routes) registerBegin(e *core.RequestEvent) error {
 	if err != nil {
 		return err
 	}
-	return r.begin(e, creation.Response, session, e.Auth.Id)
+	return r.begin(e, creation.Response, session, purposeRegister, e.Auth.Id)
 }
 
 func (r *routes) registerFinish(e *core.RequestEvent) error {
@@ -140,7 +216,7 @@ func (r *routes) registerFinish(e *core.RequestEvent) error {
 	if name == "" {
 		return e.BadRequestError("A name is required.", nil)
 	}
-	session, ok := r.pending.take(body.SessionID)
+	session, ok := r.pending.take(body.SessionID, purposeRegister)
 	if !ok || session.UserID != e.Auth.Id {
 		return e.BadRequestError("Unknown session.", nil)
 	}
@@ -185,7 +261,7 @@ func (r *routes) loginBegin(e *core.RequestEvent) error {
 	if err != nil {
 		return err
 	}
-	return r.begin(e, assertion.Response, session, "")
+	return r.begin(e, assertion.Response, session, purposeLogin, "")
 }
 
 func (r *routes) loginFinish(e *core.RequestEvent) error {
@@ -206,7 +282,7 @@ func (r *routes) verifyLogin(e *core.RequestEvent) (*core.Record, error) {
 	if err := e.BindBody(&body); err != nil {
 		return nil, err
 	}
-	session, ok := r.pending.take(body.SessionID)
+	session, ok := r.pending.take(body.SessionID, purposeLogin)
 	if !ok {
 		return nil, errors.New("unknown session")
 	}
@@ -232,19 +308,22 @@ func (r *routes) verifyLogin(e *core.RequestEvent) (*core.Record, error) {
 	if user.GetBool("deactivated") {
 		return nil, fmt.Errorf("user %s is deactivated", user.Id)
 	}
-	// go-webauthn only reports a regression, it does not refuse.
-	if credential.Authenticator.CloneWarning {
-		return nil, fmt.Errorf("sign count regression for user %s", user.Id)
-	}
-
-	key, err := e.App.FindFirstRecordByData("passkeys", "credential_id", base64.RawURLEncoding.EncodeToString(credential.ID))
-	if err != nil {
-		return nil, err
-	}
-	key.Set("sign_count", credential.Authenticator.SignCount)
-	key.Set("backup_state", credential.Flags.BackupState)
-	if err := e.App.Save(key); err != nil {
+	if err := recordUse(e.App, user.Id, credential); err != nil {
 		return nil, err
 	}
 	return user, nil
+}
+
+// recordUse refuses a sign count regression, which go-webauthn only reports, and stores the new state.
+func recordUse(app core.App, userID string, credential *webauthn.Credential) error {
+	if credential.Authenticator.CloneWarning {
+		return fmt.Errorf("sign count regression for user %s", userID)
+	}
+	key, err := app.FindFirstRecordByData("passkeys", "credential_id", base64.RawURLEncoding.EncodeToString(credential.ID))
+	if err != nil {
+		return err
+	}
+	key.Set("sign_count", credential.Authenticator.SignCount)
+	key.Set("backup_state", credential.Flags.BackupState)
+	return app.Save(key)
 }

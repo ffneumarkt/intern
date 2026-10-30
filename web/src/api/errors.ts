@@ -11,3 +11,5 @@ export class ItemHasHistoryError extends Error {}
 export class PasskeyCancelledError extends Error {}
 
 export class PasskeyExistsError extends Error {}
+
+export class WrongPasswordError extends Error {}

@@ -19,11 +19,11 @@ func newTestSessions() (*sessions, *clock) {
 
 func TestTakeReturnsWhatWasPut(t *testing.T) {
 	s, _ := newTestSessions()
-	id, err := s.put(pending{UserID: "u1", Data: webauthn.SessionData{Challenge: "c"}})
+	id, err := s.put(pending{Purpose: purposeLogin, UserID: "u1", Data: webauthn.SessionData{Challenge: "c"}})
 	if err != nil {
 		t.Fatal(err)
 	}
-	p, ok := s.take(id)
+	p, ok := s.take(id, purposeLogin)
 	if !ok || p.UserID != "u1" || p.Data.Challenge != "c" {
 		t.Errorf("got %+v, %v", p, ok)
 	}
@@ -31,24 +31,35 @@ func TestTakeReturnsWhatWasPut(t *testing.T) {
 
 func TestTakeIsSingleUse(t *testing.T) {
 	s, _ := newTestSessions()
-	id, _ := s.put(pending{})
-	s.take(id)
-	if _, ok := s.take(id); ok {
+	id, _ := s.put(pending{Purpose: purposeLogin})
+	s.take(id, purposeLogin)
+	if _, ok := s.take(id, purposeLogin); ok {
 		t.Error("second take succeeded")
 	}
 }
 
 func TestUnknownIDIsNotFound(t *testing.T) {
 	s, _ := newTestSessions()
-	if _, ok := s.take("nope"); ok {
+	if _, ok := s.take("nope", purposeLogin); ok {
 		t.Error("unknown id found")
+	}
+}
+
+func TestWrongPurposeIsRefusedAndUsesItUp(t *testing.T) {
+	s, _ := newTestSessions()
+	id, _ := s.put(pending{Purpose: purposeConfirm})
+	if _, ok := s.take(id, purposeRegister); ok {
+		t.Error("taken for another purpose")
+	}
+	if _, ok := s.take(id, purposeConfirm); ok {
+		t.Error("still there after a wrong attempt")
 	}
 }
 
 func TestIDsDiffer(t *testing.T) {
 	s, _ := newTestSessions()
-	a, _ := s.put(pending{})
-	b, _ := s.put(pending{})
+	a, _ := s.put(pending{Purpose: purposeLogin})
+	b, _ := s.put(pending{Purpose: purposeLogin})
 	if a == b {
 		t.Error("same id twice")
 	}
@@ -56,24 +67,24 @@ func TestIDsDiffer(t *testing.T) {
 
 func TestExpiresAfterFiveMinutes(t *testing.T) {
 	s, c := newTestSessions()
-	early, _ := s.put(pending{})
-	late, _ := s.put(pending{})
+	early, _ := s.put(pending{Purpose: purposeLogin})
+	late, _ := s.put(pending{Purpose: purposeLogin})
 
 	c.now = c.now.Add(5*time.Minute - time.Second)
-	if _, ok := s.take(early); !ok {
+	if _, ok := s.take(early, purposeLogin); !ok {
 		t.Error("expired too early")
 	}
 	c.now = c.now.Add(2 * time.Second)
-	if _, ok := s.take(late); ok {
+	if _, ok := s.take(late, purposeLogin); ok {
 		t.Error("still valid after five minutes")
 	}
 }
 
 func TestPutDropsExpired(t *testing.T) {
 	s, c := newTestSessions()
-	s.put(pending{})
+	s.put(pending{Purpose: purposeLogin})
 	c.now = c.now.Add(6 * time.Minute)
-	s.put(pending{})
+	s.put(pending{Purpose: purposeLogin})
 	if len(s.entries) != 1 {
 		t.Errorf("%d entries", len(s.entries))
 	}
@@ -81,15 +92,15 @@ func TestPutDropsExpired(t *testing.T) {
 
 func TestCapDropsOldest(t *testing.T) {
 	s, c := newTestSessions()
-	first, _ := s.put(pending{})
+	first, _ := s.put(pending{Purpose: purposeLogin})
 	for range maxPending {
 		c.now = c.now.Add(time.Millisecond)
-		s.put(pending{})
+		s.put(pending{Purpose: purposeLogin})
 	}
 	if len(s.entries) != maxPending {
 		t.Errorf("%d entries", len(s.entries))
 	}
-	if _, ok := s.take(first); ok {
+	if _, ok := s.take(first, purposeLogin); ok {
 		t.Error("oldest entry survived")
 	}
 }
@@ -99,8 +110,8 @@ func TestConcurrentUse(t *testing.T) {
 	var wg sync.WaitGroup
 	for range 50 {
 		wg.Go(func() {
-			id, _ := s.put(pending{})
-			s.take(id)
+			id, _ := s.put(pending{Purpose: purposeLogin})
+			s.take(id, purposeLogin)
 		})
 	}
 	wg.Wait()
