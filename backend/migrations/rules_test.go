@@ -253,6 +253,8 @@ func TestPasskeysCanOnlyBeRenamedOrRemoved(t *testing.T) {
 		body: fmt.Sprintf(`{"user":%q,"credential_id":"d","public_key":"k","name":"x"}`, w.Use.Id), status: 403})
 	e.run(t, "renames", request{as: w.Use, method: "PATCH", url: record("passkeys", key.Id), body: `{"name":"Laptop"}`, status: 200})
 	e.run(t, "no key change", request{as: w.Use, method: "PATCH", url: record("passkeys", key.Id), body: `{"public_key":"evil"}`, status: 404})
+	e.run(t, "no backup eligible change", request{as: w.Use, method: "PATCH", url: record("passkeys", key.Id), body: `{"backup_eligible":true}`, status: 404})
+	e.run(t, "no backup state change", request{as: w.Use, method: "PATCH", url: record("passkeys", key.Id), body: `{"backup_state":true}`, status: 404})
 	e.run(t, "not others'", request{as: w.Check, method: "GET", url: record("passkeys", key.Id), status: 404})
 	e.run(t, "removes", request{as: w.Use, method: "DELETE", url: record("passkeys", key.Id), status: 204})
 }
@@ -270,7 +272,7 @@ func TestTransportDocumentSettingsArePublicToRead(t *testing.T) {
 
 func TestMigrationsRevert(t *testing.T) {
 	app := testenv.New(t)
-	if _, err := core.NewMigrationsRunner(app, core.AppMigrations).Down(4); err != nil {
+	if _, err := core.NewMigrationsRunner(app, core.AppMigrations).Down(5); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := app.FindCollectionByNameOrId("items"); err == nil {
