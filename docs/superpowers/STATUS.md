@@ -64,6 +64,9 @@ From the phase 3 review:
   password still works. Needs a rate limit, at Cloudflare or in PocketBase.
 - Concurrent logins can lose a sign count update.
 - "angelegt am" shows the UTC date.
+- Adding a passkey on a device that already has one once showed no message in a browser test (1 of 9
+  full runs). 210 focused attempts did not reproduce it and the cause is unknown. Nothing is saved in
+  that case; the click just has no visible effect.
 
 ## Environment notes
 
