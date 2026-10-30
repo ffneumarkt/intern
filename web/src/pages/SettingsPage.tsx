@@ -77,13 +77,13 @@ export default function SettingsPage() {
                   <IonLabel>
                     {key.name}
                     <p>angelegt am {key.created}</p>
+                    <IonButton fill="clear" size="small" onClick={() => rename(key)}>
+                      Umbenennen
+                    </IonButton>
+                    <IonButton fill="clear" size="small" color="danger" onClick={() => remove(key)}>
+                      Entfernen
+                    </IonButton>
                   </IonLabel>
-                  <IonButton slot="end" fill="clear" size="small" onClick={() => rename(key)}>
-                    Umbenennen
-                  </IonButton>
-                  <IonButton slot="end" fill="clear" size="small" color="danger" onClick={() => remove(key)}>
-                    Entfernen
-                  </IonButton>
                 </IonItem>
               ))
             )

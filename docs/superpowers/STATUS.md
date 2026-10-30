@@ -13,6 +13,8 @@ Last updated: 2026-10-30. Read this first, then the spec
 - **Phase 2 done** (plan `plans/2026-10-30-data-and-auth.md`, branch `feature/data-and-auth`): all
   collections and rules, password login, `/api/material/due` with `internal/due`, status hooks, member
   deactivation, a default check type per category, every screen on real data, `web/src/sketch/` deleted, `make seed` for sample data.
+- **Phase 3 done** (plan `plans/2026-10-30-passkeys.md`, branch `feature/passkeys`): passkey login first
+  with password as fallback, passkeys managed under Einstellungen.
 - Nothing is deployed to the VPS yet. No `deploy/` files exist yet.
 
 ## How the process works here
@@ -23,18 +25,16 @@ line; work happens on branches with PRs against `main` (the user merges).
 
 ## Next steps (proposed order, each needs its own plan)
 
-1. **Phase 3: passkeys** (spec §5, `internal/passkey`). Login must reject `users.deactivated`; bring
-   back the login button and the Settings section removed in phase 2.
-2. **Phase 4: notifications and push** (spec §7, `internal/notify`, `internal/push`, VAPID). Skip
+1. **Phase 4: notifications and push** (spec §7, `internal/notify`, `internal/push`, VAPID). Skip
    deactivated users; bring back the Settings sections removed in phase 2.
-3. **Phase 5: camera scanning and QR labels** (spec §9, `barcode-detector`): camera picker and torch
+2. **Phase 5: camera scanning and QR labels** (spec §9, `barcode-detector`): camera picker and torch
    removed in phase 2, the label page's QR placeholder, assigning an unknown code to an item.
-4. **Phase 6: Beförderungspapier port** from `ffneumarkt-web/src/components/features/transportDocument/`
+3. **Phase 6: Beförderungspapier port** from `ffneumarkt-web/src/components/features/transportDocument/`
    (`calc.ts`, `fillForm.ts` + tests unchanged), config from `transport_document_settings`, offline.
-5. **Deploy:** `deploy/` (systemd update timer, backup wrapper, `authorized_keys` example),
+4. **Deploy:** `deploy/` (systemd update timer, backup wrapper, `authorized_keys` example),
    `intern snapshot` (spec §10), VPS setup with its own `cloudflared` and hostname
    `intern.ffneumarkt.at`, restore test.
-6. **ffneumarkt-web follow-ups** (spec §12): revert #10 there now (production has no iOS icon), redirect
+5. **ffneumarkt-web follow-ups** (spec §12): revert #10 there now (production has no iOS icon), redirect
    and cleanup at go-live.
 
 ## Deferred minor findings (from the phase 1 review)
@@ -60,6 +60,8 @@ From the phase 2 review:
 
 ## Environment notes
 
+- Passkeys in a browser test: Chromium's `WebAuthn.addVirtualAuthenticator` over the DevTools protocol
+  with `defaultBackupEligibility` and `defaultBackupState` behaves like a synced passkey.
 - Toolchain on the dev machine: Go 1.27, Node 26, Docker. `make test` runs everything.
 - Screenshots for UI checks: Playwright's Chromium at
   `~/.cache/ms-playwright/chromium-1140/chrome-linux/chrome` with **`--headless=old`** (the new
