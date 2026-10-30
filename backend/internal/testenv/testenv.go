@@ -8,6 +8,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
 
+	"github.com/ffneumarkt/intern/backend/internal/material"
 	_ "github.com/ffneumarkt/intern/backend/migrations"
 )
 
@@ -23,7 +24,7 @@ type World struct {
 	CheckTypeA, CheckTypeB          *core.Record
 }
 
-// New returns an app on an empty database with all migrations applied.
+// New returns an app on an empty database with all migrations applied and the hooks bound.
 func New(t testing.TB) *tests.TestApp {
 	t.Helper()
 	app, err := tests.NewTestAppWithConfig(core.BaseAppConfig{DataDir: t.TempDir(), EncryptionEnv: "x"})
@@ -31,6 +32,7 @@ func New(t testing.TB) *tests.TestApp {
 		t.Fatal(err)
 	}
 	t.Cleanup(app.Cleanup)
+	material.Register(app)
 	return app
 }
 
