@@ -1,11 +1,14 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import App from '../App'
 import { paths } from '../routes'
+import { signInAs, type Level } from '../test/fakeAuth'
 import { findIon, ionButton } from '../test/ionic'
 
-function renderAt(path: string, level: string) {
-  localStorage.setItem('sketch.level', level)
+vi.mock('../api/auth', () => import('../test/fakeAuth'))
+
+function renderAt(path: string, level: Level) {
+  signInAs(level)
   return render(<App initialPath={path} />)
 }
 

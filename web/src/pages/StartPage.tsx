@@ -1,10 +1,10 @@
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle } from '@ionic/react'
 import Page from '../components/Page'
 import { paths } from '../routes'
-import { atLeast, useSketchSession } from '../sketch/session'
+import { useSession } from '../session'
 
 export default function StartPage() {
-  const { level } = useSketchSession()
+  const { user } = useSession()
   return (
     <Page title="Start">
       <IonCard routerLink={paths.transportDocument} button>
@@ -13,7 +13,7 @@ export default function StartPage() {
           <IonCardSubtitle>Druckluftflaschen, funktioniert offline</IonCardSubtitle>
         </IonCardHeader>
       </IonCard>
-      {atLeast(level, 'use') ? (
+      {user ? (
         <IonCard routerLink={paths.dueList} button>
           <IonCardHeader>
             <IonCardTitle>Material</IonCardTitle>

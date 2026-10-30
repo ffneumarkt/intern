@@ -19,10 +19,10 @@ import { useLocation } from 'react-router-dom'
 import Page from '../components/Page'
 import { paths } from '../routes'
 import { findByBarcode, items, searchItems, type Item } from '../sketch/mockData'
-import { atLeast, useSketchSession } from '../sketch/session'
+import { useSession } from '../session'
 
 export default function RecordUsePage() {
-  const { level } = useSketchSession()
+  const { canAnywhere } = useSession()
   const [scanned, setScanned] = useState<Item[]>([])
   const [code, setCode] = useState('')
   const [unknown, setUnknown] = useState<string | null>(null)
@@ -99,7 +99,7 @@ export default function RecordUsePage() {
             <IonCard color="warning">
               <IonCardContent>
                 <IonText>Nicht gefunden: {unknown}</IonText>
-                {atLeast(level, 'manage') && (
+                {canAnywhere('manage') && (
                   <IonButton size="small" fill="outline" routerLink={paths.manage}>
                     Gerät zuordnen
                   </IonButton>

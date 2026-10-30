@@ -1,8 +1,7 @@
 import { IonBackButton, IonButtons, IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react'
 import type { ReactNode } from 'react'
-import ViewAsBar from '../sketch/ViewAsBar'
 
-// Common page frame: toolbar with title (and back button), sketch bar, content.
+// Common page frame: toolbar with title (and back button), content.
 export default function Page({ title, back, children }: { title: string; back?: string; children?: ReactNode }) {
   return (
     <IonPage>
@@ -15,7 +14,6 @@ export default function Page({ title, back, children }: { title: string; back?: 
           )}
           <IonTitle>{title}</IonTitle>
         </IonToolbar>
-        <ViewAsBar />
       </IonHeader>
       <IonContent className="ion-padding">
         <h1 className="page-heading">{title}</h1>

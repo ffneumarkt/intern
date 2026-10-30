@@ -15,18 +15,18 @@ import SettingsPage from './pages/SettingsPage'
 import StartPage from './pages/StartPage'
 import TransportDocumentPage from './pages/TransportDocumentPage'
 import { paths } from './routes'
-import { atLeast, SketchSessionProvider, useSketchSession } from './sketch/session'
+import { SessionProvider, useSession } from './session'
 
-function RequireUse({ children }: { children: ReactElement }) {
-  const { level } = useSketchSession()
-  return atLeast(level, 'use') ? children : <Navigate to={paths.login} replace />
+function RequireLogin({ children }: { children: ReactElement }) {
+  const { user } = useSession()
+  return user ? children : <Navigate to={paths.login} replace />
 }
 
 function Tabs() {
-  const { level } = useSketchSession()
-  const loggedIn = atLeast(level, 'use')
+  const { user } = useSession()
+  const loggedIn = user !== null
   const material = (path: string, element: ReactElement) => (
-    <Route path={path} element={<RequireUse>{element}</RequireUse>} />
+    <Route path={path} element={<RequireLogin>{element}</RequireLogin>} />
   )
   return (
     <IonTabs>
@@ -77,11 +77,11 @@ function Router({ initialPath, children }: { initialPath?: string; children: Rea
 export default function App({ initialPath }: { initialPath?: string }) {
   return (
     <IonApp>
-      <SketchSessionProvider>
+      <SessionProvider>
         <Router initialPath={initialPath}>
           <Tabs />
         </Router>
-      </SketchSessionProvider>
+      </SessionProvider>
     </IonApp>
   )
 }

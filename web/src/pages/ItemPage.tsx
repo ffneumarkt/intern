@@ -4,13 +4,13 @@ import DueStateBadge from '../components/DueStateBadge'
 import Page from '../components/Page'
 import { paths } from '../routes'
 import { history, items } from '../sketch/mockData'
-import { atLeast, useSketchSession } from '../sketch/session'
+import { useSession } from '../session'
 
 const statusLabel = { active: 'Aktiv', defective: 'Mangel', retired: 'Ausgeschieden' }
 
 export default function ItemPage() {
   const { itemId = '' } = useParams()
-  const { level } = useSketchSession()
+  const { can } = useSession()
   const item = items.find((i) => i.id === itemId)
   if (!item) return <Page title="Gerät nicht gefunden" back={paths.dueList} />
   return (
@@ -26,10 +26,10 @@ export default function ItemPage() {
       </IonCard>
       <div className="ion-margin-bottom">
         <IonButton routerLink={paths.recordUseFor(item.id)}>Verwendung erfassen</IonButton>
-        {atLeast(level, 'check') && <IonButton routerLink={paths.recordCheck(item.id)}>Prüfung erfassen</IonButton>}
-        {atLeast(level, 'check') && <IonButton color="medium" fill="outline">Ausscheiden</IonButton>}
-        {atLeast(level, 'manage') && <IonButton fill="outline" routerLink={paths.manage}>Bearbeiten</IonButton>}
-        {atLeast(level, 'manage') && <IonButton fill="outline" routerLink={paths.label(item.id)}>Etikett drucken</IonButton>}
+        {can(item.categoryId, 'check') && <IonButton routerLink={paths.recordCheck(item.id)}>Prüfung erfassen</IonButton>}
+        {can(item.categoryId, 'check') && <IonButton color="medium" fill="outline">Ausscheiden</IonButton>}
+        {can(item.categoryId, 'manage') && <IonButton fill="outline" routerLink={paths.manage}>Bearbeiten</IonButton>}
+        {can(item.categoryId, 'manage') && <IonButton fill="outline" routerLink={paths.label(item.id)}>Etikett drucken</IonButton>}
       </div>
       <IonList>
         <IonListHeader>
