@@ -10,5 +10,7 @@ export const paths = {
   recordCheck: (id = ':itemId') => `/material/geraete/${id}/pruefung`,
   label: (id = ':itemId') => `/material/geraete/${id}/etikett`,
   manage: '/material/verwalten',
+  manageCategory: (categoryId: string) => `/material/verwalten?kategorie=${categoryId}`,
+  itemEdit: (id = ':itemId') => `/material/geraete/${id}/bearbeiten`,
   settings: '/einstellungen',
 }

@@ -3,9 +3,11 @@ import { describe, expect, it, vi } from 'vitest'
 import App from '../App'
 import { paths } from '../routes'
 import { signInAs, type Level } from '../test/fakeAuth'
-import { findIon, ionButton } from '../test/ionic'
+import { data, failing } from '../test/fakeMaterial'
+import { findIon, ionButton, ionTab } from '../test/ionic'
 
 vi.mock('../api/auth', () => import('../test/fakeAuth'))
+vi.mock('../api/material', () => import('../test/fakeMaterial'))
 
 function renderAt(path: string, level: Level) {
   signInAs(level)
@@ -13,6 +15,8 @@ function renderAt(path: string, level: Level) {
 }
 
 const button = ionButton
+
+const offlineNotice = 'Keine Verbindung. Die Materialverwaltung braucht eine Internetverbindung.'
 
 async function scan(code: string) {
   const input = await screen.findByLabelText('Code manuell eingeben')
@@ -31,6 +35,45 @@ describe('due list', () => {
     expect(within(soon).getByText('Maske 03')).toBeInTheDocument()
     expect(within(soon).getByText('LA 01')).toBeInTheDocument()
     expect(screen.queryByText('Maske 04')).not.toBeInTheDocument()
+  })
+})
+
+describe('loading', () => {
+  it('shows the offline notice instead of an empty list', async () => {
+    failing.reads = true
+    renderAt(paths.dueList, 'use')
+    expect(await screen.findByText(offlineNotice)).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Überfällig' })).not.toBeInTheDocument()
+  })
+
+  it('tells a user without categories why the list is empty', async () => {
+    data.categories = []
+    data.items = []
+    renderAt(paths.dueList, 'use')
+    expect(await screen.findByText('Noch keine Kategorie freigegeben.')).toBeInTheDocument()
+  })
+
+  it('reloads when coming back to a page', async () => {
+    renderAt(paths.dueList, 'use')
+    await screen.findByText('Maske 01')
+    data.items[0].name = 'Maske Neu'
+    fireEvent.click(await findIon(() => ionTab('Start')))
+    await screen.findByRole('heading', { name: 'Start' })
+    fireEvent.click(ionTab('Material')!)
+    expect(await screen.findByText('Maske Neu')).toBeInTheDocument()
+  })
+})
+
+describe('item', () => {
+  it('shows dues and history', async () => {
+    renderAt(paths.item('m01'), 'use')
+    expect(await screen.findByText('Lebensdauer')).toBeInTheDocument()
+    expect(await screen.findByText('Maskenprüfung: bestanden')).toBeInTheDocument()
+  })
+
+  it('reports an item the user cannot see', async () => {
+    renderAt(paths.item('nope'), 'use')
+    expect(await screen.findByRole('heading', { name: 'Gerät nicht gefunden' })).toBeInTheDocument()
   })
 })
 
@@ -131,6 +174,22 @@ describe('code suggestions', () => {
 })
 
 describe('category', () => {
+  it('renders an item with nothing due', async () => {
+    renderAt(paths.category('lungenautomaten'), 'use')
+    expect(await screen.findByText('LA 02')).toBeInTheDocument()
+  })
+
+  it('links to manage only at manage level', async () => {
+    renderAt(paths.category('masken'), 'check')
+    await screen.findByText('Maske 01')
+    expect(button('Verwalten')).not.toBeInTheDocument()
+  })
+
+  it('offers manage at manage level', async () => {
+    renderAt(paths.category('masken'), 'manage')
+    expect(await findIon(() => ionButton('Verwalten'))).toBeInTheDocument()
+  })
+
   it('hides retired items until toggled', async () => {
     renderAt(paths.category('masken'), 'use')
     expect(await screen.findByText('Maske 01')).toBeInTheDocument()
