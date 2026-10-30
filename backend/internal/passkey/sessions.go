@@ -15,10 +15,23 @@ const (
 	maxPending = 1000
 )
 
-// pending is a ceremony between begin and finish. UserID is empty for a login.
+// purpose keeps the steps apart: a confirm session must not finish a registration, or anyone with
+// a logged-in session could skip the confirmation.
+type purpose int
+
+const (
+	purposeLogin purpose = iota + 1
+	purposeConfirm
+	purposeGrant
+	purposeRegister
+)
+
+// pending is a ceremony between begin and finish, or a grant from a confirmation. UserID is empty
+// for a login.
 type pending struct {
-	Data   webauthn.SessionData
-	UserID string
+	Purpose purpose
+	Data    webauthn.SessionData
+	UserID  string
 }
 
 type entry struct {
@@ -55,12 +68,12 @@ func (s *sessions) put(p pending) (string, error) {
 }
 
 // take removes the session, so a finish request cannot be replayed.
-func (s *sessions) take(id string) (pending, bool) {
+func (s *sessions) take(id string, wanted purpose) (pending, bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	e, ok := s.entries[id]
 	delete(s.entries, id)
-	if !ok || !s.now().Before(e.expires) {
+	if !ok || e.Purpose != wanted || !s.now().Before(e.expires) {
 		return pending{}, false
 	}
 	return e.pending, true

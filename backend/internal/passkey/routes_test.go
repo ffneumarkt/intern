@@ -99,9 +99,69 @@ func newDevice(user *core.Record) *device {
 	return &device{auth: auth, cred: virtualwebauthn.NewCredential(virtualwebauthn.KeyTypeEC2)}
 }
 
+// grant confirms with the password, as for a user's first passkey.
+func (h *harness) grant(user *core.Record) string {
+	h.t.Helper()
+	status, body := h.post("confirm/finish", testenv.Token(h.t, user), map[string]any{"password": testenv.Password})
+	if status != http.StatusOK {
+		h.t.Fatalf("confirm: %d %s", status, body)
+	}
+	return grantOf(h.t, body)
+}
+
+func grantOf(t *testing.T, body []byte) string {
+	t.Helper()
+	var r struct {
+		Grant string `json:"grant"`
+	}
+	if err := json.Unmarshal(body, &r); err != nil || r.Grant == "" {
+		t.Fatalf("no grant in %s (%v)", body, err)
+	}
+	return r.Grant
+}
+
+// confirmBody answers confirm/begin with an existing passkey.
+func (h *harness) confirmBody(user *core.Record, d *device) map[string]any {
+	h.t.Helper()
+	b := h.begin("confirm/begin", testenv.Token(h.t, user))
+	options, err := virtualwebauthn.ParseAssertionOptions(string(b.Options))
+	if err != nil {
+		h.t.Fatal(err)
+	}
+	response := virtualwebauthn.CreateAssertionResponse(relyingParty, d.auth, d.cred, *options)
+	return map[string]any{"sessionId": b.SessionID, "credential": json.RawMessage(response)}
+}
+
+func (h *harness) grantWithPasskey(user *core.Record, d *device) string {
+	h.t.Helper()
+	status, body := h.post("confirm/finish", testenv.Token(h.t, user), h.confirmBody(user, d))
+	if status != http.StatusOK {
+		h.t.Fatalf("confirm: %d %s", status, body)
+	}
+	return grantOf(h.t, body)
+}
+
+func (h *harness) beginRegistration(user *core.Record, grant string) begun {
+	h.t.Helper()
+	status, body := h.post("register/begin", testenv.Token(h.t, user), map[string]any{"grant": grant})
+	if status != http.StatusOK {
+		h.t.Fatalf("register/begin: %d %s", status, body)
+	}
+	var b begun
+	if err := json.Unmarshal(body, &b); err != nil {
+		h.t.Fatal(err)
+	}
+	return b
+}
+
 func (h *harness) registerBody(user *core.Record, d *device, name string) map[string]any {
 	h.t.Helper()
-	b := h.begin("register/begin", testenv.Token(h.t, user))
+	return h.registerBodyWith(user, d, name, h.grant(user))
+}
+
+func (h *harness) registerBodyWith(user *core.Record, d *device, name, grant string) map[string]any {
+	h.t.Helper()
+	b := h.beginRegistration(user, grant)
 	options, err := virtualwebauthn.ParseAttestationOptions(string(b.Options))
 	if err != nil {
 		h.t.Fatal(err)
@@ -365,8 +425,9 @@ func TestRegisterNeedsAuth(t *testing.T) {
 
 func TestExistingCredentialsAreExcluded(t *testing.T) {
 	h := newHarness(t)
-	h.register(h.w.Use, newDevice(h.w.Use))
-	b := h.begin("register/begin", testenv.Token(h.t, h.w.Use))
+	d := newDevice(h.w.Use)
+	h.register(h.w.Use, d)
+	b := h.beginRegistration(h.w.Use, h.grantWithPasskey(h.w.Use, d))
 	var options struct {
 		ExcludeCredentials []struct {
 			ID string `json:"id"`
@@ -382,7 +443,7 @@ func TestExistingCredentialsAreExcluded(t *testing.T) {
 
 func TestRegistrationAsksForADiscoverableCredential(t *testing.T) {
 	h := newHarness(t)
-	b := h.begin("register/begin", testenv.Token(h.t, h.w.Use))
+	b := h.beginRegistration(h.w.Use, h.grant(h.w.Use))
 	if !strings.Contains(string(b.Options), `"residentKey":"required"`) {
 		t.Errorf("options %s", b.Options)
 	}
@@ -391,7 +452,7 @@ func TestRegistrationAsksForADiscoverableCredential(t *testing.T) {
 func TestMalformedCredential(t *testing.T) {
 	h := newHarness(t)
 	token := testenv.Token(h.t, h.w.Use)
-	register := h.begin("register/begin", token)
+	register := h.beginRegistration(h.w.Use, h.grant(h.w.Use))
 	if status, _ := h.post("register/finish", token, map[string]any{"sessionId": register.SessionID, "name": "x", "credential": map[string]any{}}); status != http.StatusBadRequest {
 		t.Errorf("register/finish = %d", status)
 	}
@@ -406,6 +467,192 @@ func TestRegisterRequiresAName(t *testing.T) {
 	if status, _ := h.post("register/finish", testenv.Token(h.t, h.w.Use), request); status != http.StatusBadRequest {
 		t.Errorf("status = %d", status)
 	}
+}
+
+func TestRegistrationNeedsAGrant(t *testing.T) {
+	h := newHarness(t)
+	token := testenv.Token(h.t, h.w.Use)
+	for name, body := range map[string]map[string]any{"none": {}, "unknown": {"grant": "nope"}} {
+		if status, _ := h.post("register/begin", token, body); status != http.StatusForbidden {
+			t.Errorf("%s: status = %d", name, status)
+		}
+	}
+}
+
+func TestFirstPasskeyNeedsThePassword(t *testing.T) {
+	h := newHarness(t)
+	token := testenv.Token(h.t, h.w.Use)
+	for _, password := range []string{"", "wrong-password"} {
+		if status, _ := h.post("confirm/finish", token, map[string]any{"password": password}); status != http.StatusForbidden {
+			t.Errorf("password %q: status = %d", password, status)
+		}
+	}
+	h.register(h.w.Use, newDevice(h.w.Use))
+}
+
+func TestPasswordIsNotEnoughForAnAdditionalPasskey(t *testing.T) {
+	h := newHarness(t)
+	h.register(h.w.Use, newDevice(h.w.Use))
+	status, _ := h.post("confirm/finish", testenv.Token(h.t, h.w.Use), map[string]any{"password": testenv.Password})
+	if status != http.StatusForbidden {
+		t.Errorf("status = %d", status)
+	}
+}
+
+func TestAdditionalPasskeyWithAPasskey(t *testing.T) {
+	h := newHarness(t)
+	first := newDevice(h.w.Use)
+	h.register(h.w.Use, first)
+	second := newDevice(h.w.Use)
+	request := h.registerBodyWith(h.w.Use, second, "Laptop", h.grantWithPasskey(h.w.Use, first))
+	if status, body := h.post("register/finish", testenv.Token(h.t, h.w.Use), request); status != http.StatusOK {
+		t.Fatalf("%d %s", status, body)
+	}
+	if n, err := h.app.CountRecords("passkeys"); err != nil || n != 2 {
+		t.Errorf("%d passkeys, err %v", n, err)
+	}
+	if status, body := h.login(second); status != http.StatusOK {
+		t.Errorf("second passkey: %d %s", status, body)
+	}
+}
+
+func TestOtherUsersPasskeyDoesNotConfirm(t *testing.T) {
+	h := newHarness(t)
+	mine := newDevice(h.w.Use)
+	h.register(h.w.Use, mine)
+	theirs := newDevice(h.w.Check)
+	h.register(h.w.Check, theirs)
+	status, _ := h.post("confirm/finish", testenv.Token(h.t, h.w.Use), h.confirmBody(h.w.Use, theirs))
+	if status != http.StatusForbidden {
+		t.Errorf("status = %d", status)
+	}
+}
+
+func TestConfirmationBelongsToTheSameUser(t *testing.T) {
+	h := newHarness(t)
+	mine := newDevice(h.w.Use)
+	h.register(h.w.Use, mine)
+	theirs := newDevice(h.w.Check)
+	h.register(h.w.Check, theirs)
+	request := h.confirmBody(h.w.Use, mine)
+	if status, _ := h.post("confirm/finish", testenv.Token(h.t, h.w.Check), request); status != http.StatusForbidden {
+		t.Errorf("status = %d", status)
+	}
+}
+
+func TestGrantBelongsToTheSameUser(t *testing.T) {
+	h := newHarness(t)
+	grant := h.grant(h.w.Use)
+	status, _ := h.post("register/begin", testenv.Token(h.t, h.w.Check), map[string]any{"grant": grant})
+	if status != http.StatusForbidden {
+		t.Errorf("status = %d", status)
+	}
+}
+
+func TestGrantIsSingleUse(t *testing.T) {
+	h := newHarness(t)
+	grant := h.grant(h.w.Use)
+	h.beginRegistration(h.w.Use, grant)
+	status, _ := h.post("register/begin", testenv.Token(h.t, h.w.Use), map[string]any{"grant": grant})
+	if status != http.StatusForbidden {
+		t.Errorf("status = %d", status)
+	}
+}
+
+// The gate would be worthless if a confirm session could finish a registration directly.
+func TestConfirmSessionCannotFinishARegistration(t *testing.T) {
+	h := newHarness(t)
+	first := newDevice(h.w.Use)
+	h.register(h.w.Use, first)
+	token := testenv.Token(h.t, h.w.Use)
+
+	genuine := h.beginRegistration(h.w.Use, h.grantWithPasskey(h.w.Use, first))
+	confirm := h.begin("confirm/begin", token)
+	var creation, assertion map[string]any
+	if err := json.Unmarshal(genuine.Options, &creation); err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(confirm.Options, &assertion); err != nil {
+		t.Fatal(err)
+	}
+	creation["challenge"] = assertion["challenge"]
+	forged, err := json.Marshal(creation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	options, err := virtualwebauthn.ParseAttestationOptions(string(forged))
+	if err != nil {
+		t.Fatal(err)
+	}
+	response := virtualwebauthn.CreateAttestationResponse(relyingParty, newDevice(h.w.Use).auth, virtualwebauthn.NewCredential(virtualwebauthn.KeyTypeEC2), *options)
+
+	status, _ := h.post("register/finish", token, map[string]any{"sessionId": confirm.SessionID, "name": "Eindringling", "credential": json.RawMessage(response)})
+	if status != http.StatusBadRequest {
+		t.Errorf("status = %d", status)
+	}
+	if n, err := h.app.CountRecords("passkeys"); err != nil || n != 1 {
+		t.Errorf("%d passkeys, err %v", n, err)
+	}
+}
+
+func TestGrantCannotFinishARegistration(t *testing.T) {
+	h := newHarness(t)
+	request := h.registerBody(h.w.Use, newDevice(h.w.Use), "Telefon")
+	request["sessionId"] = h.grant(h.w.Use)
+	if status, _ := h.post("register/finish", testenv.Token(h.t, h.w.Use), request); status != http.StatusBadRequest {
+		t.Errorf("status = %d", status)
+	}
+}
+
+func TestLoginSessionDoesNotConfirm(t *testing.T) {
+	h := newHarness(t)
+	d := newDevice(h.w.Use)
+	h.register(h.w.Use, d)
+	status, _ := h.post("confirm/finish", testenv.Token(h.t, h.w.Use), h.loginBody(d))
+	if status != http.StatusForbidden {
+		t.Errorf("status = %d", status)
+	}
+}
+
+func TestConfirmRefusesASignCountRegression(t *testing.T) {
+	h := newHarness(t)
+	d := newDevice(h.w.Use)
+	h.register(h.w.Use, d)
+	key := h.passkeyOf(h.w.Use)
+	key.Set("sign_count", 100)
+	if err := h.app.Save(key); err != nil {
+		t.Fatal(err)
+	}
+	d.cred.Counter = 5
+	if status, _ := h.post("confirm/finish", testenv.Token(h.t, h.w.Use), h.confirmBody(h.w.Use, d)); status != http.StatusForbidden {
+		t.Errorf("status = %d", status)
+	}
+}
+
+func TestConfirmNeedsAuth(t *testing.T) {
+	h := newHarness(t)
+	for _, path := range []string{"confirm/begin", "confirm/finish"} {
+		if status, _ := h.post(path, "", map[string]any{}); status != http.StatusUnauthorized {
+			t.Errorf("%s = %d", path, status)
+		}
+	}
+}
+
+func TestConfirmBeginWithoutPasskey(t *testing.T) {
+	h := newHarness(t)
+	if status, _ := h.post("confirm/begin", testenv.Token(h.t, h.w.Use), map[string]any{}); status != http.StatusBadRequest {
+		t.Errorf("status = %d", status)
+	}
+}
+
+// Losing the only passkey must not lock the user out of adding a new one.
+func TestPasswordWorksAgainAfterRemovingAllPasskeys(t *testing.T) {
+	h := newHarness(t)
+	h.register(h.w.Use, newDevice(h.w.Use))
+	if err := h.app.Delete(h.passkeyOf(h.w.Use)); err != nil {
+		t.Fatal(err)
+	}
+	h.register(h.w.Use, newDevice(h.w.Use))
 }
 
 func TestConfigFromEnv(t *testing.T) {
