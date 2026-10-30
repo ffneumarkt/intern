@@ -1,9 +1,10 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from '../App'
+import { today } from '../today'
 import { paths } from '../routes'
 import { signInAs, type Level } from '../test/fakeAuth'
-import { data, failing } from '../test/fakeMaterial'
+import { calls, data, failing } from '../test/fakeMaterial'
 import { findIon, ionButton, ionTab } from '../test/ionic'
 
 vi.mock('../api/auth', () => import('../test/fakeAuth'))
@@ -122,6 +123,125 @@ describe('record use', () => {
     renderAt(paths.recordUse, 'manage')
     await scan('UNKNOWN-1')
     expect(await findIon(() => ionButton('Gerät zuordnen'))).toBeInTheDocument()
+  })
+})
+
+describe('saving a use', () => {
+  async function scanAndOpenForm(...codes: string[]) {
+    for (const code of codes) await scan(code)
+    const list = await screen.findByRole('list', { name: 'Gescannte Geräte' })
+    await waitFor(() => expect(within(list).getAllByRole('listitem')).toHaveLength(codes.length))
+    fireEvent.click(ionButton('Fertig')!)
+    await screen.findByLabelText('Erfasst von')
+  }
+
+  it('saves one use per item with the form values', async () => {
+    renderAt(paths.recordUse, 'use')
+    await scanAndOpenForm('M-001', 'M-002')
+    fireEvent.change(screen.getByLabelText('Art'), { target: { value: 'exercise' } })
+    fireEvent.change(screen.getByLabelText('Erfasst von'), { target: { value: 'Anna' } })
+    fireEvent.change(screen.getByLabelText('Notiz'), { target: { value: 'Atemschutzübung' } })
+    fireEvent.click(ionButton('Speichern')!)
+    await screen.findByRole('heading', { name: 'Fällig' })
+    const input = { date: today(), kind: 'exercise', recordedByName: 'Anna', note: 'Atemschutzübung' }
+    expect(calls.uses).toEqual([
+      { itemId: 'm01', input },
+      { itemId: 'm02', input },
+    ])
+  })
+
+  it('remembers who recorded on this device', async () => {
+    localStorage.setItem('intern.recordedBy', 'Anna')
+    renderAt(paths.recordUse, 'use')
+    await scanAndOpenForm('M-001')
+    expect(screen.getByLabelText('Erfasst von')).toHaveValue('Anna')
+    fireEvent.change(screen.getByLabelText('Erfasst von'), { target: { value: 'Berta' } })
+    fireEvent.click(ionButton('Speichern')!)
+    await waitFor(() => expect(localStorage.getItem('intern.recordedBy')).toBe('Berta'))
+  })
+
+  it('keeps only the unsaved items after a failure, so a retry writes each once', async () => {
+    failing.useFor.add('m02')
+    renderAt(paths.recordUse, 'use')
+    await scanAndOpenForm('M-001', 'M-002', 'M-003')
+    fireEvent.click(ionButton('Speichern')!)
+    expect(await screen.findByText('Speichern fehlgeschlagen.')).toBeInTheDocument()
+    expect(screen.getByText('Maske 02, Maske 03')).toBeInTheDocument()
+
+    failing.useFor.clear()
+    fireEvent.click(ionButton('Speichern')!)
+    await screen.findByRole('heading', { name: 'Fällig' })
+    expect(calls.uses.map((u) => u.itemId)).toEqual(['m01', 'm02', 'm03'])
+  })
+
+  it('does not find a retired item by its code', async () => {
+    renderAt(paths.recordUse, 'use')
+    await scan('M-006')
+    expect(await screen.findByText('Nicht gefunden: M-006')).toBeInTheDocument()
+  })
+})
+
+describe('recording a check', () => {
+  it('offers only the check types of the item', async () => {
+    renderAt(paths.recordCheck('l01'), 'check')
+    const select = await screen.findByLabelText('Prüfart')
+    expect(within(select).getAllByRole('option').map((o) => o.textContent)).toEqual(['Jahresprüfung'])
+  })
+
+  it('saves and shows the entry on the item page', async () => {
+    renderAt(paths.recordCheck('m01'), 'check')
+    fireEvent.change(await screen.findByLabelText('Prüfart'), { target: { value: 'fuenfjahr' } })
+    fireEvent.change(screen.getByLabelText('Datum'), { target: { value: '2026-10-20' } })
+    fireEvent.change(screen.getByLabelText('Ergebnis'), { target: { value: 'defect' } })
+    fireEvent.change(screen.getByLabelText('Notiz'), { target: { value: 'Riss' } })
+    fireEvent.click(ionButton('Speichern')!)
+    expect(await screen.findByText('5-Jahres-Prüfung: Mangel')).toBeInTheDocument()
+    expect(calls.checks).toEqual([
+      { itemId: 'm01', input: { checkTypeId: 'fuenfjahr', date: '2026-10-20', result: 'defect', note: 'Riss' } },
+    ])
+  })
+
+  it('defaults to today and a pass', async () => {
+    renderAt(paths.recordCheck('m01'), 'check')
+    expect(await screen.findByLabelText('Datum')).toHaveValue(today())
+    expect(screen.getByLabelText('Ergebnis')).toHaveValue('passed')
+  })
+
+  it('reports a failed save', async () => {
+    renderAt(paths.recordCheck('m01'), 'check')
+    await screen.findByLabelText('Prüfart')
+    failing.check = true
+    fireEvent.click(ionButton('Speichern')!)
+    expect(await screen.findByText('Speichern fehlgeschlagen.')).toBeInTheDocument()
+  })
+})
+
+describe('retiring', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('retires after confirmation', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    renderAt(paths.item('m01'), 'check')
+    fireEvent.click(await findIon(() => ionButton('Ausscheiden')))
+    await waitFor(() => expect(calls.retired).toEqual(['m01']))
+    expect(window.confirm).toHaveBeenCalledWith('Maske 01 ausscheiden?')
+  })
+
+  it('does nothing when dismissed', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+    renderAt(paths.item('m01'), 'check')
+    fireEvent.click(await findIon(() => ionButton('Ausscheiden')))
+    expect(calls.retired).toEqual([])
+  })
+
+  it('offers nothing on an item already retired', async () => {
+    renderAt(paths.item('m06'), 'manage')
+    await findIon(() => ionButton('Bearbeiten'))
+    expect(button('Ausscheiden')).not.toBeInTheDocument()
+    expect(button('Prüfung erfassen')).not.toBeInTheDocument()
+    expect(button('Verwendung erfassen')).not.toBeInTheDocument()
   })
 })
 

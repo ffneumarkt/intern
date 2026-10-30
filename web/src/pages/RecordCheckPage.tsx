@@ -1,43 +1,79 @@
-import { IonButton, IonInput, IonItem, IonList, IonSelect, IonSelectOption, IonTextarea } from '@ionic/react'
-import { useParams } from 'react-router-dom'
+import { IonButton, IonList, IonText, useIonViewWillEnter } from '@ionic/react'
+import { useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { listCheckTypes, listItems, recordCheck, type CheckInput } from '../api/material'
+import { Field, SelectField, TextAreaField } from '../components/Field'
+import Loaded from '../components/Loaded'
 import Page from '../components/Page'
 import { paths } from '../routes'
-import { checkTypes, items } from '../sketch/mockData'
+import { today } from '../today'
+import { useResource } from '../useResource'
+
+const load = async () => {
+  const [items, checkTypes] = await Promise.all([listItems(), listCheckTypes()])
+  return { items, checkTypes }
+}
 
 export default function RecordCheckPage() {
   const { itemId = '' } = useParams()
-  const item = items.find((i) => i.id === itemId)
-  const types = checkTypes.filter((t) => t.categoryId === item?.categoryId)
+  const navigate = useNavigate()
+  const resource = useResource(load)
+  const [selectedType, setSelectedType] = useState('')
+  const [date, setDate] = useState(today)
+  const [result, setResult] = useState<CheckInput['result']>('passed')
+  const [note, setNote] = useState('')
+  const [failed, setFailed] = useState(false)
+
+  // Ionic keeps the page mounted, possibly past midnight.
+  useIonViewWillEnter(() => setDate(today()))
+
   return (
     <Page title="Prüfung erfassen" back={paths.item(itemId)}>
-      <p>{item?.name}</p>
-      <IonList>
-        <IonItem>
-          <IonSelect label="Prüfart" labelPlacement="stacked" value={types[0]?.id} interface="popover">
-            {types.map((t) => (
-              <IonSelectOption key={t.id} value={t.id}>
-                {t.name}
-              </IonSelectOption>
-            ))}
-          </IonSelect>
-        </IonItem>
-        <IonItem>
-          <IonInput label="Datum" labelPlacement="stacked" type="date" value="2026-10-29" />
-        </IonItem>
-        <IonItem>
-          <IonSelect label="Ergebnis" labelPlacement="stacked" value="passed" interface="popover">
-            <IonSelectOption value="passed">Bestanden</IonSelectOption>
-            <IonSelectOption value="defect">Mangel</IonSelectOption>
-            <IonSelectOption value="retired">Ausgeschieden</IonSelectOption>
-          </IonSelect>
-        </IonItem>
-        <IonItem>
-          <IonTextarea label="Notiz" labelPlacement="stacked" />
-        </IonItem>
-      </IonList>
-      <IonButton expand="block" routerLink={paths.item(itemId)}>
-        Speichern
-      </IonButton>
+      <Loaded resource={resource}>
+        {({ items, checkTypes }) => {
+          const item = items.find((i) => i.id === itemId)
+          const types = checkTypes.filter((t) => t.categoryId === item?.categoryId)
+          const checkTypeId = selectedType || types[0]?.id || ''
+
+          const save = async () => {
+            setFailed(false)
+            try {
+              await recordCheck(itemId, { checkTypeId, date, result, note })
+              setNote('')
+              setResult('passed')
+              navigate(paths.item(itemId))
+            } catch {
+              setFailed(true)
+            }
+          }
+
+          return (
+            <>
+              <p>{item?.name}</p>
+              <IonList>
+                <SelectField label="Prüfart" value={checkTypeId} onChange={setSelectedType}>
+                  {types.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </SelectField>
+                <Field label="Datum" type="date" value={date} onChange={setDate} />
+                <SelectField label="Ergebnis" value={result} onChange={(value) => setResult(value as CheckInput['result'])}>
+                  <option value="passed">Bestanden</option>
+                  <option value="defect">Mangel</option>
+                  <option value="retired">Ausgeschieden</option>
+                </SelectField>
+                <TextAreaField label="Notiz" value={note} onChange={setNote} />
+              </IonList>
+              {failed && <IonText color="danger">Speichern fehlgeschlagen.</IonText>}
+              <IonButton expand="block" onClick={save}>
+                Speichern
+              </IonButton>
+            </>
+          )
+        }}
+      </Loaded>
     </Page>
   )
 }

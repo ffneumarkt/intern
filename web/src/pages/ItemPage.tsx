@@ -1,6 +1,7 @@
-import { IonButton, IonCard, IonCardContent, IonItem, IonLabel, IonList, IonListHeader, IonNote } from '@ionic/react'
+import { IonButton, IonCard, IonCardContent, IonItem, IonLabel, IonList, IonListHeader, IonNote, IonText } from '@ionic/react'
+import { useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { listHistory, listItems } from '../api/material'
+import { listHistory, listItems, retireItem, type Item } from '../api/material'
 import DueStateBadge from '../components/DueStateBadge'
 import Loaded from '../components/Loaded'
 import Page from '../components/Page'
@@ -17,13 +18,28 @@ export default function ItemPage() {
     const [items, history] = await Promise.all([listItems(), listHistory(itemId)])
     return { item: items.find((i) => i.id === itemId), history }
   })
+  const [failed, setFailed] = useState(false)
   const item = resource.data?.item
+
+  const retire = async (target: Item) => {
+    if (!window.confirm(`${target.name} ausscheiden?`)) return
+    setFailed(false)
+    try {
+      await retireItem(target.id)
+      resource.reload()
+    } catch {
+      setFailed(true)
+    }
+  }
+
   const title = !resource.data || item ? (item?.name ?? 'Gerät') : 'Gerät nicht gefunden'
   return (
     <Page title={title} back={item ? paths.category(item.categoryId) : paths.dueList}>
       <Loaded resource={resource}>
-        {({ item, history }) =>
-          item && (
+        {({ item, history }) => {
+          if (!item) return null
+          const active = item.status !== 'retired'
+          return (
             <>
               <IonCard>
                 <IonCardContent>
@@ -34,10 +50,15 @@ export default function ItemPage() {
                   {item.note && <p>Notiz: {item.note}</p>}
                 </IonCardContent>
               </IonCard>
+              {failed && <IonText color="danger">Speichern fehlgeschlagen.</IonText>}
               <div className="ion-margin-bottom">
-                <IonButton routerLink={paths.recordUseFor(item.id)}>Verwendung erfassen</IonButton>
-                {can(item.categoryId, 'check') && <IonButton routerLink={paths.recordCheck(item.id)}>Prüfung erfassen</IonButton>}
-                {can(item.categoryId, 'check') && <IonButton color="medium" fill="outline">Ausscheiden</IonButton>}
+                {active && <IonButton routerLink={paths.recordUseFor(item.id)}>Verwendung erfassen</IonButton>}
+                {active && can(item.categoryId, 'check') && <IonButton routerLink={paths.recordCheck(item.id)}>Prüfung erfassen</IonButton>}
+                {active && can(item.categoryId, 'check') && (
+                  <IonButton color="medium" fill="outline" onClick={() => retire(item)}>
+                    Ausscheiden
+                  </IonButton>
+                )}
                 {can(item.categoryId, 'manage') && <IonButton fill="outline" routerLink={paths.manage}>Bearbeiten</IonButton>}
                 {can(item.categoryId, 'manage') && <IonButton fill="outline" routerLink={paths.label(item.id)}>Etikett drucken</IonButton>}
               </div>
@@ -46,7 +67,7 @@ export default function ItemPage() {
                   <IonLabel>Fälligkeiten</IonLabel>
                 </IonListHeader>
                 {item.dues.map((d) => (
-                  <IonItem key={d.label}>
+                  <IonItem key={`${d.kind}-${d.checkTypeId}`}>
                     <IonLabel>
                       <h3>{d.label}</h3>
                       <p>{d.date}</p>
@@ -59,8 +80,8 @@ export default function ItemPage() {
                 <IonListHeader>
                   <IonLabel>Verlauf</IonLabel>
                 </IonListHeader>
-                {history.map((h) => (
-                  <IonItem key={`${h.date}-${h.title}`}>
+                {history.map((h, index) => (
+                  <IonItem key={index}>
                     <IonLabel>
                       <h3>{h.title}</h3>
                       <p>{h.detail}</p>
@@ -71,7 +92,7 @@ export default function ItemPage() {
               </IonList>
             </>
           )
-        }
+        }}
       </Loaded>
     </Page>
   )

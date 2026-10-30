@@ -119,3 +119,43 @@ export async function listHistory(itemId: string): Promise<HistoryEntry[]> {
   ]
   return entries.sort((a, b) => b.date.localeCompare(a.date) || (b.created ?? '').localeCompare(a.created ?? ''))
 }
+
+export interface UseInput {
+  date: string
+  kind: 'operation' | 'exercise' | 'other'
+  recordedByName: string
+  note: string
+}
+
+export interface CheckInput {
+  checkTypeId: string
+  date: string
+  result: 'passed' | 'defect' | 'retired'
+  note: string
+}
+
+export async function recordUse(itemId: string, input: UseInput): Promise<void> {
+  await pb.collection('uses').create({
+    item: itemId,
+    date: input.date,
+    kind: input.kind,
+    recorded_by_name: input.recordedByName,
+    note: input.note,
+    created_by: pb.authStore.record?.id,
+  })
+}
+
+export async function recordCheck(itemId: string, input: CheckInput): Promise<void> {
+  await pb.collection('checks').create({
+    item: itemId,
+    check_type: input.checkTypeId,
+    date: input.date,
+    result: input.result,
+    note: input.note,
+    performed_by: pb.authStore.record?.id,
+  })
+}
+
+export async function retireItem(itemId: string): Promise<void> {
+  await pb.collection('items').update(itemId, { status: 'retired' })
+}
