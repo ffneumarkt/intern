@@ -291,6 +291,8 @@ Ionic tabs; tabs appear only when they apply to the logged-in user.
 ### CI (GitHub Actions)
 
 - Pull requests: `vitest`, `tsc --noEmit`, `go vet`, `go test ./...`, image build without push.
+- A newer push cancels a running build of the same branch or PR, on `main` too, so a superseded commit
+  may get no SHA tag.
 - Changes that only touch `docs/**`, `*.md` files or `LICENSE` skip CI entirely (`paths-ignore` on
   both triggers), so docs PRs show no checks and docs commits on `main` build no new image.
 - `main`: multi-stage Dockerfile (Node build → Go build → `gcr.io/distroless/static`, runs as root so
