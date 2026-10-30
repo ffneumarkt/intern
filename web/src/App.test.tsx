@@ -108,7 +108,13 @@ describe('passkeys in settings', () => {
   })
 
   const iPhone = { id: 'k1', name: 'iPhone', created: '2026-10-29' }
-  const add = async (name: string) => {
+  const add = async (name: string, password = 'richtig') => {
+    fireEvent.change(await screen.findByLabelText('Name des Geräts'), { target: { value: name } })
+    fireEvent.change(screen.getByLabelText('Passwort'), { target: { value: password } })
+    fireEvent.click(await findIon(() => ionButton('Passkey hinzufügen')))
+  }
+  const confirmAndAdd = async (name: string) => {
+    fireEvent.click(await findIon(() => ionButton('Mit Passkey bestätigen')))
     fireEvent.change(await screen.findByLabelText('Name des Geräts'), { target: { value: name } })
     fireEvent.click(await findIon(() => ionButton('Passkey hinzufügen')))
   }
@@ -130,7 +136,75 @@ describe('passkeys in settings', () => {
     await add('Laptop')
     expect(await screen.findByText('Laptop')).toBeInTheDocument()
     expect(passkeyState.added).toEqual(['Laptop'])
-    expect(screen.getByLabelText('Name des Geräts')).toHaveValue('')
+    fireEvent.click(await findIon(() => ionButton('Mit Passkey bestätigen')))
+    expect(await screen.findByLabelText('Name des Geräts')).toHaveValue('')
+  })
+
+  it('asks for the password for the first passkey', async () => {
+    renderAt(paths.settings, 'use')
+    await add('Laptop')
+    await screen.findByText('Laptop')
+    expect(passkeyState.grants).toEqual(['grant-password'])
+  })
+
+  it('refuses a wrong password and keeps the form', async () => {
+    renderAt(paths.settings, 'use')
+    await add('Laptop', 'falsch')
+    expect(await screen.findByText('Passwort ist falsch.')).toBeInTheDocument()
+    expect(passkeyState.added).toEqual([])
+    expect(screen.getByLabelText('Name des Geräts')).toHaveValue('Laptop')
+  })
+
+  it('asks for an existing passkey before adding another', async () => {
+    passkeyState.items = [iPhone]
+    renderAt(paths.settings, 'use')
+    await findIon(() => ionButton('Mit Passkey bestätigen'))
+    expect(ionButton('Passkey hinzufügen')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Passwort')).not.toBeInTheDocument()
+    await confirmAndAdd('Laptop')
+    await screen.findByText('Laptop')
+    expect(passkeyState.grants).toEqual(['grant-passkey'])
+  })
+
+  it('needs a new confirmation after each attempt', async () => {
+    passkeyState.items = [iPhone]
+    passkeyState.cancelled = true
+    renderAt(paths.settings, 'use')
+    await confirmAndAdd('Laptop')
+    expect(await findIon(() => ionButton('Mit Passkey bestätigen'))).toBeInTheDocument()
+    expect(ionButton('Passkey hinzufügen')).not.toBeInTheDocument()
+  })
+
+  it('says nothing when the confirmation dialog is closed', async () => {
+    passkeyState.items = [iPhone]
+    passkeyState.confirmCancelled = true
+    renderAt(paths.settings, 'use')
+    fireEvent.click(await findIon(() => ionButton('Mit Passkey bestätigen')))
+    await findIon(() => ionButton('Mit Passkey bestätigen'))
+    expect(screen.queryByText('Bestätigung fehlgeschlagen.')).not.toBeInTheDocument()
+  })
+
+  it('reports a failed confirmation', async () => {
+    passkeyState.items = [iPhone]
+    passkeyState.confirmFails = true
+    renderAt(paths.settings, 'use')
+    fireEvent.click(await findIon(() => ionButton('Mit Passkey bestätigen')))
+    expect(await screen.findByText('Bestätigung fehlgeschlagen.')).toBeInTheDocument()
+  })
+
+  it('confirms once on a double tap', async () => {
+    passkeyState.items = [iPhone]
+    renderAt(paths.settings, 'use')
+    fireEvent.click(await findIon(() => ionButton('Mit Passkey bestätigen')))
+    fireEvent.click(ionButton('Mit Passkey bestätigen')!)
+    await screen.findByLabelText('Name des Geräts')
+    expect(passkeyState.confirmations).toBe(1)
+  })
+
+  it('explains the way out when the existing passkey is out of reach', async () => {
+    passkeyState.items = [iPhone]
+    renderAt(paths.settings, 'use')
+    expect(await screen.findByText('Kein Zugriff auf den Passkey? Nach dem Entfernen genügt das Passwort.')).toBeInTheDocument()
   })
 
   it('adds once on a double tap', async () => {
@@ -157,9 +231,10 @@ describe('passkeys in settings', () => {
   })
 
   it('recognises a device that already has one', async () => {
+    passkeyState.items = [iPhone]
     passkeyState.exists = true
     renderAt(paths.settings, 'use')
-    await add('Laptop')
+    await confirmAndAdd('Laptop')
     expect(await screen.findByText('Dieses Gerät hat bereits einen Passkey.')).toBeInTheDocument()
   })
 
@@ -218,6 +293,7 @@ describe('passkeys in settings', () => {
     expect(await screen.findByText('iPhone')).toBeInTheDocument()
     expect(ionButton('Passkey hinzufügen')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Name des Geräts')).not.toBeInTheDocument()
+    expect(ionButton('Mit Passkey bestätigen')).not.toBeInTheDocument()
   })
 
   it('still offers logout while offline', async () => {

@@ -1,8 +1,8 @@
 import { startAuthentication, startRegistration } from '@simplewebauthn/browser'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { pb } from './client'
-import { PasskeyCancelledError, PasskeyExistsError } from './errors'
-import { addPasskey, listPasskeys, loginWithPasskey } from './passkeys'
+import { PasskeyCancelledError, PasskeyExistsError, WrongPasswordError } from './errors'
+import { addPasskey, confirmWithPasskey, confirmWithPassword, listPasskeys, loginWithPasskey } from './passkeys'
 
 vi.mock('@simplewebauthn/browser', () => ({
   browserSupportsWebAuthn: () => true,
@@ -65,6 +65,35 @@ describe('loginWithPasskey', () => {
   })
 })
 
+describe('confirming', () => {
+  it('exchanges the password for a grant', async () => {
+    const fetchMock = serve({ '/api/passkey/confirm/finish': { grant: 'g1' } })
+    expect(await confirmWithPassword('geheim')).toBe('g1')
+    expect(sentTo(fetchMock, 'confirm/finish')).toEqual({ password: 'geheim' })
+  })
+
+  it('recognises a wrong password', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{}', { status: 403 })))
+    await expect(confirmWithPassword('falsch')).rejects.toBeInstanceOf(WrongPasswordError)
+  })
+
+  it('exchanges a passkey assertion for a grant', async () => {
+    const fetchMock = serve({
+      '/api/passkey/confirm/begin': { sessionId: 's3', options: { challenge: 'c' } },
+      '/api/passkey/confirm/finish': { grant: 'g2' },
+    })
+    vi.mocked(startAuthentication).mockResolvedValue({ id: 'cred' } as never)
+    expect(await confirmWithPasskey()).toBe('g2')
+    expect(sentTo(fetchMock, 'confirm/finish')).toEqual({ sessionId: 's3', credential: { id: 'cred' } })
+  })
+
+  it('reports a closed dialog as cancelled', async () => {
+    serve({ '/api/passkey/confirm/begin': { sessionId: 's3', options: {} } })
+    vi.mocked(startAuthentication).mockRejectedValue(browserError('NotAllowedError'))
+    await expect(confirmWithPasskey()).rejects.toBeInstanceOf(PasskeyCancelledError)
+  })
+})
+
 describe('addPasskey', () => {
   it('sends the name with the credential', async () => {
     const fetchMock = serve({
@@ -72,20 +101,21 @@ describe('addPasskey', () => {
       '/api/passkey/register/finish': { id: 'k1' },
     })
     vi.mocked(startRegistration).mockResolvedValue({ id: 'cred' } as never)
-    await addPasskey('iPhone')
+    await addPasskey('iPhone', 'g1')
+    expect(sentTo(fetchMock, 'register/begin')).toEqual({ grant: 'g1' })
     expect(sentTo(fetchMock, 'register/finish')).toEqual({ sessionId: 's2', name: 'iPhone', credential: { id: 'cred' } })
   })
 
   it('recognises a device that already has a passkey', async () => {
     serve({ '/api/passkey/register/begin': { sessionId: 's2', options: {} } })
     vi.mocked(startRegistration).mockRejectedValue(browserError('InvalidStateError'))
-    await expect(addPasskey('iPhone')).rejects.toBeInstanceOf(PasskeyExistsError)
+    await expect(addPasskey('iPhone', 'g1')).rejects.toBeInstanceOf(PasskeyExistsError)
   })
 
   it('reports a closed dialog as cancelled', async () => {
     serve({ '/api/passkey/register/begin': { sessionId: 's2', options: {} } })
     vi.mocked(startRegistration).mockRejectedValue(browserError('NotAllowedError'))
-    await expect(addPasskey('iPhone')).rejects.toBeInstanceOf(PasskeyCancelledError)
+    await expect(addPasskey('iPhone', 'g1')).rejects.toBeInstanceOf(PasskeyCancelledError)
   })
 })
 
