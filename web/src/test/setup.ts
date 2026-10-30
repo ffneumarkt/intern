@@ -3,6 +3,7 @@ import { cleanup } from '@testing-library/react'
 import { setupIonicReact } from '@ionic/react'
 import { afterEach, beforeEach, vi } from 'vitest'
 import { resetMaterial } from './fakeMaterial'
+import { resetPasskeys } from './fakePasskeys'
 
 setupIonicReact({ mode: 'md' })
 
@@ -20,7 +21,10 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 })
 
-beforeEach(resetMaterial)
+beforeEach(() => {
+  resetMaterial()
+  resetPasskeys()
+})
 
 afterEach(() => {
   cleanup()

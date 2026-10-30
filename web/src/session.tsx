@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import * as auth from './api/auth'
 import type { Level, User } from './api/auth'
+import * as passkeys from './api/passkeys'
 
 const order: Level[] = ['use', 'check', 'manage']
 
@@ -13,6 +14,7 @@ interface Session {
   canAnywhere(required: Level): boolean
   reloadLevels(): Promise<void>
   login(email: string, password: string): Promise<void>
+  loginWithPasskey(): Promise<void>
   logout(): void
 }
 
@@ -48,6 +50,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     reloadLevels,
     login: async (email, password) => {
       await auth.login(email, password)
+      setUser(auth.currentUser())
+      await reloadLevels()
+    },
+    loginWithPasskey: async () => {
+      await passkeys.loginWithPasskey()
       setUser(auth.currentUser())
       await reloadLevels()
     },
