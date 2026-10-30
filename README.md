@@ -10,6 +10,7 @@ Design: `docs/superpowers/specs/2026-10-29-intern-platform-design.md` · Status 
 ```sh
 make dev-api                                # backend on http://127.0.0.1:8090, admin UI at /_/
 make dev-web                                # frontend dev server, proxies /api and /_ to the backend
+make debug                                  # both of the above together with LOG_LEVEL=debug
 make test                                   # go vet + go test, typecheck, vitest
 make image                                  # build the Docker image
 ```

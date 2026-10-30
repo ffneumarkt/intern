@@ -1,4 +1,8 @@
-.PHONY: dev-api dev-web test build image run
+.PHONY: dev-api dev-web debug test build image run
+
+# Runs backend and frontend together with debug logging; Ctrl-C stops both.
+debug:
+	LOG_LEVEL=debug $(MAKE) -j2 dev-api dev-web
 
 dev-api:
 	cd backend && go run ./cmd/intern serve
