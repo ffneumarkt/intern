@@ -1,0 +1,60 @@
+name: Image
+
+# Docs-only changes don't need a new image.
+on:
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - LICENSE
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - LICENSE
+
+# A newer push makes a running build of the same branch or PR pointless.
+concurrency:
+  group: image-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Pull requests get these from web.yml and go.yml, and run them only when their code changed.
+  web:
+    if: github.event_name == 'push'
+    uses: ./.github/workflows/web.yml
+
+  go:
+    if: github.event_name == 'push'
+    uses: ./.github/workflows/go.yml
+
+  image:
+    needs: [web, go]
+    # Plain needs would skip this on pull requests, where web and go are skipped.
+    if: ${{ !failure() && !cancelled() }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.event_name == 'push' }}
+          tags: |
+            ghcr.io/ffneumarkt/intern:latest
+            ghcr.io/ffneumarkt/intern:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
