@@ -296,7 +296,8 @@ Ionic tabs; tabs appear only when they apply to the logged-in user.
 
 ### CI (GitHub Actions)
 
-- Pull requests: `vitest`, `tsc --noEmit`, `go vet`, `go test ./...`, image build without push.
+- Pull requests: `vitest`, `tsc --noEmit`, `go vet`, `go test ./...`, `govulncheck`, image build without
+  push. `govulncheck` is not required for the image, so a new advisory does not block a release.
 - A newer push cancels a running build of the same branch or PR, on `main` too, so a superseded commit
   may get no SHA tag.
 - Changes that only touch `docs/**`, `*.md` files or `LICENSE` skip CI entirely (`paths-ignore` on
