@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from '../App'
 import { today } from '../today'
 import { paths } from '../routes'
-import { signInAs, type Level } from '../test/fakeAuth'
+import { levelsFailing, signInAs, type Level } from '../test/fakeAuth'
 import { calls, data, failing } from '../test/fakeMaterial'
 import { findIon, ionButton, ionTab } from '../test/ionic'
 
@@ -54,6 +54,15 @@ describe('loading', () => {
     expect(await screen.findByText('Noch keine Kategorie freigegeben.')).toBeInTheDocument()
   })
 
+  it('recovers when the connection returns', async () => {
+    failing.reads = true
+    renderAt(paths.dueList, 'use')
+    await screen.findByText(offlineNotice)
+    failing.reads = false
+    window.dispatchEvent(new Event('online'))
+    expect(await screen.findByText('Maske 01')).toBeInTheDocument()
+  })
+
   it('reloads when coming back to a page', async () => {
     renderAt(paths.dueList, 'use')
     await screen.findByText('Maske 01')
@@ -70,6 +79,27 @@ describe('item', () => {
     renderAt(paths.item('m01'), 'use')
     expect(await screen.findByText('Lebensdauer')).toBeInTheDocument()
     expect(await screen.findByText('Maskenprüfung: bestanden')).toBeInTheDocument()
+  })
+
+  it('recovers its actions after permissions failed to load at start', async () => {
+    signInAs('check')
+    levelsFailing.value = true
+    render(<App initialPath={paths.dueList} />)
+    await screen.findByText('Maske 01')
+    fireEvent.click(await findIon(() => ionTab('Start')))
+    await screen.findByRole('heading', { name: 'Start' })
+    levelsFailing.value = false
+    fireEvent.click(ionTab('Material')!)
+    fireEvent.click(await screen.findByText('Maske 01'))
+    expect(await findIon(() => ionButton('Prüfung erfassen'))).toBeInTheDocument()
+  })
+
+  it('keeps known permissions when reloading them fails', async () => {
+    renderAt(paths.dueList, 'check')
+    await screen.findByText('Maske 01')
+    levelsFailing.value = true
+    fireEvent.click(await screen.findByText('Maske 01'))
+    expect(await findIon(() => ionButton('Prüfung erfassen'))).toBeInTheDocument()
   })
 
   it('reports an item the user cannot see', async () => {
@@ -150,6 +180,24 @@ describe('saving a use', () => {
     ])
   })
 
+  it('writes once on a double tap', async () => {
+    renderAt(paths.recordUse, 'use')
+    await scanAndOpenForm('M-001', 'M-002')
+    fireEvent.click(ionButton('Speichern')!)
+    fireEvent.click(ionButton('Speichern')!)
+    await screen.findByRole('heading', { name: 'Fällig' })
+    expect(calls.uses.map((u) => u.itemId)).toEqual(['m01', 'm02'])
+  })
+
+  it('refuses a future date', async () => {
+    renderAt(paths.recordUse, 'use')
+    await scanAndOpenForm('M-001')
+    fireEvent.change(screen.getByLabelText('Datum'), { target: { value: '2062-01-01' } })
+    fireEvent.click(ionButton('Speichern')!)
+    expect(await screen.findByText('Datum darf nicht in der Zukunft liegen.')).toBeInTheDocument()
+    expect(calls.uses).toEqual([])
+  })
+
   it('remembers who recorded on this device', async () => {
     localStorage.setItem('intern.recordedBy', 'Anna')
     renderAt(paths.recordUse, 'use')
@@ -199,6 +247,24 @@ describe('recording a check', () => {
     expect(calls.checks).toEqual([
       { itemId: 'm01', input: { checkTypeId: 'fuenfjahr', date: '2026-10-20', result: 'defect', note: 'Riss' } },
     ])
+  })
+
+  it('writes once on a double tap', async () => {
+    renderAt(paths.recordCheck('m01'), 'check')
+    await screen.findByLabelText('Prüfart')
+    fireEvent.click(ionButton('Speichern')!)
+    fireEvent.click(ionButton('Speichern')!)
+    await waitFor(() => expect(calls.checks.length).toBeGreaterThan(0))
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(calls.checks).toHaveLength(1)
+  })
+
+  it('refuses a future date', async () => {
+    renderAt(paths.recordCheck('m01'), 'check')
+    fireEvent.change(await screen.findByLabelText('Datum'), { target: { value: '2062-01-01' } })
+    fireEvent.click(ionButton('Speichern')!)
+    expect(await screen.findByText('Datum darf nicht in der Zukunft liegen.')).toBeInTheDocument()
+    expect(calls.checks).toEqual([])
   })
 
   it('defaults to today and a pass', async () => {
@@ -293,6 +359,25 @@ describe('manage', () => {
     ])
   })
 
+  it('creates one item on a double tap', async () => {
+    renderAt(paths.manage, 'manage')
+    await lastChecked('Maskenprüfung')
+    set('Bezeichnung', 'Maske 07')
+    fireEvent.click(ionButton('Gerät anlegen')!)
+    fireEvent.click(ionButton('Gerät anlegen')!)
+    await screen.findByRole('heading', { name: 'Maske 07' })
+    expect(calls.createdItems).toHaveLength(1)
+  })
+
+  it('refuses a future last checked date', async () => {
+    renderAt(paths.manage, 'manage')
+    fireEvent.change(await lastChecked('Maskenprüfung'), { target: { value: '2062-01-01' } })
+    set('Bezeichnung', 'Maske 07')
+    fireEvent.click(ionButton('Gerät anlegen')!)
+    expect(await screen.findByText('Datum darf nicht in der Zukunft liegen.')).toBeInTheDocument()
+    expect(calls.createdItems).toEqual([])
+  })
+
   it('explains a duplicate code and keeps the form', async () => {
     failing.barcode = true
     renderAt(paths.manage, 'manage')
@@ -338,14 +423,22 @@ describe('manage', () => {
     renderAt(paths.itemEdit('m01'), 'manage')
     fireEvent.click(await findIon(() => ionButton('Gerät löschen')))
     await waitFor(() => expect(calls.deletedItems).toEqual(['m01']))
-    expect(window.confirm).toHaveBeenCalledWith('Maske 01 löschen?')
+    expect(window.confirm).toHaveBeenCalledWith('Maske 01 und 3 Verlaufseinträge endgültig löschen?')
     expect(await screen.findByRole('heading', { name: 'Atemschutzmasken' })).toBeInTheDocument()
+  })
+
+  it('asks plainly for an item without history', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+    renderAt(paths.itemEdit('m02'), 'manage')
+    fireEvent.click(await findIon(() => ionButton('Gerät löschen')))
+    await waitFor(() => expect(window.confirm).toHaveBeenCalledWith('Maske 02 löschen?'))
   })
 
   it('keeps an item when deletion is dismissed', async () => {
     vi.spyOn(window, 'confirm').mockReturnValue(false)
     renderAt(paths.itemEdit('m01'), 'manage')
     fireEvent.click(await findIon(() => ionButton('Gerät löschen')))
+    await waitFor(() => expect(window.confirm).toHaveBeenCalled())
     expect(calls.deletedItems).toEqual([])
   })
 
@@ -356,6 +449,18 @@ describe('manage', () => {
     fireEvent.click(ionButton('Prüfart anlegen')!)
     expect(await screen.findByText('Intervall oder „nach Verwendung“ angeben.')).toBeInTheDocument()
     expect(calls.createdCheckTypes).toEqual([])
+  })
+
+  it('creates one check type on a double tap', async () => {
+    renderAt(paths.manage, 'manage')
+    await openCheckTypes()
+    set('Name', 'Sichtprüfung')
+    set('Intervall in Monaten', '6')
+    fireEvent.click(ionButton('Prüfart anlegen')!)
+    fireEvent.click(ionButton('Prüfart anlegen')!)
+    await waitFor(() => expect(calls.createdCheckTypes.length).toBeGreaterThan(0))
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(calls.createdCheckTypes).toHaveLength(1)
   })
 
   it('creates a check type', async () => {

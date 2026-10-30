@@ -10,9 +10,10 @@ interface FieldProps {
   type?: string
   autoComplete?: string
   required?: boolean
+  max?: string
 }
 
-export function Field({ label, value, onChange, type = 'text', autoComplete, required }: FieldProps) {
+export function Field({ label, value, onChange, type = 'text', autoComplete, required, max }: FieldProps) {
   return (
     <IonItem>
       <label className="stacked-label">
@@ -23,6 +24,7 @@ export function Field({ label, value, onChange, type = 'text', autoComplete, req
           value={value}
           autoComplete={autoComplete}
           required={required}
+          max={max}
           onChange={(e) => onChange(e.target.value)}
         />
       </label>

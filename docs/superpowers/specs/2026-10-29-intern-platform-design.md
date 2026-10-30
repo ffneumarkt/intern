@@ -136,6 +136,8 @@ Items can also be retired by hand (level `check` or higher). Retired items keep 
 hidden from lists by default and take no new uses or checks, otherwise a `defect` check would bring
 one back. `status` changes by hand only to `retired`. An item's category cannot change through the
 API. Uses and checks cannot be edited or deleted through the API; superusers correct them in `/_/`.
+They cannot be dated in the future. Deleting an item deletes its history; the app states how many
+entries that takes before asking.
 
 ## 4. Permissions
 

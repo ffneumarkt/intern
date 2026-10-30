@@ -1,5 +1,6 @@
 import { useIonViewWillEnter } from '@ionic/react'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useSession } from './session'
 
 export interface Resource<T> {
   data?: T
@@ -7,9 +8,10 @@ export interface Resource<T> {
   reload(): void
 }
 
-// Loads whenever the page is entered: Ionic keeps pages mounted, so an effect would show stale
-// data when coming back.
+// Loads whenever the page is entered, because Ionic keeps pages mounted, and when the connection
+// returns. Permissions reload along with the data, so a failed load at start does not stick.
 export function useResource<T>(load: () => Promise<T>): Resource<T> {
+  const { reloadLevels } = useSession()
   const [state, setState] = useState<{ data?: T; error?: unknown }>({})
   const latestLoad = useRef(load)
   latestLoad.current = load
@@ -17,6 +19,7 @@ export function useResource<T>(load: () => Promise<T>): Resource<T> {
 
   const reload = useCallback(() => {
     const request = ++latestRequest.current
+    void reloadLevels()
     latestLoad.current().then(
       (data) => {
         if (request === latestRequest.current) setState({ data })
@@ -25,8 +28,14 @@ export function useResource<T>(load: () => Promise<T>): Resource<T> {
         if (request === latestRequest.current) setState({ error })
       },
     )
-  }, [])
+  }, [reloadLevels])
 
   useIonViewWillEnter(reload)
+
+  useEffect(() => {
+    window.addEventListener('online', reload)
+    return () => window.removeEventListener('online', reload)
+  }, [reload])
+
   return { ...state, reload }
 }

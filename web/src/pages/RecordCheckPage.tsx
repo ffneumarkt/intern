@@ -6,7 +6,8 @@ import { Field, SelectField, TextAreaField } from '../components/Field'
 import Loaded from '../components/Loaded'
 import Page from '../components/Page'
 import { paths } from '../routes'
-import { today } from '../today'
+import { futureDateMessage, isFuture, today } from '../today'
+import { useBusy } from '../useBusy'
 import { useResource } from '../useResource'
 
 const load = async () => {
@@ -22,7 +23,8 @@ export default function RecordCheckPage() {
   const [date, setDate] = useState(today)
   const [result, setResult] = useState<CheckInput['result']>('passed')
   const [note, setNote] = useState('')
-  const [failed, setFailed] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const { busy, once } = useBusy()
 
   // Ionic keeps the page mounted, possibly past midnight.
   useIonViewWillEnter(() => setDate(today()))
@@ -36,14 +38,18 @@ export default function RecordCheckPage() {
           const checkTypeId = selectedType || types[0]?.id || ''
 
           const save = async () => {
-            setFailed(false)
+            if (isFuture(date)) {
+              setError(futureDateMessage)
+              return
+            }
+            setError(null)
             try {
               await recordCheck(itemId, { checkTypeId, date, result, note })
               setNote('')
               setResult('passed')
               navigate(paths.item(itemId))
             } catch {
-              setFailed(true)
+              setError('Speichern fehlgeschlagen.')
             }
           }
 
@@ -58,7 +64,7 @@ export default function RecordCheckPage() {
                     </option>
                   ))}
                 </SelectField>
-                <Field label="Datum" type="date" value={date} onChange={setDate} />
+                <Field label="Datum" type="date" max={today()} value={date} onChange={setDate} />
                 <SelectField label="Ergebnis" value={result} onChange={(value) => setResult(value as CheckInput['result'])}>
                   <option value="passed">Bestanden</option>
                   <option value="defect">Mangel</option>
@@ -66,8 +72,8 @@ export default function RecordCheckPage() {
                 </SelectField>
                 <TextAreaField label="Notiz" value={note} onChange={setNote} />
               </IonList>
-              {failed && <IonText color="danger">Speichern fehlgeschlagen.</IonText>}
-              <IonButton expand="block" onClick={save}>
+              {error && <IonText color="danger">{error}</IonText>}
+              <IonButton expand="block" disabled={busy} onClick={() => once(save)}>
                 Speichern
               </IonButton>
             </>

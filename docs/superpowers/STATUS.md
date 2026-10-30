@@ -48,6 +48,16 @@ line; work happens on branches with PRs against `main` (the user merges).
 - JS bundle above Vite's 500 kB warning (code splitting later).
 - CI warnings: docker actions still target Node 20; `ubuntu-latest` moves to Ubuntu 26.
 
+From the phase 2 review:
+
+- A lost response followed by a retry can duplicate one use; client-generated record ids would fix it.
+- The new check type form does not clear after creating one.
+- No way back from the record use form step to the list.
+- Login while offline shows the wrong-password message.
+- `internal/material/hooks.go` uses `go-ozzo/ozzo-validation`, not PocketBase's fork, so hook errors
+  lose their field detail on the API.
+- `Loaded` reports every error as "Keine Verbindung", including server faults.
+
 ## Environment notes
 
 - Toolchain on the dev machine: Go 1.27, Node 26, Docker. `make test` runs everything.

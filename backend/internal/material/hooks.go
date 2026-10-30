@@ -3,12 +3,15 @@ package material
 import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/pocketbase/pocketbase/core"
+
+	"github.com/ffneumarkt/intern/backend/internal/due"
 )
 
 // Register binds the record hooks.
 func Register(app core.App) {
 	app.OnRecordCreateExecute("checks").BindFunc(applyCheckResult)
 	app.OnRecordValidate("check_types").BindFunc(validateCheckType)
+	app.OnRecordValidate("uses", "checks").BindFunc(rejectFutureDate)
 	app.OnRecordAuthRequest("users").BindFunc(rejectDeactivated)
 	app.OnRecordUpdate("users").BindFunc(endSessionsOnDeactivation)
 }
@@ -60,6 +63,15 @@ func validateCheckType(e *core.RecordEvent) error {
 		if target.GetString("category") != e.Record.GetString("category") {
 			return validation.Errors{"also_satisfies": validation.NewError("validation_other_category", "must be of the same category")}
 		}
+	}
+	return e.Next()
+}
+
+// rejectFutureDate catches typos: a passed check dated years ahead would silently mark an item as
+// not due, and users cannot correct history.
+func rejectFutureDate(e *core.RecordEvent) error {
+	if calendarDate(e.Record, "date").After(due.Today()) {
+		return validation.Errors{"date": validation.NewError("validation_future_date", "must not be in the future")}
 	}
 	return e.Next()
 }

@@ -21,6 +21,7 @@ import Loaded from '../components/Loaded'
 import Page from '../components/Page'
 import { paths } from '../routes'
 import { useSession } from '../session'
+import { useBusy } from '../useBusy'
 import { useResource } from '../useResource'
 
 const load = async () => {
@@ -180,6 +181,7 @@ function CheckTypeForm({ categoryId, checkType, others, onDone }: CheckTypeFormP
   const [afterUse, setAfterUse] = useState(checkType?.afterUse ?? false)
   const [alsoSatisfies, setAlsoSatisfies] = useState(checkType?.alsoSatisfies ?? [])
   const [error, setError] = useState<string | null>(null)
+  const { busy, once } = useBusy()
 
   const save = async () => {
     const intervalMonths = Number(months) || 0
@@ -236,7 +238,7 @@ function CheckTypeForm({ categoryId, checkType, others, onDone }: CheckTypeFormP
           ))}
       </IonList>
       {error && <IonText color="danger">{error}</IonText>}
-      <IonButton expand="block" disabled={!name.trim()} onClick={save}>
+      <IonButton expand="block" disabled={busy || !name.trim()} onClick={() => once(save)}>
         {!checkType && <IonIcon slot="start" icon={addOutline} aria-hidden />}
         {checkType ? 'Speichern' : 'Prüfart anlegen'}
       </IonButton>

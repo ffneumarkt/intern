@@ -8,7 +8,8 @@ import Loaded from '../components/Loaded'
 import Page from '../components/Page'
 import { paths } from '../routes'
 import { useSession } from '../session'
-import { today } from '../today'
+import { futureDateMessage, isFuture, today } from '../today'
+import { useBusy } from '../useBusy'
 import { useResource } from '../useResource'
 
 const recordedByKey = 'intern.recordedBy'
@@ -55,7 +56,8 @@ export default function RecordUsePage() {
   const [kind, setKind] = useState<UseInput['kind']>('operation')
   const [recordedBy, setRecordedBy] = useState(readRecordedBy)
   const [note, setNote] = useState('')
-  const [failed, setFailed] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const { busy, once } = useBusy()
   const preselectedId = new URLSearchParams(useLocation().search).get('geraet')
   const items = resource.data
 
@@ -88,7 +90,11 @@ export default function RecordUsePage() {
 
   // Saved items leave the list one by one, so a retry after a failure writes only the rest.
   const save = async () => {
-    setFailed(false)
+    if (isFuture(date)) {
+      setError(futureDateMessage)
+      return
+    }
+    setError(null)
     rememberRecordedBy(recordedBy)
     let remaining = scanned
     try {
@@ -98,7 +104,7 @@ export default function RecordUsePage() {
         setScanned(remaining)
       }
     } catch {
-      setFailed(true)
+      setError('Speichern fehlgeschlagen.')
       return
     }
     setStep('scan')
@@ -165,7 +171,7 @@ export default function RecordUsePage() {
             <>
               <p>{scanned.map((i) => i.name).join(', ')}</p>
               <IonList>
-                <Field label="Datum" type="date" value={date} onChange={setDate} />
+                <Field label="Datum" type="date" max={today()} value={date} onChange={setDate} />
                 <SelectField label="Art" value={kind} onChange={(value) => setKind(value as UseInput['kind'])}>
                   <option value="operation">Einsatz</option>
                   <option value="exercise">Übung</option>
@@ -174,8 +180,8 @@ export default function RecordUsePage() {
                 <Field label="Erfasst von" value={recordedBy} onChange={setRecordedBy} />
                 <TextAreaField label="Notiz" value={note} onChange={setNote} />
               </IonList>
-              {failed && <IonText color="danger">Speichern fehlgeschlagen.</IonText>}
-              <IonButton expand="block" onClick={save}>
+              {error && <IonText color="danger">{error}</IonText>}
+              <IonButton expand="block" disabled={busy} onClick={() => once(save)}>
                 Speichern
               </IonButton>
             </>

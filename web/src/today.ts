@@ -4,3 +4,7 @@ const viennaDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Vienna' 
 export function today(): string {
   return viennaDate.format(new Date())
 }
+
+export const isFuture = (date: string) => date > today()
+
+export const futureDateMessage = 'Datum darf nicht in der Zukunft liegen.'

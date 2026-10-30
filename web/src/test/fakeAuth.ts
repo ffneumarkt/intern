@@ -10,6 +10,7 @@ const testUser: User = { id: 'u1', name: 'Test Benutzer', email: 'test@example.c
 let user: User | null = null
 let levels: Record<string, Level> = {}
 let loginLevels: Record<string, Level> = {}
+export const levelsFailing = { value: false }
 const listeners = new Set<() => void>()
 
 const notify = () => listeners.forEach((listener) => listener())
@@ -22,6 +23,7 @@ export function signInAs(level: Level | null, perCategory?: Record<string, Level
   user = level ? testUser : null
   levels = perCategory ?? (level ? spread(level) : {})
   loginLevels = spread('use')
+  levelsFailing.value = false
 }
 
 // Logged out, with what a successful login will grant.
@@ -55,5 +57,6 @@ export function logout() {
 export async function refresh() {}
 
 export async function listLevels() {
+  if (levelsFailing.value) throw new TypeError('Failed to fetch')
   return levels
 }

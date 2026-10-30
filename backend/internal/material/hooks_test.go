@@ -9,6 +9,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
 
+	"github.com/ffneumarkt/intern/backend/internal/due"
 	"github.com/ffneumarkt/intern/backend/internal/testenv"
 )
 
@@ -104,6 +105,30 @@ func TestCheckTypeValidation(t *testing.T) {
 	w.CheckTypeA.Set("also_satisfies", []string{w.CheckTypeB.Id})
 	if err := app.Save(w.CheckTypeA); err == nil {
 		t.Error("also_satisfies of another category accepted on update")
+	}
+}
+
+func TestEntriesCannotBeDatedInTheFuture(t *testing.T) {
+	app := testenv.New(t)
+	w := testenv.Seed(t, app)
+	date := func(days int) string { return due.Today().AddDate(0, 0, days).Format("2006-01-02") }
+	build := func(collection, date string) *core.Record {
+		c, err := app.FindCollectionByNameOrId(collection)
+		if err != nil {
+			t.Fatal(err)
+		}
+		record := core.NewRecord(c)
+		record.Load(map[string]any{"item": w.ItemA.Id, "date": date, "kind": "other", "created_by": w.Use.Id,
+			"check_type": w.CheckTypeA.Id, "result": "passed", "performed_by": w.Check.Id})
+		return record
+	}
+	for _, collection := range []string{"uses", "checks"} {
+		if err := app.Save(build(collection, date(1))); err == nil {
+			t.Errorf("%s: tomorrow accepted", collection)
+		}
+		if err := app.Save(build(collection, date(0))); err != nil {
+			t.Errorf("%s: today rejected: %v", collection, err)
+		}
 	}
 }
 
