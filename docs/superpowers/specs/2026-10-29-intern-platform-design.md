@@ -2,7 +2,8 @@
 
 Status: approved 2026-10-29. Phase 1 (skeleton + UI sketch) merged in PR #1; see
 `docs/superpowers/STATUS.md` for the current state and next steps. Updated 2026-10-29 with the
-decisions made during phase 1 (layout, logging, versions, record use details).
+decisions made during phase 1 (layout, logging, versions, record use details) and 2026-10-30 with
+those of phase 2 (settled rules, immutable history, member deactivation).
 
 ## 1. Goal
 
@@ -90,17 +91,17 @@ backend/
   cmd/intern/        # main.go: PocketBase app setup, route and cron registration, subcommands
   internal/server/   # RegisterFrontend: SPA serving next to /api and /_/
   internal/logging/  # charmbracelet/log setup
-  internal/          # due, notify, push, passkey, snapshot
+  internal/          # due, material, notify, push, passkey, snapshot, devseed, testenv
   migrations/        # PocketBase Go migrations
   ui/                # embed.go + dist/ (Vite output; dist/.gitkeep keeps the embed valid)
 web/                 # Ionic React + Vite app
   src/pages/         # one file per screen
   src/components/    # shared components (Page, ItemRow, DueStateBadge)
-  src/sketch/        # sketch-only code (mock data, "Ansicht als" session); deleted in phase 2
-  src/test/          # Vitest setup and Ionic test helpers
+  src/api/           # PocketBase client, auth and material calls; replaced by fakes in tests
+  src/test/          # Vitest setup, Ionic test helpers, fakes and fixtures
 Dockerfile           # node → go → distroless/static, source label links the GHCR package
 compose.yaml         # reference compose file for the VPS
-Makefile             # dev-api, dev-web, test, build, image, run
+Makefile             # dev-api, dev-web, debug, seed, test, build, image, run
 deploy/              # (later) systemd units, backup wrapper script, authorized_keys example
 .github/workflows/   # ci.yml
 docs/superpowers/    # specs, plans, STATUS.md
@@ -112,10 +113,10 @@ All collections are PocketBase collections created by Go migrations. `?` marks o
 
 | Collection | Fields | Notes |
 |---|---|---|
-| `users` (auth) | name, email, password | PocketBase auth collection; email + password login enabled |
+| `users` (auth) | name, email, password, `deactivated` (bool) | PocketBase auth collection; email + password login enabled; deactivated instead of deleted, see section 4 |
 | `categories` | name, `max_service_life_years`? (number) | e.g. "Masks" |
 | `permissions` | user → users, category → categories, level (`use` \| `check` \| `manage`) | unique index on (user, category) |
-| `check_types` | category → categories, name, `interval_months`? (number), `after_use` (bool), `also_satisfies` → check_types (multiple) | at least one trigger required; `also_satisfies` only targets check types of the same category (validated in a hook) |
+| `check_types` | category → categories, name, `interval_months`? (number), `after_use` (bool), `is_default` (bool), `also_satisfies` → check_types (multiple) | at least one trigger required; `also_satisfies` only targets check types of the same category (validated in a hook); at most one default per category (a hook clears the previous one) |
 | `items` | category → categories, name (e.g. inventory number), serial?, `barcode`? (unique when set), `manufactured_on`? (date), status (`active` \| `defective` \| `retired`), note? | |
 | `uses` | item → items, date, kind (`operation` \| `exercise` \| `other`), `recorded_by_name`?, note?, created_by → users | |
 | `checks` | item → items, check_type → check_types, date, result (`passed` \| `defect` \| `retired`), performed_by → users, note? | |
@@ -131,8 +132,12 @@ All collections are PocketBase collections created by Go migrations. `?` marks o
 - `defect`: set the item to `defective`.
 - `retired`: set the item to `retired`.
 
-Items can also be retired by hand (level `check` or higher). Retired items keep their history and are
-hidden from lists by default.
+Items can also be retired by hand (level `check` or higher). Retired items keep their history, are
+hidden from lists by default and take no new uses or checks, otherwise a `defect` check would bring
+one back. `status` changes by hand only to `retired`. An item's category cannot change through the
+API. Uses and checks cannot be edited or deleted through the API; superusers correct them in `/_/`.
+They cannot be dated in the future. Deleting an item deletes its history; the app states how many
+entries that takes before asking.
 
 ## 4. Permissions
 
@@ -149,15 +154,22 @@ No roles. Each user has at most one permission per category:
   settings of others and `transport_document_settings` in the PocketBase admin UI (`/_/`). There are no
   admin screens and no admin flag in the app.
 - The shared station account has `use` level.
-- All rules are enforced by PocketBase collection rules, e.g. `checks` create rule:
-  `@collection.permissions.user ?= @request.auth.id && @collection.permissions.category ?= item.category && @collection.permissions.level ?~ "check|manage"`
-  (exact rule syntax settled in implementation; each rule gets an API test).
+- All rules are enforced by PocketBase collection rules, each with an API test, e.g. the permission
+  part of the `checks` create rule:
+  `@collection.permissions.user ?= @request.auth.id && @collection.permissions.category ?= item.category && (@collection.permissions.level ?= "check" || @collection.permissions.level ?= "manage")`.
+  All `@collection.permissions` conditions in a rule match the same row; `?~` is a LIKE, not a regex.
+- Public registration and self-deletion, which PocketBase allows by default, are closed. Logged-in
+  users can view other users' names (not emails) for the history.
+- **Deactivating a member:** the admin sets `deactivated` in `/_/`. Login and token refresh fail like a
+  wrong password, and existing tokens stop working at once. Permissions, uses and checks stay, and
+  clearing the flag restores the account. Users with history cannot be deleted. Passkey login (section
+  5) and notifications (section 7) must honour the flag.
 - `transport_document_settings`: list and view public, write superuser only.
 - Users manage only their own `notification_settings`, `push_subscriptions` and `passkeys`.
 
 ## 5. Authentication
 
-- **Passkeys first, email + password as fallback.** PocketBase v0.41.1 has no WebAuthn support
+- **Passkeys first, email + password as fallback.** Deactivated users cannot log in by either way. PocketBase v0.41.1 has no WebAuthn support
   (checked 2026-10-29), so passkeys are custom code.
 - Routes in `internal/passkey`:
   - `POST /api/passkey/register/begin` and `/finish` (authenticated): adds a credential to `passkeys`.
@@ -218,7 +230,7 @@ the logic exists only once.
 - **Daily job at 07:00 Europe/Vienna** (PocketBase cron). At startup, the job runs once if today's run
   has not happened yet. Timings missed while the server was down are not sent afterwards; overdue
   reminders continue normally.
-- For each user and each of their `notification_settings` (only categories they have permission for):
+- For each active user and each of their `notification_settings` (only categories they have permission for):
   a due date fires when it is exactly N days away for an N in `timings`, and, if `weekly_overdue`, on
   every 7th day after the due date while it is overdue.
 - **One grouped push per user per day**, e.g. "Masks: 2 overdue, 1 due today". Tapping it opens the due
@@ -244,8 +256,8 @@ Ionic tabs; tabs appear only when they apply to the logged-in user.
 | Category → items | `use`+ | Items with state badge; retired items hidden behind a show/hide button |
 | Item detail | `use`+ | Due date per check type, end of life, combined history of checks and uses; actions by level |
 | Record use | `use`+ | Scan loop (section 9), then one form: date (today), kind, "recorded by" (remembered per device), note; saves one use per item. Opened from an item's detail page via `/material/verwendung?geraet=<id>`, it starts with that item in the list |
-| Record check | `check`+ | Check type, date, result, note |
-| Manage | `manage` | Create and edit items (incl. "last checked on" per check type) and check types |
+| Record check | `check`+ | Check type (preselects the category's default, else the first), date, result, note |
+| Manage | `manage` | Create and edit items (incl. "last checked on" per check type) and check types (incl. the category's default) |
 | QR label | `manage` | Printable QR label for an item; if the item has no barcode, one is generated from its ID and saved |
 | Settings | logged in | Notification settings per category, enable push on this device (iOS outside home screen: "Add to Home Screen first" guide), passkeys, logout |
 
@@ -271,8 +283,7 @@ Ionic tabs; tabs appear only when they apply to the logged-in user.
 - **Live suggestions while typing a code manually:** as soon as text is entered, a list shows active
   (not retired) items whose code or name contains the text, case-insensitive, excluding items already
   in the list (e.g. `M-00` offers Maske 01–05). Tapping a suggestion adds the item and clears the
-  input. Enter with an exact code still adds directly. Open question for phase 2: cap the list (e.g. 8
-  entries) and whether matching names should stay in.
+  input. Enter with an exact code still adds directly. Names stay in the match and the list has no cap.
 - Scanning from the material tab works as quick search and opens the item.
 
 ## 10. Build, deploy, backup

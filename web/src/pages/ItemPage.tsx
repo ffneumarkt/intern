@@ -1,66 +1,99 @@
-import { IonButton, IonCard, IonCardContent, IonItem, IonLabel, IonList, IonListHeader, IonNote } from '@ionic/react'
+import { IonButton, IonCard, IonCardContent, IonItem, IonLabel, IonList, IonListHeader, IonNote, IonText } from '@ionic/react'
+import { useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { listHistory, listItems, retireItem, type Item } from '../api/material'
 import DueStateBadge from '../components/DueStateBadge'
+import Loaded from '../components/Loaded'
 import Page from '../components/Page'
 import { paths } from '../routes'
-import { history, items } from '../sketch/mockData'
-import { atLeast, useSketchSession } from '../sketch/session'
+import { useSession } from '../session'
+import { useResource } from '../useResource'
 
 const statusLabel = { active: 'Aktiv', defective: 'Mangel', retired: 'Ausgeschieden' }
 
 export default function ItemPage() {
   const { itemId = '' } = useParams()
-  const { level } = useSketchSession()
-  const item = items.find((i) => i.id === itemId)
-  if (!item) return <Page title="Gerät nicht gefunden" back={paths.dueList} />
+  const { can } = useSession()
+  const resource = useResource(async () => {
+    const [items, history] = await Promise.all([listItems(), listHistory(itemId)])
+    return { item: items.find((i) => i.id === itemId), history }
+  })
+  const [failed, setFailed] = useState(false)
+  const item = resource.data?.item
+
+  const retire = async (target: Item) => {
+    if (!window.confirm(`${target.name} ausscheiden?`)) return
+    setFailed(false)
+    try {
+      await retireItem(target.id)
+      resource.reload()
+    } catch {
+      setFailed(true)
+    }
+  }
+
+  const title = !resource.data || item ? (item?.name ?? 'Gerät') : 'Gerät nicht gefunden'
   return (
-    <Page title={item.name} back={paths.category(item.categoryId)}>
-      <IonCard>
-        <IonCardContent>
-          <p>Seriennummer: {item.serial ?? '–'}</p>
-          <p>Code: {item.barcode ?? '–'}</p>
-          <p>Hergestellt: {item.manufacturedOn ?? '–'}</p>
-          <p>Status: {statusLabel[item.status]}</p>
-          {item.note && <p>Notiz: {item.note}</p>}
-        </IonCardContent>
-      </IonCard>
-      <div className="ion-margin-bottom">
-        <IonButton routerLink={paths.recordUseFor(item.id)}>Verwendung erfassen</IonButton>
-        {atLeast(level, 'check') && <IonButton routerLink={paths.recordCheck(item.id)}>Prüfung erfassen</IonButton>}
-        {atLeast(level, 'check') && <IonButton color="medium" fill="outline">Ausscheiden</IonButton>}
-        {atLeast(level, 'manage') && <IonButton fill="outline" routerLink={paths.manage}>Bearbeiten</IonButton>}
-        {atLeast(level, 'manage') && <IonButton fill="outline" routerLink={paths.label(item.id)}>Etikett drucken</IonButton>}
-      </div>
-      <IonList>
-        <IonListHeader>
-          <IonLabel>Fälligkeiten</IonLabel>
-        </IonListHeader>
-        {item.dues.map((d) => (
-          <IonItem key={d.label}>
-            <IonLabel>
-              <h3>{d.label}</h3>
-              <p>{d.date}</p>
-            </IonLabel>
-            <DueStateBadge state={d.state} />
-          </IonItem>
-        ))}
-      </IonList>
-      <IonList>
-        <IonListHeader>
-          <IonLabel>Verlauf</IonLabel>
-        </IonListHeader>
-        {history
-          .filter((h) => h.itemId === item.id)
-          .map((h) => (
-            <IonItem key={`${h.date}-${h.title}`}>
-              <IonLabel>
-                <h3>{h.title}</h3>
-                <p>{h.detail}</p>
-              </IonLabel>
-              <IonNote slot="end">{h.date}</IonNote>
-            </IonItem>
-          ))}
-      </IonList>
+    <Page title={title} back={item ? paths.category(item.categoryId) : paths.dueList}>
+      <Loaded resource={resource}>
+        {({ item, history }) => {
+          if (!item) return null
+          const active = item.status !== 'retired'
+          return (
+            <>
+              <IonCard>
+                <IonCardContent>
+                  <p>Seriennummer: {item.serial ?? '–'}</p>
+                  <p>Code: {item.barcode ?? '–'}</p>
+                  <p>Hergestellt: {item.manufacturedOn ?? '–'}</p>
+                  <p>Status: {statusLabel[item.status]}</p>
+                  {item.note && <p>Notiz: {item.note}</p>}
+                </IonCardContent>
+              </IonCard>
+              {failed && <IonText color="danger">Speichern fehlgeschlagen.</IonText>}
+              <div className="ion-margin-bottom">
+                {active && <IonButton routerLink={paths.recordUseFor(item.id)}>Verwendung erfassen</IonButton>}
+                {active && can(item.categoryId, 'check') && <IonButton routerLink={paths.recordCheck(item.id)}>Prüfung erfassen</IonButton>}
+                {active && can(item.categoryId, 'check') && (
+                  <IonButton color="medium" fill="outline" onClick={() => retire(item)}>
+                    Ausscheiden
+                  </IonButton>
+                )}
+                {can(item.categoryId, 'manage') && <IonButton fill="outline" routerLink={paths.itemEdit(item.id)}>Bearbeiten</IonButton>}
+                {can(item.categoryId, 'manage') && <IonButton fill="outline" routerLink={paths.label(item.id)}>Etikett drucken</IonButton>}
+              </div>
+              <IonList>
+                <IonListHeader>
+                  <IonLabel>Fälligkeiten</IonLabel>
+                </IonListHeader>
+                {item.dues.map((d) => (
+                  <IonItem key={`${d.kind}-${d.checkTypeId}`}>
+                    <IonLabel>
+                      <h3>{d.label}</h3>
+                      <p>{d.date}</p>
+                    </IonLabel>
+                    <DueStateBadge state={d.state} />
+                  </IonItem>
+                ))}
+              </IonList>
+              <IonList>
+                <IonListHeader>
+                  <IonLabel>Verlauf</IonLabel>
+                </IonListHeader>
+                {history.map((h, index) => (
+                  <IonItem key={index}>
+                    <IonLabel>
+                      <h3>{h.title}</h3>
+                      <p>{h.detail}</p>
+                    </IonLabel>
+                    <IonNote slot="end">{h.date}</IonNote>
+                  </IonItem>
+                ))}
+              </IonList>
+            </>
+          )
+        }}
+      </Loaded>
     </Page>
   )
 }

@@ -1,7 +1,8 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
 import { setupIonicReact } from '@ionic/react'
-import { afterEach, vi } from 'vitest'
+import { afterEach, beforeEach, vi } from 'vitest'
+import { resetMaterial } from './fakeMaterial'
 
 setupIonicReact({ mode: 'md' })
 
@@ -18,6 +19,8 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: vi.fn(),
   })),
 })
+
+beforeEach(resetMaterial)
 
 afterEach(() => {
   cleanup()
