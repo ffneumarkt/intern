@@ -103,7 +103,7 @@ Dockerfile           # node → go → distroless/static, source label links the
 compose.yaml         # reference compose file for the VPS
 Makefile             # dev-api, dev-web, debug, seed, test, build, image, run
 deploy/              # (later) systemd units, backup wrapper script, authorized_keys example
-.github/workflows/   # ci.yml
+.github/workflows/   # web.yml, go.yml, security.yml, image.yml
 docs/superpowers/    # specs, plans, STATUS.md
 ```
 
@@ -296,12 +296,16 @@ Ionic tabs; tabs appear only when they apply to the logged-in user.
 
 ### CI (GitHub Actions)
 
-- Pull requests: `vitest`, `tsc --noEmit`, `go vet`, `go test ./...`, `govulncheck`, image build without
-  push. `govulncheck` is not required for the image, so a new advisory does not block a release.
-- A newer push cancels a running build of the same branch or PR, on `main` too, so a superseded commit
-  may get no SHA tag.
-- Changes that only touch `docs/**`, `*.md` files or `LICENSE` skip CI entirely (`paths-ignore` on
-  both triggers), so docs PRs show no checks and docs commits on `main` build no new image.
+- One workflow per concern in `.github/workflows/`: `web.yml` (`vitest`, `tsc --noEmit`), `go.yml`
+  (`go vet`, `go test ./...`), `security.yml` (`govulncheck`, `npm audit` at level high) and `image.yml`.
+- `web.yml` and `go.yml` run on pull requests that touch their code. `image.yml` builds on every pull
+  request without pushing. On `main` it calls `web.yml` and `go.yml` first, so no image is pushed
+  without passing tests.
+- `security.yml` is not required for the image, so a new advisory does not block a release.
+- A newer push cancels a running build of the same workflow and branch or PR, on `main` too, so a
+  superseded commit may get no SHA tag.
+- Changes that only touch `docs/**`, `*.md` files or `LICENSE` start none of these, so docs PRs show no
+  checks and docs commits on `main` build no new image.
 - `main`: multi-stage Dockerfile (Node build → Go build → `gcr.io/distroless/static`, runs as root so
   the bind-mounted `./data` needs no special ownership), pushed to GHCR as `ghcr.io/ffneumarkt/intern`
   with tags `latest` and the commit SHA. `packages: write` is granted only to the `image` job. The image

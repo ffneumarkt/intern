@@ -1,0 +1,54 @@
+name: Security
+
+# Not called by image.yml: a newly published advisory should show up red without stopping an
+# unrelated fix from shipping.
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - web/package.json
+      - web/package-lock.json
+      - .github/workflows/security.yml
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - web/package.json
+      - web/package-lock.json
+      - .github/workflows/security.yml
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Fails only on vulnerabilities the code actually reaches.
+  govulncheck:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+
+  # Reads only the lockfile, so nothing needs installing. Moderate and low findings are reviewed by
+  # hand, see docs/superpowers/STATUS.md.
+  npm-audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 26
+      - run: npm audit --audit-level=high

@@ -1,0 +1,33 @@
+name: Go
+
+# Also called by image.yml, so an image is only pushed after these pass.
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - .github/workflows/go.yml
+  workflow_call:
+
+# Named literally: in a called workflow, github.workflow is the caller's name, and sharing its
+# group would make the two cancel each other.
+concurrency:
+  group: go-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - run: go vet ./...
+      - run: go test ./...
