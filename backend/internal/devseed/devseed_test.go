@@ -97,6 +97,20 @@ func TestSeedGivesEachUserItsLevel(t *testing.T) {
 	}
 }
 
+func TestSeedSetsADefaultCheckType(t *testing.T) {
+	app := testenv.New(t)
+	if err := devseed.Seed(app, today); err != nil {
+		t.Fatal(err)
+	}
+	record, err := app.FindFirstRecordByData("check_types", "name", "Maskenprüfung")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !record.GetBool("is_default") {
+		t.Error("Maskenprüfung is not the default")
+	}
+}
+
 func TestSeedRunsOnce(t *testing.T) {
 	app := testenv.New(t)
 	if err := devseed.Seed(app, today); err != nil {

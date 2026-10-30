@@ -108,6 +108,63 @@ func TestCheckTypeValidation(t *testing.T) {
 	}
 }
 
+func isDefault(t *testing.T, app core.App, id string) bool {
+	t.Helper()
+	record, err := app.FindRecordById("check_types", id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return record.GetBool("is_default")
+}
+
+func TestOneDefaultCheckTypePerCategory(t *testing.T) {
+	app := testenv.New(t)
+	w := testenv.Seed(t, app)
+	first := testenv.Create(t, app, "check_types", map[string]any{"category": w.CategoryA.Id, "name": "Erste",
+		"interval_months": 6, "is_default": true})
+	w.CheckTypeB.Set("is_default", true)
+	if err := app.Save(w.CheckTypeB); err != nil {
+		t.Fatal(err)
+	}
+
+	w.CheckTypeA.Set("is_default", true)
+	if err := app.Save(w.CheckTypeA); err != nil {
+		t.Fatal(err)
+	}
+	if isDefault(t, app, first.Id) {
+		t.Error("the previous default stayed after an update")
+	}
+	if !isDefault(t, app, w.CheckTypeA.Id) {
+		t.Error("the new default was not stored")
+	}
+	if !isDefault(t, app, w.CheckTypeB.Id) {
+		t.Error("another category lost its default")
+	}
+
+	created := testenv.Create(t, app, "check_types", map[string]any{"category": w.CategoryA.Id, "name": "Neu",
+		"after_use": true, "is_default": true})
+	if isDefault(t, app, w.CheckTypeA.Id) {
+		t.Error("the previous default stayed after a create")
+	}
+	if !isDefault(t, app, created.Id) {
+		t.Error("the created default was not stored")
+	}
+}
+
+func TestSavingANonDefaultKeepsTheDefault(t *testing.T) {
+	app := testenv.New(t)
+	w := testenv.Seed(t, app)
+	chosen := testenv.Create(t, app, "check_types", map[string]any{"category": w.CategoryA.Id, "name": "Standard",
+		"interval_months": 6, "is_default": true})
+	w.CheckTypeA.Set("name", "Umbenannt")
+	if err := app.Save(w.CheckTypeA); err != nil {
+		t.Fatal(err)
+	}
+	if !isDefault(t, app, chosen.Id) {
+		t.Error("the default was lost")
+	}
+}
+
 func TestEntriesCannotBeDatedInTheFuture(t *testing.T) {
 	app := testenv.New(t)
 	w := testenv.Seed(t, app)

@@ -35,7 +35,7 @@ export default function RecordCheckPage() {
         {({ items, checkTypes }) => {
           const item = items.find((i) => i.id === itemId)
           const types = checkTypes.filter((t) => t.categoryId === item?.categoryId)
-          const checkTypeId = selectedType || types[0]?.id || ''
+          const checkTypeId = selectedType || (types.find((t) => t.isDefault) ?? types[0])?.id || ''
 
           const save = async () => {
             if (isFuture(date)) {

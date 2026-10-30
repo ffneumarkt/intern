@@ -8,9 +8,9 @@ const categories: Category[] = [
 ]
 
 const checkTypes: CheckType[] = [
-  { id: 'maskenpruefung', categoryId: 'masken', name: 'Maskenprüfung', intervalMonths: 12, afterUse: true, alsoSatisfies: [] },
-  { id: 'fuenfjahr', categoryId: 'masken', name: '5-Jahres-Prüfung', intervalMonths: 60, afterUse: false, alsoSatisfies: ['maskenpruefung'] },
-  { id: 'la-jahr', categoryId: 'lungenautomaten', name: 'Jahresprüfung', intervalMonths: 12, afterUse: true, alsoSatisfies: [] },
+  { id: 'maskenpruefung', categoryId: 'masken', name: 'Maskenprüfung', intervalMonths: 12, afterUse: true, isDefault: false, alsoSatisfies: [] },
+  { id: 'fuenfjahr', categoryId: 'masken', name: '5-Jahres-Prüfung', intervalMonths: 60, afterUse: false, isDefault: false, alsoSatisfies: ['maskenpruefung'] },
+  { id: 'la-jahr', categoryId: 'lungenautomaten', name: 'Jahresprüfung', intervalMonths: 12, afterUse: true, isDefault: false, alsoSatisfies: [] },
 ]
 
 const checkDue = (label: string, date: string, state: DueState, checkTypeId = 'maskenpruefung'): Due => ({

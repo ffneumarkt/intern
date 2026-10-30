@@ -21,6 +21,7 @@ approved; these deviations apply and the code is authoritative:
 - Logout lands on the login page, not Start: `RequireLogin` redirects first.
 - After a partly saved item, Manage stays open with the form cleared and a warning.
 - `ItemForm` gained `Notiz`, and `api/errors.ts` holds the errors screens explain.
+- Added on user request after the review: a default check type per category (`check_types.is_default`).
 
 ## Global Constraints
 

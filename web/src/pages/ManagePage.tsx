@@ -138,6 +138,7 @@ function CheckTypesTab({ categoryId, checkTypes, onChange }: CheckTypesTabProps)
 
   const describe = (t: CheckType) =>
     [
+      t.isDefault && 'Standard',
       t.intervalMonths && `alle ${t.intervalMonths} Monate`,
       t.afterUse && 'nach Verwendung',
       t.alsoSatisfies.length > 0 &&
@@ -179,6 +180,7 @@ function CheckTypeForm({ categoryId, checkType, others, onDone }: CheckTypeFormP
   const [name, setName] = useState(checkType?.name ?? '')
   const [months, setMonths] = useState(checkType?.intervalMonths ? String(checkType.intervalMonths) : '')
   const [afterUse, setAfterUse] = useState(checkType?.afterUse ?? false)
+  const [isDefault, setIsDefault] = useState(checkType?.isDefault ?? false)
   const [alsoSatisfies, setAlsoSatisfies] = useState(checkType?.alsoSatisfies ?? [])
   const [error, setError] = useState<string | null>(null)
   const { busy, once } = useBusy()
@@ -190,7 +192,7 @@ function CheckTypeForm({ categoryId, checkType, others, onDone }: CheckTypeFormP
       return
     }
     setError(null)
-    const input = { name, intervalMonths, afterUse, alsoSatisfies }
+    const input = { name, intervalMonths, afterUse, isDefault, alsoSatisfies }
     try {
       if (checkType) await updateCheckType(checkType.id, input)
       else await createCheckType({ ...input, categoryId })
@@ -224,6 +226,7 @@ function CheckTypeForm({ categoryId, checkType, others, onDone }: CheckTypeFormP
         <Field label="Name" value={name} onChange={setName} />
         <Field label="Intervall in Monaten" type="number" value={months} onChange={setMonths} />
         <CheckboxField label="nach Verwendung" checked={afterUse} onChange={setAfterUse} />
+        <CheckboxField label="Standardprüfung" checked={isDefault} onChange={setIsDefault} />
         {others
           .filter((t) => t.id !== checkType?.id)
           .map((t) => (

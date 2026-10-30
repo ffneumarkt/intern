@@ -12,7 +12,7 @@ Last updated: 2026-10-30. Read this first, then the spec
   linked to the repo; anonymous pull verified.
 - **Phase 2 done** (plan `plans/2026-10-30-data-and-auth.md`, branch `feature/data-and-auth`): all
   collections and rules, password login, `/api/material/due` with `internal/due`, status hooks, member
-  deactivation, every screen on real data, `web/src/sketch/` deleted, `make seed` for sample data.
+  deactivation, a default check type per category, every screen on real data, `web/src/sketch/` deleted, `make seed` for sample data.
 - Nothing is deployed to the VPS yet. No `deploy/` files exist yet.
 
 ## How the process works here

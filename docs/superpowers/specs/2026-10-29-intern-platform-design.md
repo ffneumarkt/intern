@@ -116,7 +116,7 @@ All collections are PocketBase collections created by Go migrations. `?` marks o
 | `users` (auth) | name, email, password, `deactivated` (bool) | PocketBase auth collection; email + password login enabled; deactivated instead of deleted, see section 4 |
 | `categories` | name, `max_service_life_years`? (number) | e.g. "Masks" |
 | `permissions` | user → users, category → categories, level (`use` \| `check` \| `manage`) | unique index on (user, category) |
-| `check_types` | category → categories, name, `interval_months`? (number), `after_use` (bool), `also_satisfies` → check_types (multiple) | at least one trigger required; `also_satisfies` only targets check types of the same category (validated in a hook) |
+| `check_types` | category → categories, name, `interval_months`? (number), `after_use` (bool), `is_default` (bool), `also_satisfies` → check_types (multiple) | at least one trigger required; `also_satisfies` only targets check types of the same category (validated in a hook); at most one default per category (a hook clears the previous one) |
 | `items` | category → categories, name (e.g. inventory number), serial?, `barcode`? (unique when set), `manufactured_on`? (date), status (`active` \| `defective` \| `retired`), note? | |
 | `uses` | item → items, date, kind (`operation` \| `exercise` \| `other`), `recorded_by_name`?, note?, created_by → users | |
 | `checks` | item → items, check_type → check_types, date, result (`passed` \| `defect` \| `retired`), performed_by → users, note? | |
@@ -256,8 +256,8 @@ Ionic tabs; tabs appear only when they apply to the logged-in user.
 | Category → items | `use`+ | Items with state badge; retired items hidden behind a show/hide button |
 | Item detail | `use`+ | Due date per check type, end of life, combined history of checks and uses; actions by level |
 | Record use | `use`+ | Scan loop (section 9), then one form: date (today), kind, "recorded by" (remembered per device), note; saves one use per item. Opened from an item's detail page via `/material/verwendung?geraet=<id>`, it starts with that item in the list |
-| Record check | `check`+ | Check type, date, result, note |
-| Manage | `manage` | Create and edit items (incl. "last checked on" per check type) and check types |
+| Record check | `check`+ | Check type (preselects the category's default, else the first), date, result, note |
+| Manage | `manage` | Create and edit items (incl. "last checked on" per check type) and check types (incl. the category's default) |
 | QR label | `manage` | Printable QR label for an item; if the item has no barcode, one is generated from its ID and saved |
 | Settings | logged in | Notification settings per category, enable push on this device (iOS outside home screen: "Add to Home Screen first" guide), passkeys, logout |
 

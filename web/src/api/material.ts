@@ -15,6 +15,7 @@ export interface CheckType {
   name: string
   intervalMonths?: number
   afterUse: boolean
+  isDefault: boolean
   alsoSatisfies: string[]
 }
 
@@ -73,6 +74,7 @@ export async function listCheckTypes(): Promise<CheckType[]> {
     name: r.name,
     intervalMonths: r.interval_months || undefined,
     afterUse: r.after_use,
+    isDefault: r.is_default,
     alsoSatisfies: r.also_satisfies ?? [],
   }))
 }
@@ -176,6 +178,7 @@ export interface CheckTypeInput {
   name: string
   intervalMonths: number
   afterUse: boolean
+  isDefault: boolean
   alsoSatisfies: string[]
 }
 
@@ -191,6 +194,7 @@ const checkTypeFields = (input: Omit<CheckTypeInput, 'categoryId'>) => ({
   name: input.name,
   interval_months: input.intervalMonths,
   after_use: input.afterUse,
+  is_default: input.isDefault,
   also_satisfies: input.alsoSatisfies,
 })
 

@@ -163,6 +163,8 @@ func TestManageLevel(t *testing.T) {
 	e.run(t, "renames a check type", request{as: w.Manage, method: "PATCH", url: record("check_types", w.CheckTypeA.Id), body: `{"name":"x"}`, status: 200})
 	e.run(t, "no moving a check type", request{as: w.Manage, method: "PATCH", url: record("check_types", w.CheckTypeA.Id),
 		body: fmt.Sprintf(`{"category":%q}`, w.CategoryB.Id), status: 404})
+	e.run(t, "sets the default", request{as: w.Manage, method: "PATCH", url: record("check_types", w.CheckTypeA.Id), body: `{"is_default":true}`,
+		status: 200, contains: []string{`"is_default":true`}})
 	e.run(t, "deletes a check type", request{as: w.Manage, method: "DELETE", url: record("check_types", w.CheckTypeA.Id), status: 204})
 	e.run(t, "deletes an item", request{as: w.Manage, method: "DELETE", url: record("items", w.ItemA.Id), status: 204})
 	e.run(t, "no delete elsewhere", request{as: w.Manage, method: "DELETE", url: record("items", w.ItemB.Id), status: 404})
@@ -264,7 +266,7 @@ func TestTransportDocumentSettingsArePublicToRead(t *testing.T) {
 
 func TestMigrationsRevert(t *testing.T) {
 	app := testenv.New(t)
-	if _, err := core.NewMigrationsRunner(app, core.AppMigrations).Down(2); err != nil {
+	if _, err := core.NewMigrationsRunner(app, core.AppMigrations).Down(3); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := app.FindCollectionByNameOrId("items"); err == nil {

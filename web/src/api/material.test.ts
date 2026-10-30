@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { listHistory, listItems } from './material'
+import { listCheckTypes, listHistory, listItems } from './material'
 
 const list = (items: object[]) => ({ page: 1, perPage: 1000, totalItems: items.length, totalPages: 1, items })
 
@@ -44,6 +44,17 @@ describe('listItems', () => {
     const [item] = await listItems()
     expect(item.dueState).toBe('overdue')
     expect(item.dues.map((d) => d.label)).toEqual(['Mangel', 'Maskenprüfung', 'Lebensdauer'])
+  })
+})
+
+describe('listCheckTypes', () => {
+  it('reads the default flag', async () => {
+    serve({
+      '/api/collections/check_types/records': list([
+        { id: 't1', category: 'c1', name: 'prüfen', interval_months: 0, after_use: true, is_default: true, also_satisfies: [] },
+      ]),
+    })
+    expect((await listCheckTypes())[0].isDefault).toBe(true)
   })
 })
 

@@ -236,6 +236,30 @@ describe('recording a check', () => {
     expect(within(select).getAllByRole('option').map((o) => o.textContent)).toEqual(['Jahresprüfung'])
   })
 
+  it('preselects the default check type of the category', async () => {
+    data.checkTypes = data.checkTypes.map((t) => ({ ...t, isDefault: t.id === 'fuenfjahr' }))
+    renderAt(paths.recordCheck('m01'), 'check')
+    expect(await screen.findByLabelText('Prüfart')).toHaveValue('fuenfjahr')
+  })
+
+  it('ignores the default of another category', async () => {
+    data.checkTypes = data.checkTypes.map((t) => ({ ...t, isDefault: t.id === 'la-jahr' }))
+    renderAt(paths.recordCheck('m01'), 'check')
+    expect(await screen.findByLabelText('Prüfart')).toHaveValue('maskenpruefung')
+  })
+
+  it('falls back to the first check type without a default', async () => {
+    renderAt(paths.recordCheck('m01'), 'check')
+    expect(await screen.findByLabelText('Prüfart')).toHaveValue('maskenpruefung')
+  })
+
+  it('still lets the user pick another type than the default', async () => {
+    data.checkTypes = data.checkTypes.map((t) => ({ ...t, isDefault: t.id === 'fuenfjahr' }))
+    renderAt(paths.recordCheck('m01'), 'check')
+    fireEvent.change(await screen.findByLabelText('Prüfart'), { target: { value: 'maskenpruefung' } })
+    expect(screen.getByLabelText('Prüfart')).toHaveValue('maskenpruefung')
+  })
+
   it('saves and shows the entry on the item page', async () => {
     renderAt(paths.recordCheck('m01'), 'check')
     fireEvent.change(await screen.findByLabelText('Prüfart'), { target: { value: 'fuenfjahr' } })
@@ -470,6 +494,7 @@ describe('manage', () => {
     set('Intervall in Monaten', '6')
     fireEvent.click(screen.getByLabelText('nach Verwendung'))
     fireEvent.click(screen.getByLabelText('gilt auch als Maskenprüfung'))
+    fireEvent.click(screen.getByLabelText('Standardprüfung'))
     fireEvent.click(ionButton('Prüfart anlegen')!)
     await waitFor(() => expect(calls.createdCheckTypes).toHaveLength(1))
     expect(calls.createdCheckTypes[0]).toEqual({
@@ -477,6 +502,7 @@ describe('manage', () => {
       name: 'Sichtprüfung',
       intervalMonths: 6,
       afterUse: true,
+      isDefault: true,
       alsoSatisfies: ['maskenpruefung'],
     })
   })
@@ -493,6 +519,20 @@ describe('manage', () => {
     fireEvent.click(ionButton('Speichern')!)
     await waitFor(() => expect(calls.updatedCheckTypes).toHaveLength(1))
     expect(calls.updatedCheckTypes[0].input.intervalMonths).toBe(24)
+  })
+
+  it('shows and changes the default of a check type', async () => {
+    data.checkTypes = data.checkTypes.map((t) => ({ ...t, isDefault: t.id === 'maskenpruefung' }))
+    renderAt(paths.manage, 'manage')
+    await openCheckTypes()
+    expect(screen.getByText('Standard · alle 12 Monate · nach Verwendung')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('Maskenprüfung'))
+    const checkbox = await screen.findByLabelText('Standardprüfung')
+    expect(checkbox).toBeChecked()
+    fireEvent.click(checkbox)
+    fireEvent.click(ionButton('Speichern')!)
+    await waitFor(() => expect(calls.updatedCheckTypes).toHaveLength(1))
+    expect(calls.updatedCheckTypes[0].input.isDefault).toBe(false)
   })
 
   it('explains why a used check type cannot be deleted', async () => {
