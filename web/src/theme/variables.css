@@ -59,6 +59,14 @@
   padding: 8px 0;
 }
 
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 0;
+}
+
 .label-preview {
   display: flex;
   flex-direction: column;

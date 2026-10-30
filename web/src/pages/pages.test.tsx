@@ -245,6 +245,162 @@ describe('retiring', () => {
   })
 })
 
+describe('manage', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  const lastChecked = (type: string) => screen.findByLabelText(`Zuletzt geprüft am (${type})`)
+  const set = (label: string, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } })
+  const openCheckTypes = async () => {
+    fireEvent.click(await screen.findByText('Prüfarten'))
+    await findIon(() => ionButton('Prüfart anlegen'))
+  }
+
+  it('lists only categories at manage level', async () => {
+    signInAs('use', { masken: 'manage', lungenautomaten: 'use' })
+    render(<App initialPath={paths.manage} />)
+    const select = await screen.findByLabelText('Kategorie')
+    expect(within(select).getAllByRole('option').map((o) => o.textContent)).toEqual(['Atemschutzmasken'])
+  })
+
+  it('preselects the category from the link', async () => {
+    renderAt(paths.manageCategory('lungenautomaten'), 'manage')
+    expect(await screen.findByLabelText('Kategorie')).toHaveValue('lungenautomaten')
+    expect(await lastChecked('Jahresprüfung')).toBeInTheDocument()
+  })
+
+  it('refuses a user without manage anywhere', async () => {
+    renderAt(paths.manage, 'check')
+    expect(await screen.findByText('Keine Berechtigung.')).toBeInTheDocument()
+  })
+
+  it('creates an item with last checked dates of the selected category', async () => {
+    renderAt(paths.manage, 'manage')
+    fireEvent.change(await lastChecked('Maskenprüfung'), { target: { value: '2026-01-15' } })
+    expect(screen.queryByLabelText('Zuletzt geprüft am (Jahresprüfung)')).not.toBeInTheDocument()
+    set('Bezeichnung', 'Maske 07')
+    set('Seriennummer', 'DR-07')
+    set('Code', 'M-007')
+    set('Hergestellt am', '2026-02-01')
+    fireEvent.click(ionButton('Gerät anlegen')!)
+    expect(await screen.findByRole('heading', { name: 'Maske 07' })).toBeInTheDocument()
+    expect(calls.createdItems).toEqual([
+      {
+        input: { categoryId: 'masken', name: 'Maske 07', serial: 'DR-07', barcode: 'M-007', manufacturedOn: '2026-02-01', note: '' },
+        lastChecked: { maskenpruefung: '2026-01-15' },
+      },
+    ])
+  })
+
+  it('explains a duplicate code and keeps the form', async () => {
+    failing.barcode = true
+    renderAt(paths.manage, 'manage')
+    await lastChecked('Maskenprüfung')
+    set('Bezeichnung', 'Maske 07')
+    fireEvent.click(ionButton('Gerät anlegen')!)
+    expect(await screen.findByText('Code ist bereits vergeben.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Bezeichnung')).toHaveValue('Maske 07')
+  })
+
+  it('clears the form when the item exists but a check failed, so a retry cannot duplicate it', async () => {
+    failing.initialChecks = true
+    renderAt(paths.manage, 'manage')
+    await lastChecked('Maskenprüfung')
+    set('Bezeichnung', 'Maske 07')
+    fireEvent.click(ionButton('Gerät anlegen')!)
+    expect(await screen.findByText('Gerät angelegt, aber nicht alle Prüfungen gespeichert.')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByLabelText('Bezeichnung')).toHaveValue(''))
+  })
+
+  it('edits an item from its page', async () => {
+    renderAt(paths.item('m01'), 'manage')
+    fireEvent.click(await findIon(() => ionButton('Bearbeiten')))
+    const name = await screen.findByLabelText('Bezeichnung')
+    expect(name).toHaveValue('Maske 01')
+    expect(screen.getByLabelText('Code')).toHaveValue('M-001')
+    fireEvent.change(name, { target: { value: 'Maske 1' } })
+    fireEvent.click(ionButton('Speichern')!)
+    await waitFor(() => expect(calls.updatedItems).toHaveLength(1))
+    expect(calls.updatedItems[0]).toEqual({
+      itemId: 'm01',
+      input: { name: 'Maske 1', serial: 'DR-4711-01', barcode: 'M-001', manufacturedOn: '2016-03-01', note: '' },
+    })
+  })
+
+  it('offers no editing below manage', async () => {
+    renderAt(paths.itemEdit('m01'), 'check')
+    expect(await screen.findByText('Keine Berechtigung.')).toBeInTheDocument()
+  })
+
+  it('deletes an item after confirmation', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    renderAt(paths.itemEdit('m01'), 'manage')
+    fireEvent.click(await findIon(() => ionButton('Gerät löschen')))
+    await waitFor(() => expect(calls.deletedItems).toEqual(['m01']))
+    expect(window.confirm).toHaveBeenCalledWith('Maske 01 löschen?')
+    expect(await screen.findByRole('heading', { name: 'Atemschutzmasken' })).toBeInTheDocument()
+  })
+
+  it('keeps an item when deletion is dismissed', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+    renderAt(paths.itemEdit('m01'), 'manage')
+    fireEvent.click(await findIon(() => ionButton('Gerät löschen')))
+    expect(calls.deletedItems).toEqual([])
+  })
+
+  it('requires a trigger for a check type', async () => {
+    renderAt(paths.manage, 'manage')
+    await openCheckTypes()
+    set('Name', 'Sichtprüfung')
+    fireEvent.click(ionButton('Prüfart anlegen')!)
+    expect(await screen.findByText('Intervall oder „nach Verwendung“ angeben.')).toBeInTheDocument()
+    expect(calls.createdCheckTypes).toEqual([])
+  })
+
+  it('creates a check type', async () => {
+    renderAt(paths.manage, 'manage')
+    await openCheckTypes()
+    set('Name', 'Sichtprüfung')
+    set('Intervall in Monaten', '6')
+    fireEvent.click(screen.getByLabelText('nach Verwendung'))
+    fireEvent.click(screen.getByLabelText('gilt auch als Maskenprüfung'))
+    fireEvent.click(ionButton('Prüfart anlegen')!)
+    await waitFor(() => expect(calls.createdCheckTypes).toHaveLength(1))
+    expect(calls.createdCheckTypes[0]).toEqual({
+      categoryId: 'masken',
+      name: 'Sichtprüfung',
+      intervalMonths: 6,
+      afterUse: true,
+      alsoSatisfies: ['maskenpruefung'],
+    })
+  })
+
+  it('edits a check type, offering only others of its category', async () => {
+    renderAt(paths.manage, 'manage')
+    await openCheckTypes()
+    fireEvent.click(screen.getByText('Maskenprüfung'))
+    expect(await screen.findByLabelText('Name')).toHaveValue('Maskenprüfung')
+    expect(screen.queryByLabelText('gilt auch als Maskenprüfung')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('gilt auch als 5-Jahres-Prüfung')).toBeInTheDocument()
+    expect(screen.queryByLabelText('gilt auch als Jahresprüfung')).not.toBeInTheDocument()
+    set('Intervall in Monaten', '24')
+    fireEvent.click(ionButton('Speichern')!)
+    await waitFor(() => expect(calls.updatedCheckTypes).toHaveLength(1))
+    expect(calls.updatedCheckTypes[0].input.intervalMonths).toBe(24)
+  })
+
+  it('explains why a used check type cannot be deleted', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    failing.deleteCheckType = true
+    renderAt(paths.manage, 'manage')
+    await openCheckTypes()
+    fireEvent.click(screen.getByText('Maskenprüfung'))
+    fireEvent.click(await findIon(() => ionButton('Prüfart löschen')))
+    expect(await screen.findByText('Prüfart wird noch verwendet und kann nicht gelöscht werden.')).toBeInTheDocument()
+  })
+})
+
 describe('record use from item detail', () => {
   it('opens record use with the item preselected', async () => {
     renderAt(paths.item('m01'), 'use')

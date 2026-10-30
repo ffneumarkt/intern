@@ -5,6 +5,7 @@ import type { ReactElement, ReactNode } from 'react'
 import { Navigate, Route } from 'react-router-dom'
 import CategoryPage from './pages/CategoryPage'
 import DueListPage from './pages/DueListPage'
+import ItemEditPage from './pages/ItemEditPage'
 import ItemPage from './pages/ItemPage'
 import LabelPage from './pages/LabelPage'
 import LoginPage from './pages/LoginPage'
@@ -37,6 +38,7 @@ function Tabs() {
         {material(paths.dueList, <DueListPage />)}
         {material(paths.category(), <CategoryPage />)}
         {material(paths.item(), <ItemPage />)}
+        {material(paths.itemEdit(), <ItemEditPage />)}
         {material(paths.recordUse, <RecordUsePage />)}
         {material(paths.recordCheck(), <RecordCheckPage />)}
         {material(paths.label(), <LabelPage />)}

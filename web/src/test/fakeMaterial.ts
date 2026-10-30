@@ -1,17 +1,33 @@
 // In-memory stand-in for api/material. Tests read and change `data`; setup.ts resets it.
-import type { CheckInput, UseInput } from '../api/material'
+import { BarcodeTakenError, CheckTypeInUseError, ItemPartlySavedError } from '../api/errors'
+import type { CheckInput, CheckTypeInput, ItemInput, UseInput } from '../api/material'
 import { freshData } from './fixtures'
 
 export type * from '../api/material'
 
 export let data = freshData()
-export const failing = { reads: false, check: false, useFor: new Set<string>() }
-export const calls = { uses: [] as { itemId: string; input: UseInput }[], checks: [] as { itemId: string; input: CheckInput }[], retired: [] as string[] }
+export const failing = {
+  reads: false,
+  check: false,
+  useFor: new Set<string>(),
+  barcode: false,
+  initialChecks: false,
+  deleteCheckType: false,
+}
+export const calls = { uses: [] as { itemId: string; input: UseInput }[], checks: [] as { itemId: string; input: CheckInput }[], retired: [] as string[], createdItems: [] as { input: ItemInput; lastChecked: Record<string, string> }[], updatedItems: [] as { itemId: string; input: Omit<ItemInput, 'categoryId'> }[], deletedItems: [] as string[], createdCheckTypes: [] as CheckTypeInput[], updatedCheckTypes: [] as { id: string; input: Omit<CheckTypeInput, 'categoryId'> }[] }
 
 export function resetMaterial() {
   data = freshData()
   failing.reads = false
   failing.check = false
+  failing.barcode = false
+  failing.initialChecks = false
+  failing.deleteCheckType = false
+  calls.createdItems = []
+  calls.updatedItems = []
+  calls.deletedItems = []
+  calls.createdCheckTypes = []
+  calls.updatedCheckTypes = []
   failing.useFor.clear()
   calls.uses = []
   calls.checks = []
@@ -50,4 +66,35 @@ export async function recordCheck(itemId: string, input: CheckInput) {
 
 export async function retireItem(itemId: string) {
   calls.retired.push(itemId)
+}
+
+export async function createItem(input: ItemInput, lastChecked: Record<string, string>) {
+  if (failing.barcode) throw new BarcodeTakenError()
+  calls.createdItems.push({ input, lastChecked })
+  data.items.push({ ...input, id: 'neu', status: 'active', dueState: 'ok', dues: [] })
+  if (failing.initialChecks) throw new ItemPartlySavedError()
+  return 'neu'
+}
+
+export async function updateItem(itemId: string, input: Omit<ItemInput, 'categoryId'>) {
+  if (failing.barcode) throw new BarcodeTakenError()
+  calls.updatedItems.push({ itemId, input })
+}
+
+export async function deleteItem(itemId: string) {
+  calls.deletedItems.push(itemId)
+  data.items = data.items.filter((i) => i.id !== itemId)
+}
+
+export async function createCheckType(input: CheckTypeInput) {
+  calls.createdCheckTypes.push(input)
+}
+
+export async function updateCheckType(id: string, input: Omit<CheckTypeInput, 'categoryId'>) {
+  calls.updatedCheckTypes.push({ id, input })
+}
+
+export async function deleteCheckType(id: string) {
+  if (failing.deleteCheckType) throw new CheckTypeInUseError()
+  data.checkTypes = data.checkTypes.filter((t) => t.id !== id)
 }

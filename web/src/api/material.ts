@@ -1,5 +1,7 @@
+import { ClientResponseError } from 'pocketbase'
 import type { DueState } from '../components/DueStateBadge'
 import { pb } from './client'
+import { BarcodeTakenError, CheckTypeInUseError, ItemPartlySavedError } from './errors'
 
 export interface Category {
   id: string
@@ -158,4 +160,88 @@ export async function recordCheck(itemId: string, input: CheckInput): Promise<vo
 
 export async function retireItem(itemId: string): Promise<void> {
   await pb.collection('items').update(itemId, { status: 'retired' })
+}
+
+export interface ItemInput {
+  categoryId: string
+  name: string
+  serial: string
+  barcode: string
+  manufacturedOn: string
+  note: string
+}
+
+export interface CheckTypeInput {
+  categoryId: string
+  name: string
+  intervalMonths: number
+  afterUse: boolean
+  alsoSatisfies: string[]
+}
+
+const itemFields = (input: Omit<ItemInput, 'categoryId'>) => ({
+  name: input.name,
+  serial: input.serial,
+  barcode: input.barcode,
+  manufactured_on: input.manufacturedOn,
+  note: input.note,
+})
+
+const checkTypeFields = (input: Omit<CheckTypeInput, 'categoryId'>) => ({
+  name: input.name,
+  interval_months: input.intervalMonths,
+  after_use: input.afterUse,
+  also_satisfies: input.alsoSatisfies,
+})
+
+function explainItemError(err: unknown): unknown {
+  return err instanceof ClientResponseError && err.response?.data?.barcode ? new BarcodeTakenError() : err
+}
+
+// lastChecked maps check type ids to dates; each creates an initial passed check, so existing
+// equipment does not start out overdue.
+export async function createItem(input: ItemInput, lastChecked: Record<string, string>): Promise<string> {
+  let id: string
+  try {
+    const record = await pb.collection('items').create({ ...itemFields(input), category: input.categoryId, status: 'active' })
+    id = record.id
+  } catch (err) {
+    throw explainItemError(err)
+  }
+  try {
+    for (const [checkTypeId, date] of Object.entries(lastChecked)) {
+      await recordCheck(id, { checkTypeId, date, result: 'passed', note: '' })
+    }
+  } catch {
+    throw new ItemPartlySavedError()
+  }
+  return id
+}
+
+export async function updateItem(itemId: string, input: Omit<ItemInput, 'categoryId'>): Promise<void> {
+  try {
+    await pb.collection('items').update(itemId, itemFields(input))
+  } catch (err) {
+    throw explainItemError(err)
+  }
+}
+
+export async function deleteItem(itemId: string): Promise<void> {
+  await pb.collection('items').delete(itemId)
+}
+
+export async function createCheckType(input: CheckTypeInput): Promise<void> {
+  await pb.collection('check_types').create({ ...checkTypeFields(input), category: input.categoryId })
+}
+
+export async function updateCheckType(id: string, input: Omit<CheckTypeInput, 'categoryId'>): Promise<void> {
+  await pb.collection('check_types').update(id, checkTypeFields(input))
+}
+
+export async function deleteCheckType(id: string): Promise<void> {
+  try {
+    await pb.collection('check_types').delete(id)
+  } catch (err) {
+    throw err instanceof ClientResponseError && err.status === 400 ? new CheckTypeInUseError() : err
+  }
 }

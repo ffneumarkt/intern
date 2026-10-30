@@ -41,6 +41,17 @@ export function TextAreaField({ label, value, onChange }: Pick<FieldProps, 'labe
   )
 }
 
+export function CheckboxField({ label, checked, onChange }: { label: string; checked: boolean; onChange(checked: boolean): void }) {
+  return (
+    <IonItem>
+      <label className="checkbox-label">
+        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+        {label}
+      </label>
+    </IonItem>
+  )
+}
+
 export function SelectField({ label, value, onChange, children }: Pick<FieldProps, 'label' | 'value' | 'onChange'> & { children: ReactNode }) {
   return (
     <IonItem>

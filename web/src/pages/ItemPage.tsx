@@ -59,7 +59,7 @@ export default function ItemPage() {
                     Ausscheiden
                   </IonButton>
                 )}
-                {can(item.categoryId, 'manage') && <IonButton fill="outline" routerLink={paths.manage}>Bearbeiten</IonButton>}
+                {can(item.categoryId, 'manage') && <IonButton fill="outline" routerLink={paths.itemEdit(item.id)}>Bearbeiten</IonButton>}
                 {can(item.categoryId, 'manage') && <IonButton fill="outline" routerLink={paths.label(item.id)}>Etikett drucken</IonButton>}
               </div>
               <IonList>
