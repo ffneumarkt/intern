@@ -122,7 +122,7 @@ All collections are PocketBase collections created by Go migrations. `?` marks o
 | `checks` | item → items, check_type → check_types, date, result (`passed` \| `defect` \| `retired`), performed_by → users, note? | |
 | `notification_settings` | user → users, category → categories, timings (JSON array of days before due, e.g. `[14, 3, 0]`), `weekly_overdue` (bool) | unique on (user, category) |
 | `push_subscriptions` | user → users, endpoint (unique), p256dh, auth, device_label | |
-| `passkeys` | user → users, credential_id (unique), public_key, sign_count, aaguid?, name | |
+| `passkeys` | user → users, credential_id (unique), public_key, sign_count, aaguid?, name, `backup_eligible` (bool), `backup_state` (bool), created | |
 | `notification_log` | user → users, item → items, reason (`check:<check_type id>` \| `end_of_life`), due_date, timing (days before, or `overdue`), sent_on | dedupe key (user, item, reason, due_date, timing, sent_on) |
 | `transport_document_settings` | station name, station address (street, postal code, town), cylinder label, cylinder litres in tenths, points limit, filling station (name, street, postal code, town), checklist (JSON array of strings) | single record |
 
@@ -177,12 +177,18 @@ No roles. Each user has at most one permission per category:
     success it returns the same response as a password login (token + user record), so the JS SDK
     stores it in its auth store as usual.
   - WebAuthn session data between begin and finish is kept in memory with a 5-minute expiry.
-- Relying party ID `intern.ffneumarkt.at`, origin `https://intern.ffneumarkt.at` (configurable for
-  local development).
+- Relying party ID `intern.ffneumarkt.at`, origin `https://intern.ffneumarkt.at`, overridden with
+  `PASSKEY_RP_ID` and `PASSKEY_ORIGIN` (comma separated). WebAuthn does not accept an IP address, so
+  local development runs on `http://localhost:5173`.
+- The backup flags are stored because go-webauthn compares them on every login: without them a synced
+  iCloud or Google passkey fails on its second use.
+- All login failures answer alike; the reason goes to the log. A user may remove their last passkey,
+  since the password still works.
 - Flow: the admin creates the account with a password; the user logs in once with it and adds one or
   more passkeys under Settings (rename, remove). The login screen shows "Sign in with passkey" first,
   password below.
-- The sign count is updated on each login; a sign count regression rejects the login.
+- The sign count is updated on each login; a sign count regression rejects the login. Synced passkeys
+  report 0 every time, which is not a regression.
 - Tokens are PocketBase's stateless JWTs; logout clears the local auth store. The app calls
   `authRefresh()` on start.
 
@@ -290,7 +296,8 @@ Ionic tabs; tabs appear only when they apply to the logged-in user.
 
 ### CI (GitHub Actions)
 
-- Pull requests: `vitest`, `tsc --noEmit`, `go vet`, `go test ./...`, image build without push.
+- Pull requests: `vitest`, `tsc --noEmit`, `go vet`, `go test ./...`, `govulncheck`, image build without
+  push. `govulncheck` is not required for the image, so a new advisory does not block a release.
 - A newer push cancels a running build of the same branch or PR, on `main` too, so a superseded commit
   may get no SHA tag.
 - Changes that only touch `docs/**`, `*.md` files or `LICENSE` skip CI entirely (`paths-ignore` on

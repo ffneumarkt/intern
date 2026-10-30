@@ -125,6 +125,15 @@ func TestHistoryBlocksDeletes(t *testing.T) {
 	}
 }
 
+func TestPasskeyCreatedIsSet(t *testing.T) {
+	app := testenv.New(t)
+	w := testenv.Seed(t, app)
+	key := testenv.Create(t, app, "passkeys", map[string]any{"user": w.Use.Id, "credential_id": "c", "public_key": "k", "name": "Telefon"})
+	if key.GetDateTime("created").IsZero() {
+		t.Error("created is empty")
+	}
+}
+
 func TestUsersCanBeDeactivated(t *testing.T) {
 	app := testenv.New(t)
 	w := testenv.Seed(t, app)

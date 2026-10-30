@@ -9,6 +9,7 @@ import { findIon, ionButton, ionTab } from '../test/ionic'
 
 vi.mock('../api/auth', () => import('../test/fakeAuth'))
 vi.mock('../api/material', () => import('../test/fakeMaterial'))
+vi.mock('../api/passkeys', () => import('../test/fakePasskeys'))
 
 function renderAt(path: string, level: Level) {
   signInAs(level)

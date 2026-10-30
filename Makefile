@@ -4,8 +4,9 @@
 debug:
 	LOG_LEVEL=debug $(MAKE) -j2 dev-api dev-web
 
+# Passkeys need the name localhost, so open the app at http://localhost:5173.
 dev-api:
-	cd backend && go run ./cmd/intern serve
+	cd backend && PASSKEY_RP_ID=localhost PASSKEY_ORIGIN=http://localhost:5173 go run ./cmd/intern serve
 
 dev-web:
 	npm --prefix web run dev

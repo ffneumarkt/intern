@@ -53,6 +53,21 @@ jobs:
       - run: go vet ./...
       - run: go test ./...
 
+  # Separate from the image's needs: a newly published advisory should show up red without stopping
+  # an unrelated fix from shipping. Only vulnerabilities the code actually reaches fail it.
+  govulncheck:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+
   image:
     needs: [web, go]
     runs-on: ubuntu-latest

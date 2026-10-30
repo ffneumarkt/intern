@@ -13,6 +13,8 @@ Last updated: 2026-10-30. Read this first, then the spec
 - **Phase 2 done** (plan `plans/2026-10-30-data-and-auth.md`, branch `feature/data-and-auth`): all
   collections and rules, password login, `/api/material/due` with `internal/due`, status hooks, member
   deactivation, a default check type per category, every screen on real data, `web/src/sketch/` deleted, `make seed` for sample data.
+- **Phase 3 done** (plan `plans/2026-10-30-passkeys.md`, branch `feature/passkeys`): passkey login first
+  with password as fallback, passkeys managed under Einstellungen.
 - Nothing is deployed to the VPS yet. No `deploy/` files exist yet.
 
 ## How the process works here
@@ -23,18 +25,16 @@ line; work happens on branches with PRs against `main` (the user merges).
 
 ## Next steps (proposed order, each needs its own plan)
 
-1. **Phase 3: passkeys** (spec §5, `internal/passkey`). Login must reject `users.deactivated`; bring
-   back the login button and the Settings section removed in phase 2.
-2. **Phase 4: notifications and push** (spec §7, `internal/notify`, `internal/push`, VAPID). Skip
+1. **Phase 4: notifications and push** (spec §7, `internal/notify`, `internal/push`, VAPID). Skip
    deactivated users; bring back the Settings sections removed in phase 2.
-3. **Phase 5: camera scanning and QR labels** (spec §9, `barcode-detector`): camera picker and torch
+2. **Phase 5: camera scanning and QR labels** (spec §9, `barcode-detector`): camera picker and torch
    removed in phase 2, the label page's QR placeholder, assigning an unknown code to an item.
-4. **Phase 6: Beförderungspapier port** from `ffneumarkt-web/src/components/features/transportDocument/`
+3. **Phase 6: Beförderungspapier port** from `ffneumarkt-web/src/components/features/transportDocument/`
    (`calc.ts`, `fillForm.ts` + tests unchanged), config from `transport_document_settings`, offline.
-5. **Deploy:** `deploy/` (systemd update timer, backup wrapper, `authorized_keys` example),
+4. **Deploy:** `deploy/` (systemd update timer, backup wrapper, `authorized_keys` example),
    `intern snapshot` (spec §10), VPS setup with its own `cloudflared` and hostname
    `intern.ffneumarkt.at`, restore test.
-6. **ffneumarkt-web follow-ups** (spec §12): revert #10 there now (production has no iOS icon), redirect
+5. **ffneumarkt-web follow-ups** (spec §12): revert #10 there now (production has no iOS icon), redirect
    and cleanup at go-live.
 
 ## Deferred minor findings (from the phase 1 review)
@@ -58,8 +58,29 @@ From the phase 2 review:
   lose their field detail on the API.
 - `Loaded` reports every error as "Keine Verbindung", including server faults.
 
+From the phase 3 review:
+
+- An anonymous flood of `login/begin` evicts pending passkey ceremonies, including registrations; the
+  password still works. Needs a rate limit, at Cloudflare or in PocketBase.
+- Concurrent logins can lose a sign count update.
+- "angelegt am" shows the UTC date.
+- Adding a passkey on a device that already has one once showed no message in a browser test (1 of 9
+  full runs). 210 focused attempts did not reproduce it and the cause is unknown. Nothing is saved in
+  that case; the click just has no visible effect.
+
+Known dependency findings, checked 2026-10-30 (`govulncheck`, `npm audit`):
+
+- `golang.org/x/crypto/openpgp` (GO-2026-5932): no fix exists, the package is unused here.
+- `react-router` 6.30.6 is the newest 6.x and Ionic 9 requires `<7`. GHSA-wrjc-x8rr-h8h6 needs an
+  attacker-controlled path in `<Link>` or `useNavigate`, but all paths come from `routes.ts` and record
+  ids. GHSA-337j-9hxr-rhxg needs server-side rendering, which the app does not use. Do not run
+  `npm audit fix --force`: it moves to react-router 8. Recheck when Ionic allows react-router 7.
+- Four low findings in `vite-plugin-pwa` and its build tooling, which do not ship to the browser.
+
 ## Environment notes
 
+- Passkeys in a browser test: Chromium's `WebAuthn.addVirtualAuthenticator` over the DevTools protocol
+  with `defaultBackupEligibility` and `defaultBackupState` behaves like a synced passkey.
 - Toolchain on the dev machine: Go 1.27, Node 26, Docker. `make test` runs everything.
 - Screenshots for UI checks: Playwright's Chromium at
   `~/.cache/ms-playwright/chromium-1140/chrome-linux/chrome` with **`--headless=old`** (the new
