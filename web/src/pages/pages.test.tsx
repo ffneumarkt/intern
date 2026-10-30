@@ -17,6 +17,7 @@ function renderAt(path: string, level: Level) {
 
 const button = ionButton
 
+const historyNotice = 'Gerät hat einen Verlauf und kann nicht gelöscht, nur ausgeschieden werden.'
 const offlineNotice = 'Keine Verbindung. Die Materialverwaltung braucht eine Internetverbindung.'
 
 async function scan(code: string) {
@@ -442,27 +443,34 @@ describe('manage', () => {
     expect(await screen.findByText('Keine Berechtigung.')).toBeInTheDocument()
   })
 
-  it('deletes an item after confirmation', async () => {
+  it('deletes an item without history after confirmation', async () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true)
-    renderAt(paths.itemEdit('m01'), 'manage')
-    fireEvent.click(await findIon(() => ionButton('Gerät löschen')))
-    await waitFor(() => expect(calls.deletedItems).toEqual(['m01']))
-    expect(window.confirm).toHaveBeenCalledWith('Maske 01 und 3 Verlaufseinträge endgültig löschen?')
-    expect(await screen.findByRole('heading', { name: 'Atemschutzmasken' })).toBeInTheDocument()
-  })
-
-  it('asks plainly for an item without history', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(false)
     renderAt(paths.itemEdit('m02'), 'manage')
     fireEvent.click(await findIon(() => ionButton('Gerät löschen')))
-    await waitFor(() => expect(window.confirm).toHaveBeenCalledWith('Maske 02 löschen?'))
+    await waitFor(() => expect(calls.deletedItems).toEqual(['m02']))
+    expect(window.confirm).toHaveBeenCalledWith('Maske 02 löschen?')
+    expect(await screen.findByRole('heading', { name: 'Atemschutzmasken' })).toBeInTheDocument()
   })
 
   it('keeps an item when deletion is dismissed', async () => {
     vi.spyOn(window, 'confirm').mockReturnValue(false)
-    renderAt(paths.itemEdit('m01'), 'manage')
+    renderAt(paths.itemEdit('m02'), 'manage')
     fireEvent.click(await findIon(() => ionButton('Gerät löschen')))
-    await waitFor(() => expect(window.confirm).toHaveBeenCalled())
+    expect(calls.deletedItems).toEqual([])
+  })
+
+  it('offers no deletion once an item has history', async () => {
+    renderAt(paths.itemEdit('m01'), 'manage')
+    expect(await screen.findByText(historyNotice)).toBeInTheDocument()
+    expect(button('Gerät löschen')).not.toBeInTheDocument()
+  })
+
+  it('explains when the server refuses because history appeared meanwhile', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    failing.deleteItem = true
+    renderAt(paths.itemEdit('m02'), 'manage')
+    fireEvent.click(await findIon(() => ionButton('Gerät löschen')))
+    expect(await screen.findByText(historyNotice)).toBeInTheDocument()
     expect(calls.deletedItems).toEqual([])
   })
 

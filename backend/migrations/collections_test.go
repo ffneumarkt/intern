@@ -79,19 +79,36 @@ func TestItemCreatedIsSet(t *testing.T) {
 	}
 }
 
-func TestDeletingAnItemRemovesItsHistory(t *testing.T) {
+func TestAnItemWithoutHistoryCanBeDeleted(t *testing.T) {
 	app := testenv.New(t)
 	w := testenv.Seed(t, app)
-	testenv.Create(t, app, "uses", map[string]any{"item": w.ItemA.Id, "date": "2026-10-01", "kind": "other", "created_by": w.Use.Id})
-	testenv.Create(t, app, "checks", map[string]any{"item": w.ItemA.Id, "check_type": w.CheckTypeA.Id,
-		"date": "2026-10-01", "result": "passed", "performed_by": w.Check.Id})
 	if err := app.Delete(w.ItemA); err != nil {
 		t.Fatal(err)
 	}
-	for _, collection := range []string{"uses", "checks"} {
-		if n, err := app.CountRecords(collection); err != nil || n != 0 {
-			t.Errorf("%s: %d left, err %v", collection, n, err)
-		}
+}
+
+func TestHistoryKeepsItsItem(t *testing.T) {
+	entries := map[string]func(w *testenv.World) map[string]any{
+		"uses": func(w *testenv.World) map[string]any {
+			return map[string]any{"item": w.ItemA.Id, "date": "2026-10-01", "kind": "other", "created_by": w.Use.Id}
+		},
+		"checks": func(w *testenv.World) map[string]any {
+			return map[string]any{"item": w.ItemA.Id, "check_type": w.CheckTypeA.Id, "date": "2026-10-01",
+				"result": "passed", "performed_by": w.Check.Id}
+		},
+	}
+	for collection, entry := range entries {
+		t.Run(collection, func(t *testing.T) {
+			app := testenv.New(t)
+			w := testenv.Seed(t, app)
+			testenv.Create(t, app, collection, entry(w))
+			if err := app.Delete(w.ItemA); err == nil {
+				t.Error("item with history deleted")
+			}
+			if n, err := app.CountRecords(collection); err != nil || n != 1 {
+				t.Errorf("%s: %d left, err %v", collection, n, err)
+			}
+		})
 	}
 }
 
