@@ -1,4 +1,4 @@
-.PHONY: dev-api dev-web debug test build image run
+.PHONY: dev-api dev-web debug seed test build image run
 
 # Runs backend and frontend together with debug logging; Ctrl-C stops both.
 debug:
@@ -9,6 +9,10 @@ dev-api:
 
 dev-web:
 	npm --prefix web run dev
+
+# Fills backend/pb_data with sample data; does nothing if it already has categories.
+seed:
+	cd backend && go run ./cmd/seed
 
 test:
 	cd backend && go vet ./... && go test ./...

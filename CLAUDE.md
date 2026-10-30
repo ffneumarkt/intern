@@ -24,6 +24,8 @@ Internal tools for FF Neumarkt at `intern.ffneumarkt.at`. Start with `docs/super
 make dev-api   # backend on :8090, admin UI at /_/
 make dev-web   # Vite dev server, proxies /api and /_
 make debug     # dev-api and dev-web together with LOG_LEVEL=debug
+make seed      # sample data in backend/pb_data, users keine@, verwendung@, pruefung@,
+               # verwaltung@ffneumarkt.local, password intern-dev-1234
 make test      # go vet + go test, tsc, vitest
 make build     # frontend into backend/ui/dist + binary backend/intern
 make image     # docker build -t intern:local .
