@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { paths } from './routes'
 import { signInAs, signOutWithLogin, type Level } from './test/fakeAuth'
@@ -99,6 +99,132 @@ describe('login', () => {
     await screen.findByLabelText('E-Mail')
     expect(ionButton('Mit Passkey anmelden')).not.toBeInTheDocument()
     expect(screen.queryByText('oder mit E-Mail und Passwort')).not.toBeInTheDocument()
+  })
+})
+
+describe('passkeys in settings', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  const iPhone = { id: 'k1', name: 'iPhone', created: '2026-10-29' }
+  const add = async (name: string) => {
+    fireEvent.change(await screen.findByLabelText('Name des Geräts'), { target: { value: name } })
+    fireEvent.click(await findIon(() => ionButton('Passkey hinzufügen')))
+  }
+
+  it('lists passkeys with their date', async () => {
+    passkeyState.items = [iPhone]
+    renderAt(paths.settings, 'use')
+    expect(await screen.findByText('iPhone')).toBeInTheDocument()
+    expect(screen.getByText('angelegt am 2026-10-29')).toBeInTheDocument()
+  })
+
+  it('says when there is none yet', async () => {
+    renderAt(paths.settings, 'use')
+    expect(await screen.findByText('Noch kein Passkey angelegt.')).toBeInTheDocument()
+  })
+
+  it('adds one, clears the field and shows it', async () => {
+    renderAt(paths.settings, 'use')
+    await add('Laptop')
+    expect(await screen.findByText('Laptop')).toBeInTheDocument()
+    expect(passkeyState.added).toEqual(['Laptop'])
+    expect(screen.getByLabelText('Name des Geräts')).toHaveValue('')
+  })
+
+  it('adds once on a double tap', async () => {
+    renderAt(paths.settings, 'use')
+    await add('Laptop')
+    fireEvent.click(ionButton('Passkey hinzufügen')!)
+    await screen.findByText('Laptop')
+    expect(passkeyState.added).toEqual(['Laptop'])
+  })
+
+  it('needs a name', async () => {
+    renderAt(paths.settings, 'use')
+    await add('   ')
+    await screen.findByText('Noch kein Passkey angelegt.')
+    expect(passkeyState.added).toEqual([])
+  })
+
+  it('says nothing when the dialog is closed', async () => {
+    passkeyState.cancelled = true
+    renderAt(paths.settings, 'use')
+    await add('Laptop')
+    await waitFor(() => expect(screen.getByLabelText('Name des Geräts')).toHaveValue('Laptop'))
+    expect(screen.queryByText('Passkey konnte nicht angelegt werden.')).not.toBeInTheDocument()
+  })
+
+  it('recognises a device that already has one', async () => {
+    passkeyState.exists = true
+    renderAt(paths.settings, 'use')
+    await add('Laptop')
+    expect(await screen.findByText('Dieses Gerät hat bereits einen Passkey.')).toBeInTheDocument()
+  })
+
+  it('reports a failed registration', async () => {
+    renderAt(paths.settings, 'use')
+    await screen.findByText('Noch kein Passkey angelegt.')
+    passkeyState.failing = true
+    await add('Laptop')
+    expect(await screen.findByText('Passkey konnte nicht angelegt werden.')).toBeInTheDocument()
+  })
+
+  it('renames through a prompt', async () => {
+    passkeyState.items = [iPhone]
+    vi.spyOn(window, 'prompt').mockReturnValue('Diensthandy')
+    renderAt(paths.settings, 'use')
+    await screen.findByText('iPhone')
+    fireEvent.click(await findIon(() => ionButton('Umbenennen')))
+    expect(await screen.findByText('Diensthandy')).toBeInTheDocument()
+    expect(window.prompt).toHaveBeenCalledWith('Neuer Name', 'iPhone')
+  })
+
+  it.each([[null], ['  ']])('keeps the name when the prompt returns %j', async (answer) => {
+    passkeyState.items = [iPhone]
+    vi.spyOn(window, 'prompt').mockReturnValue(answer)
+    renderAt(paths.settings, 'use')
+    await screen.findByText('iPhone')
+    fireEvent.click(await findIon(() => ionButton('Umbenennen')))
+    await waitFor(() => expect(window.prompt).toHaveBeenCalled())
+    expect(passkeyState.items[0].name).toBe('iPhone')
+  })
+
+  it('removes after confirmation', async () => {
+    passkeyState.items = [iPhone]
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    renderAt(paths.settings, 'use')
+    await screen.findByText('iPhone')
+    fireEvent.click(await findIon(() => ionButton('Entfernen')))
+    expect(await screen.findByText('Noch kein Passkey angelegt.')).toBeInTheDocument()
+    expect(window.confirm).toHaveBeenCalledWith('Passkey „iPhone“ entfernen?')
+  })
+
+  it('keeps it when dismissed', async () => {
+    passkeyState.items = [iPhone]
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+    renderAt(paths.settings, 'use')
+    await screen.findByText('iPhone')
+    fireEvent.click(await findIon(() => ionButton('Entfernen')))
+    await waitFor(() => expect(window.confirm).toHaveBeenCalled())
+    expect(passkeyState.items).toHaveLength(1)
+  })
+
+  it('hides adding in a browser without passkeys, keeps the list', async () => {
+    passkeyState.supported = false
+    passkeyState.items = [iPhone]
+    renderAt(paths.settings, 'use')
+    expect(await screen.findByText('iPhone')).toBeInTheDocument()
+    expect(ionButton('Passkey hinzufügen')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Name des Geräts')).not.toBeInTheDocument()
+  })
+
+  it('still offers logout while offline', async () => {
+    passkeyState.failing = true
+    renderAt(paths.settings, 'use')
+    expect(await screen.findByText(/^Keine Verbindung\./)).toBeInTheDocument()
+    expect(await findIon(() => ionButton('Abmelden'))).toBeInTheDocument()
   })
 })
 
