@@ -122,3 +122,11 @@ ion-chip:focus-visible {
   border: none;
   border-radius: 8px;
 }
+
+/* Error and warning messages under forms and pages stand on their own line, apart from the field
+   lines above and the button below. */
+ion-content ion-text.ion-color-danger,
+ion-content ion-text.ion-color-warning {
+  display: block;
+  margin: 12px 0;
+}

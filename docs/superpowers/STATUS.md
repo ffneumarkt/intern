@@ -41,8 +41,16 @@ Last updated: 2026-10-31. Read this first, then the spec
   `aria-pressed`, Enter and Space). A user without a permitted category sees a hint under
   „Erinnerungen“. A browser without a working push service (Playwright's Firefox) now shows push as off
   instead of „Keine Verbindung“ for the whole section. jsdom tests in `pages.test.tsx`, real-browser
-  tests in `web/e2e/settings.spec.ts`. The other forms still use `Field`; they move to `IonInput` one
-  by one, each with end-to-end coverage (next steps).
+  tests in `web/e2e/settings.spec.ts`.
+- **Ionic migration done** (plan `plans/2026-10-31-ionic-dialogs-and-forms.md`): confirm and prompt
+  dialogs are `IonAlert`s (`components/useDialogs.ts`), and `components/Field.tsx` renders `IonInput`,
+  `IonTextarea`, `IonSelect` (alert interface: pick, then OK) and `IonToggle` for every form (login,
+  record use incl. the manual code field, record check, item form, check type form, passkey add).
+  Native on purpose: the Ruhezeit `Von`/`Bis` time inputs, and the date fields, which are `IonInput
+  type="date"` and so open the OS date picker (`IonDatetime` is not used). E2E: `dialogs.spec.ts`,
+  `forms.spec.ts` (Enter submits the login, a use, a check and a new item are saved and show in the
+  history; throwaway items are removed with their history through the e2e superuser); screenshots of
+  every form in iOS and Material mode were checked.
 - Nothing is deployed to the VPS yet. No `deploy/` files exist yet.
 
 ## How the process works here
@@ -68,8 +76,7 @@ line; work happens on branches with PRs against `main` (the user merges).
    https URL) is set by hand.
 4. **ffneumarkt-web follow-ups** (spec §12): revert #10 there now (production has no iOS icon), redirect
    and cleanup at go-live.
-5. **E2E follow-ups:** `image.yml` may gate on `e2e.yml` once it has run stably. The other forms move
-   from `Field` to `IonInput` one by one, each with end-to-end coverage.
+5. **E2E follow-ups:** `image.yml` may gate on `e2e.yml` once it has run stably.
 
 ## Deferred minor findings (from the phase 1 review)
 
@@ -98,6 +105,19 @@ From the phase 3 review:
   registrations; the limit of 30 per minute is per IP. The password still works.
 - Concurrent logins can lose a sign count update.
 - "angelegt am" shows the UTC date.
+
+From the Ionic forms check (screenshots at 390 px, iOS and Material):
+
+- Selects need two taps (option, then OK); `interface="action-sheet"` or `"popover"` would take one for
+  the short lists (Art, Ergebnis, Kategorie).
+- In an alert the destructive button has the same red as the primary colour, so on iOS only its bold
+  weight sets „Löschen“ apart from „Abbrechen“.
+- The manual code field in Verwendung erfassen sits in an `IonItem` inside a card, so it is indented
+  twice and the suggestion box under it starts a little left of the field. Readable, not aligned.
+- Form fields (inside `IonItem`s) start 16 px further in than the text and buttons of the page.
+- The date fields show `mm/dd/yyyy` in Playwright's browsers despite `de-AT`: the native control
+  follows the browser's own locale (as with the Ruhezeit times).
+- On the manage page the item list starts right under the segment, with no gap.
 - Adding a passkey on a device that already has one once showed no message in a browser test (1 of 9
   full runs). 210 focused attempts did not reproduce it and the cause is unknown. Nothing is saved in
   that case; the click just has no visible effect.
@@ -149,9 +169,12 @@ Known dependency findings, checked 2026-10-31 (`govulncheck`, `npm audit`):
 - Push in a browser test: headless Chromium (old or new) has no push service ("push service not
   available") and reports `Notification.permission` as denied; headed Playwright Chromium with a
   persistent context (not incognito) subscribes at FCM and shows real pushes.
-- Screenshots of Einstellungen: `E2E_SCREENSHOTS=1 npm --prefix web run e2e -- e2e/screens.spec.ts`
-  writes `web/test-results/screens/<project>-<state>.png` (WebKit = iOS look, Chromium and Firefox =
-  Material). They are not committed, and the next Playwright run clears `test-results/`. The native
+- Screenshots of Einstellungen and the forms: `E2E_SCREENSHOTS=1 npm --prefix web run e2e --
+  e2e/screens.spec.ts` writes `web/test-results/screens/<project>-<state>.png` (WebKit = iOS look,
+  Chromium and Firefox = Material; `E2E_SCREENS_DIR` picks another folder). They are not committed, and
+  the next Playwright run clears `test-results/`. Without WebKit, iOS mode also shows in Chromium with
+  the `devices['iPhone 14']` profile (its iOS user agent makes Ionic pick iOS mode), e.g. from a local
+  config that adds such a project. The native
   time inputs show AM/PM in Playwright's Chromium and Firefox despite `locale: 'de-AT'` (the browser's
   own locale decides); a German browser shows 24 h.
 - `page.route` in WebKit does not see requests of a page that the PWA service worker controls; block

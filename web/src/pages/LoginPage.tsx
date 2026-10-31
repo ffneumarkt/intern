@@ -62,7 +62,7 @@ export default function LoginPage() {
         </>
       )}
       <form onSubmit={submit}>
-        <IonList inset>
+        <IonList>
           <Field label="E-Mail" type="email" autoComplete="username" value={email} onChange={setEmail} required />
           <Field
             label="Passwort"
