@@ -140,10 +140,11 @@ func (j *Job) notifyUser(userID string, now time.Time) error {
 					continue
 				}
 				all = append(all, fired{item: it.Record.Id, reason: reason, timing: timing, dueDate: d.Date})
-				// Dues are earliest first, so the first fired one has the most urgent state.
+				// Each item counts once, under its most urgent state, which is that of its earliest due
+				// (not necessarily one that fires in this run).
 				if !itemFired {
 					itemFired = true
-					items = append(items, FiredItem{ID: it.Record.Id, Category: names[category], State: d.State})
+					items = append(items, FiredItem{ID: it.Record.Id, Category: names[category], State: it.Result.State})
 				}
 			}
 		}

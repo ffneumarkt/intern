@@ -603,3 +603,27 @@ func TestScheduleAddsJob(t *testing.T) {
 	}
 	t.Error("no job notify")
 }
+
+func TestRunReportsMostUrgentStateOfItem(t *testing.T) {
+	e := setup(t)
+	// Item A is past its end of life, whose timing 0 push went out long ago.
+	e.w.CategoryA.Set("max_service_life_years", 1)
+	if err := e.app.Save(e.w.CategoryA); err != nil {
+		t.Fatal(err)
+	}
+	e.w.ItemA.Set("manufactured_on", "2025-05-01")
+	if err := e.app.Save(e.w.ItemA); err != nil {
+		t.Fatal(err)
+	}
+	testenv.Create(t, e.app, "notification_log", map[string]any{
+		"user": e.w.Check.Id, "item": e.w.ItemA.Id, "reason": "end_of_life",
+		"due_date": "2026-05-01", "timing": "0", "sent_on": "2026-05-01"})
+	e.dueOn(e.w.ItemA, e.w.CheckTypeA, "2026-06-15")
+
+	e.job.Run(at("2026-06-01 07:00"))
+
+	m := e.wantMessages(e.w.Check, 1)
+	if m[0].Body != "A: 1 überfällig" {
+		t.Errorf("body %q", m[0].Body)
+	}
+}
