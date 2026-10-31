@@ -100,6 +100,22 @@ describe('login', () => {
     expect(await findTab('Material')).toBeInTheDocument()
   })
 
+  it('opens the due list again after logging out and back in', async () => {
+    signOutWithLogin('use')
+    render(<App initialPath={paths.login} />)
+    await submitLogin('richtig')
+    expect(await screen.findByRole('heading', { name: 'Fällig' })).toBeInTheDocument()
+
+    fireEvent.click(await findTab('Einstellungen'))
+    fireEvent.click(await findIon(() => ionButton('Abmelden')))
+    expect(await screen.findByRole('heading', { name: 'Anmelden' })).toBeInTheDocument()
+
+    await submitLogin('richtig')
+    expect(await screen.findByRole('heading', { name: 'Fällig' })).toBeInTheDocument()
+    // The login page is gone, not merely behind the due list.
+    await waitFor(() => expect(screen.queryByRole('heading', { name: 'Anmelden' })).not.toBeInTheDocument())
+  })
+
   it('shows an error for wrong credentials', async () => {
     renderAt(paths.login, null)
     await submitLogin('falsch')

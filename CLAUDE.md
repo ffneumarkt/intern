@@ -17,6 +17,9 @@ Internal tools for FF Neumarkt at `intern.ffneumarkt.at`. Start with `docs/super
   `test/fakeMaterial.ts`, `test/fakePasskeys.ts`, `test/fakeNotifications.ts` and `test/fakePush.ts`.
 - Form fields are native inputs through `web/src/components/Field.tsx`, not `IonInput`/`IonSelect`.
 - Data pages load with `useResource`, not an effect: Ionic keeps pages mounted.
+- Never redirect from a page or route element (`<Navigate>`): Ionic keeps visited pages mounted, so each
+  one would redirect and the stack breaks (the next login stays on the login page in Firefox). Redirect in
+  one place, as `LoginRedirect` in `App.tsx` does.
 - Go tests that use `internal/testenv` live in external `_test` packages.
 - TDD: write the failing test first, watch it fail, then implement.
 - Work on a branch, open a PR against `main`; the user merges.

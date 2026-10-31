@@ -1,8 +1,8 @@
-import { IonApp, IonIcon, IonLabel, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs } from '@ionic/react'
+import { IonApp, IonIcon, IonLabel, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs, useIonRouter } from '@ionic/react'
 import { IonReactMemoryRouter, IonReactRouter } from '@ionic/react-router'
 import { constructOutline, documentTextOutline, homeOutline, settingsOutline } from 'ionicons/icons'
-import type { ReactElement, ReactNode } from 'react'
-import { Navigate, Route } from 'react-router-dom'
+import { useEffect, type ReactElement, type ReactNode } from 'react'
+import { Route, useLocation } from 'react-router-dom'
 import CategoryPage from './pages/CategoryPage'
 import DueListPage from './pages/DueListPage'
 import ItemEditPage from './pages/ItemEditPage'
@@ -15,12 +15,25 @@ import RecordUsePage from './pages/RecordUsePage'
 import SettingsPage from './pages/SettingsPage'
 import StartPage from './pages/StartPage'
 import TransportDocumentPage from './pages/TransportDocumentPage'
-import { paths } from './routes'
+import { paths, requiresLogin } from './routes'
 import { SessionProvider, useSession } from './session'
 
+// Ionic keeps visited pages mounted. If each of them redirected on logout, the stack would see
+// several replace navigations at once and the next login could leave the login page visible.
 function RequireLogin({ children }: { children: ReactElement }) {
   const { user } = useSession()
-  return user ? children : <Navigate to={paths.login} replace />
+  return user ? children : null
+}
+
+// The single redirect for a logged-out user on a page that needs a login.
+function LoginRedirect() {
+  const { user } = useSession()
+  const router = useIonRouter()
+  const { pathname } = useLocation()
+  useEffect(() => {
+    if (!user && requiresLogin(pathname)) router.push(paths.login, 'root', 'replace')
+  }, [user, pathname, router])
+  return null
 }
 
 function Tabs() {
@@ -81,6 +94,7 @@ export default function App({ initialPath }: { initialPath?: string }) {
     <IonApp>
       <SessionProvider>
         <Router initialPath={initialPath}>
+          <LoginRedirect />
           <Tabs />
         </Router>
       </SessionProvider>
