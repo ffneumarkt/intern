@@ -28,11 +28,15 @@ type fakeSender struct {
 	sent      []sent
 	fail      map[string]error
 	delivered map[string]int
+	onSend    func(userID string) // runs during Send, like a concurrent run would
 }
 
 func (s *fakeSender) Send(userID string, message notify.Message) (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if s.onSend != nil {
+		s.onSend(userID)
+	}
 	if err := s.fail[userID]; err != nil {
 		return 0, err
 	}
@@ -467,6 +471,36 @@ func TestGroupsOnePushPerUser(t *testing.T) {
 	if n := len(e.logRows(e.w.Check)); n != 2 {
 		t.Errorf("%d log rows, want 2", n)
 	}
+}
+
+func TestLogConflictCountsAsSent(t *testing.T) {
+	e := setup(t)
+	e.dueOn(e.w.ItemA, e.w.CheckTypeA, "2026-06-15")
+	e.job.Logger.SetLevel(log.DebugLevel)
+	// Another run logs the same timing between this run's history load and its save.
+	e.sender.onSend = func(userID string) {
+		testenv.Create(t, e.app, "notification_log", map[string]any{
+			"user": userID, "item": e.w.ItemA.Id, "reason": "check:" + e.w.CheckTypeA.Id,
+			"due_date": "2026-06-15", "timing": "14", "sent_on": "2026-06-01"})
+	}
+
+	e.job.Run(at("2026-06-01 07:00"))
+
+	e.wantMessages(e.w.Check, 1)
+	if n := len(e.logRows(e.w.Check)); n != 1 {
+		t.Errorf("%d log rows, want 1", n)
+	}
+	logs := e.logs.String()
+	if strings.Contains(logs, "WARN") || strings.Contains(logs, "ERRO") {
+		t.Errorf("conflict logged as a problem:\n%s", logs)
+	}
+	if !strings.Contains(logs, "already logged") {
+		t.Errorf("conflict not logged at debug:\n%s", logs)
+	}
+
+	e.sender.onSend = nil
+	e.job.Run(at("2026-06-01 07:01"))
+	e.wantMessages(e.w.Check, 1)
 }
 
 func TestFailedDeliveryIsRetried(t *testing.T) {

@@ -2,6 +2,7 @@ package notify
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/charmbracelet/log"
 	"github.com/pocketbase/dbx"
+	validation "github.com/pocketbase/ozzo-validation/v4"
 	"github.com/pocketbase/pocketbase/core"
 
 	"github.com/ffneumarkt/intern/backend/internal/due"
@@ -172,7 +174,7 @@ func (j *Job) notifyUser(userID string, now time.Time) error {
 		row.Set("timing", f.timing)
 		row.Set("sent_on", today)
 		if err := j.App.Save(row); err != nil {
-			if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+			if isUniqueConflict(err) {
 				j.Logger.Debug("notification job: already logged", "user", userID, "item", f.item, "timing", f.timing)
 				continue
 			}
@@ -285,4 +287,20 @@ func dateValue(d time.Time) string {
 func calendarDate(r *core.Record, field string) time.Time {
 	y, m, d := r.GetDateTime(field).Time().UTC().Date()
 	return time.Date(y, m, d, 0, 0, 0, 0, time.UTC)
+}
+
+// isUniqueConflict says whether a save failed on a unique index. PocketBase turns the SQLite error
+// into validation errors with the code validation_not_unique.
+func isUniqueConflict(err error) bool {
+	var fields validation.Errors
+	if !errors.As(err, &fields) {
+		return false
+	}
+	for _, e := range fields {
+		var ve validation.Error
+		if errors.As(e, &ve) && ve.Code() == "validation_not_unique" {
+			return true
+		}
+	}
+	return false
 }
