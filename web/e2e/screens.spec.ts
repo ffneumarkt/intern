@@ -93,7 +93,7 @@ test.describe('forms', () => {
       await expect(field(page, 'Erfasst von')).toBeVisible()
       await shoot(page, info.project.name, 'use-form')
       await select(page, 'Art').click()
-      await expect(page.locator('ion-alert').getByRole('radio', { name: 'Übung' })).toBeVisible()
+      await expect(page.locator('ion-popover').getByRole('radio', { name: 'Übung', exact: true })).toBeVisible()
       await shoot(page, info.project.name, 'use-select')
     })
   })

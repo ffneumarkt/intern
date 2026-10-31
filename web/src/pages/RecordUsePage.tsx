@@ -122,7 +122,7 @@ export default function RecordUsePage() {
               <IonCard>
                 <IonCardContent>
                   <form onSubmit={submitCode}>
-                    <Field label="Code manuell eingeben" value={code} autoComplete="off" onChange={setCode} />
+                    <Field label="Code manuell eingeben" value={code} autoComplete="off" autoCapitalize="off" onChange={setCode} />
                   </form>
                   <Suggestions suggestions={searchItems(items, code, scanned.map((i) => i.id))} onPick={pick} />
                 </IonCardContent>

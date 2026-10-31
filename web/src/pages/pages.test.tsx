@@ -497,6 +497,18 @@ describe('manage', () => {
     expect(screen.getByLabelText('Code')).toHaveValue('M-001')
   })
 
+  it('types codes and serial numbers without capitalisation or autocorrect', async () => {
+    renderAt(paths.itemEdit('m01'), 'manage')
+    expect(await screen.findByLabelText('Bezeichnung')).toHaveAttribute('autocapitalize', 'sentences')
+    for (const label of ['Code', 'Seriennummer']) {
+      expect(screen.getByLabelText(label)).toHaveAttribute('autocapitalize', 'off')
+      expect(screen.getByLabelText(label)).toHaveAttribute('autocorrect', 'off')
+    }
+    cleanup()
+    renderAt(paths.recordUse, 'use')
+    expect(await screen.findByLabelText('Code manuell eingeben')).toHaveAttribute('autocapitalize', 'off')
+  })
+
   it('offers no editing below manage', async () => {
     renderAt(paths.itemEdit('m01'), 'check')
     expect(await screen.findByText('Keine Berechtigung.')).toBeInTheDocument()

@@ -15,12 +15,11 @@ const select = (page: Page, label: string) =>
   page.locator('ion-select').filter({ visible: true, has: page.getByText(label, { exact: true }) })
 const unique = () => randomBytes(3).toString('hex')
 
-// Picks an option in the select's alert: tap the option, then OK.
+// Picks an option in the select's popover: one tap on the option closes it.
 async function choose(page: Page, label: string, option: string) {
   await select(page, label).click()
-  await page.locator('ion-alert').getByRole('radio', { name: option, exact: true }).click()
-  await page.locator('ion-alert').getByRole('button', { name: 'OK', exact: true }).click()
-  await expect(page.locator('ion-alert')).toHaveCount(0)
+  await page.locator('ion-popover').getByRole('radio', { name: option, exact: true }).click()
+  await expect(page.locator('ion-popover')).toHaveCount(0)
   await expect(select(page, label).locator('.select-text')).toHaveText(option)
 }
 
@@ -72,18 +71,26 @@ test.describe('as verwaltung', () => {
     await page.goto('/material/verwendung')
     const code = field(page, 'Code manuell eingeben')
     await code.fill('M-001')
+    await expect(code).toHaveAttribute('autocapitalize', 'off')
+    await expect(code).toHaveAttribute('autocorrect', 'off')
+    await expect(code).toHaveJSProperty('spellcheck', false)
     await code.press('Enter')
     await expect(page.getByRole('list', { name: 'Gescannte Geräte' }).getByText('Maske 01')).toBeVisible()
     await expect(code).toHaveValue('')
 
     await page.getByRole('button', { name: 'Fertig' }).click()
-    // The form has one select (Art); its chosen text lives in the shadow DOM, which CSS pierces.
-    const kind = page.locator('ion-select').filter({ visible: true })
+    // Typing help as the browser gives it: on for names, off for codes.
+    await expect(field(page, 'Erfasst von')).toHaveAttribute('autocapitalize', 'sentences')
+    await expect(field(page, 'Erfasst von')).toHaveJSProperty('spellcheck', true)
+    await expect(field(page, 'Notiz')).toHaveJSProperty('spellcheck', true)
+    const kind = select(page, 'Art')
     await expect(kind.locator('.select-text')).toHaveText('Einsatz')
     await kind.click()
-    await expect(page.getByRole('button', { name: 'Abbrechen' })).toBeVisible()
-    await page.getByRole('radio', { name: 'Übung' }).click()
-    await page.getByRole('button', { name: 'OK' }).click()
+    // The popover marks the current value.
+    const popover = page.locator('ion-popover')
+    await expect(popover.getByRole('radio', { name: 'Einsatz', exact: true })).toBeChecked()
+    await popover.getByRole('radio', { name: 'Übung', exact: true }).click()
+    await expect(popover).toHaveCount(0)
     await expect(kind).toHaveJSProperty('value', 'exercise')
     await expect(kind.locator('.select-text')).toHaveText('Übung')
   })

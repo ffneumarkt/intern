@@ -44,7 +44,7 @@ Last updated: 2026-10-31. Read this first, then the spec
   tests in `web/e2e/settings.spec.ts`.
 - **Ionic migration done** (plan `plans/2026-10-31-ionic-dialogs-and-forms.md`): confirm and prompt
   dialogs are `IonAlert`s (`components/useDialogs.ts`), and `components/Field.tsx` renders `IonInput`,
-  `IonTextarea`, `IonSelect` (alert interface: pick, then OK) and `IonToggle` for every form (login,
+  `IonTextarea`, `IonSelect` (popover interface: one tap) and `IonToggle` for every form (login,
   record use incl. the manual code field, record check, item form, check type form, passkey add).
   Native on purpose: the Ruhezeit `Von`/`Bis` time inputs, and the date fields, which are `IonInput
   type="date"` and so open the OS date picker (`IonDatetime` is not used). E2E: `dialogs.spec.ts`,
@@ -108,8 +108,6 @@ From the phase 3 review:
 
 From the Ionic forms check (screenshots at 390 px, iOS and Material):
 
-- Selects need two taps (option, then OK); `interface="action-sheet"` or `"popover"` would take one for
-  the short lists (Art, Ergebnis, Kategorie).
 - In an alert the destructive button has the same red as the primary colour, so on iOS only its bold
   weight sets „Löschen“ apart from „Abbrechen“.
 - The manual code field in Verwendung erfassen sits in an `IonItem` inside a card, so it is indented

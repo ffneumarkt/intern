@@ -45,8 +45,8 @@ export default function ItemForm({ item, checkTypes = [], submitLabel, onSave }:
     <>
       <IonList>
         <Field label="Bezeichnung" value={name} onChange={setName} />
-        <Field label="Seriennummer" value={serial} onChange={setSerial} />
-        <Field label="Code" value={barcode} onChange={setBarcode} />
+        <Field label="Seriennummer" value={serial} onChange={setSerial} autoCapitalize="off" />
+        <Field label="Code" value={barcode} onChange={setBarcode} autoCapitalize="off" />
         <Field label="Hergestellt am" type="date" value={manufacturedOn} onChange={setManufacturedOn} />
         <TextAreaField label="Notiz" value={note} onChange={setNote} />
         {checkTypes.map((t) => (

@@ -21,6 +21,30 @@ describe('Field', () => {
     expect(onChange).toHaveBeenLastCalledWith('c@d.at')
   })
 
+  // The browser defaults of the old native fields: plain text is capitalised, corrected and
+  // spellchecked; codes, credentials, dates and numbers are not.
+  const typingHints = (input: HTMLElement) => [
+    input.getAttribute('autocapitalize'),
+    input.getAttribute('autocorrect'),
+    // jsdom has no spellcheck property, so Stencil sets an attribute: present for true, absent for false.
+    input.hasAttribute('spellcheck'),
+  ]
+
+  it('capitalises, corrects and spellchecks plain text by default', async () => {
+    render(<Field label="Bezeichnung" value="" onChange={() => {}} />)
+    expect(typingHints(await screen.findByLabelText('Bezeichnung'))).toEqual(['sentences', 'on', true])
+  })
+
+  it('turns the typing help off for code-like text', async () => {
+    render(<Field label="Code" value="" onChange={() => {}} autoCapitalize="off" />)
+    expect(typingHints(await screen.findByLabelText('Code'))).toEqual(['off', 'off', false])
+  })
+
+  it.each(['email', 'password', 'date', 'number'])('turns the typing help off for type %s', async (type) => {
+    render(<Field label="Feld" type={type} value="" onChange={() => {}} />)
+    expect(typingHints(await screen.findByLabelText('Feld'))).toEqual(['off', 'off', false])
+  })
+
   it('follows its controlled value', async () => {
     function Controlled() {
       const [value, setValue] = useState('alt')
@@ -51,6 +75,13 @@ describe('TextAreaField', () => {
     typeInto(textarea, 'Riss')
     expect(onChange).toHaveBeenLastCalledWith('Riss')
   })
+
+  it('capitalises and spellchecks like a native textarea', async () => {
+    render(<TextAreaField label="Notiz" value="" onChange={() => {}} />)
+    const textarea = await screen.findByLabelText('Notiz')
+    expect(textarea).toHaveAttribute('autocapitalize', 'sentences')
+    expect(textarea).toHaveAttribute('spellcheck')
+  })
 })
 
 describe('SelectField', () => {
@@ -74,11 +105,22 @@ describe('SelectField', () => {
     await waitFor(() => expect(selectedText(select)).toBe('Alpha'))
   })
 
-  it('opens the default alert interface with a German cancel button', async () => {
+  it('opens a popover: one tap, anchored at the field', async () => {
     render(<Controlled />)
     const select = (await findIon(() => ionSelect('Art'))) as HTMLIonSelectElement
-    expect(select.interface).toBe('alert')
-    expect(select.cancelText).toBe('Abbrechen')
+    expect(select.interface).toBe('popover')
+  })
+
+  it('reports an empty value as an empty string, not "undefined"', async () => {
+    const onChange = vi.fn()
+    render(
+      <SelectField label="Art" value="a" onChange={onChange}>
+        <IonSelectOption value="a">Alpha</IonSelectOption>
+      </SelectField>,
+    )
+    const select = await findIon(() => ionSelect('Art'))
+    fireEvent(select, new CustomEvent('ionChange', { detail: { value: undefined } }))
+    expect(onChange).toHaveBeenLastCalledWith('')
   })
 
   it('shows no selection for a value that is not among the options', async () => {
