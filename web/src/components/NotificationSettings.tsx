@@ -218,7 +218,7 @@ function Push({
         : !push.available
           ? 'Push ist auf diesem Server nicht eingerichtet.'
           : push.enabled
-            ? 'Diese Geräte bekommen Erinnerungen, auch wenn die App geschlossen ist.'
+            ? 'Dieses Gerät bekommt Erinnerungen, auch wenn die App geschlossen ist.'
             : 'Ohne Push auf diesem Gerät kommen keine Nachrichten an.'
   const on = push.available && push.enabled
   return (

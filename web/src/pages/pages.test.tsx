@@ -800,7 +800,7 @@ describe('notification settings', () => {
     await open()
     await findIon(() => ionItem('Testnachricht senden'))
     expect(secondLine('Push-Nachrichten')).toBe('Aktiv auf diesem Gerät')
-    expect(screen.getByText('Diese Geräte bekommen Erinnerungen, auch wenn die App geschlossen ist.')).toBeInTheDocument()
+    expect(screen.getByText('Dieses Gerät bekommt Erinnerungen, auch wenn die App geschlossen ist.')).toBeInTheDocument()
   })
 
   it('sends a test push', async () => {
