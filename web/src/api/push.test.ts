@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { pb } from './client'
 import { PushDeniedError } from './errors'
-import { disablePush, enablePush, pushAvailable, pushSupport, syncPush } from './push'
+import { disablePush, enablePush, pushAvailable, pushEnabled, pushSupport, syncPush } from './push'
 
 const endpoint = 'https://push.example.com/abc'
 // base64url of the bytes 1, 2, 3
@@ -81,6 +81,21 @@ describe('pushAvailable', () => {
   it('is true with a key', async () => {
     serve({ '/api/push/key': () => json({ publicKey: key }) })
     expect(await pushAvailable()).toBe(true)
+  })
+})
+
+describe('pushEnabled', () => {
+  it('is true with a subscription', async () => {
+    stubBrowser({ subscription: true })
+    expect(await pushEnabled()).toBe(true)
+  })
+
+  // Firefox without its push service (Playwright's build, or dom.push.connection.enabled off)
+  // rejects getSubscription with an AbortError.
+  it('is false when the browser cannot read the subscription', async () => {
+    const { pushManager } = stubBrowser()
+    pushManager.getSubscription.mockRejectedValue(new DOMException('Error retrieving push subscription.', 'AbortError'))
+    expect(await pushEnabled()).toBe(false)
   })
 })
 

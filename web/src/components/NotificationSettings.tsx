@@ -145,9 +145,10 @@ function Content({ data, reload }: { data: LoadedAll; reload(): void }) {
         }}
         test={() => void test()}
       />
+      <SettingsHeader>Erinnerungen</SettingsHeader>
+      {data.categories.length === 0 && <SettingsFooter text="Noch keine Kategorie freigegeben, daher keine Erinnerungen." />}
       {data.categories.length > 0 && (
         <>
-          <SettingsHeader>Erinnerungen</SettingsHeader>
           <IonList inset>
             {data.categories.map((category) => (
               <Category
@@ -301,16 +302,26 @@ function Category({
                 {dayChips.map(({ days, label }) => {
                   const key = `day:${setting.id}:${days}`
                   const active = shown(key, setting.timings.includes(days))
+                  const toggle = () => {
+                    if (busy) return
+                    choose(key, !active)
+                    update(setting, { timings: toggleDay(setting.timings, days) })
+                  }
+                  // ion-chip is a plain element: role, tab stop and keys make it a toggle button.
                   return (
                     <IonChip
                       key={days}
+                      role="button"
+                      tabIndex={busy ? -1 : 0}
                       color={active ? 'primary' : undefined}
                       outline={!active}
                       disabled={busy}
                       aria-pressed={active ? 'true' : 'false'}
-                      onClick={() => {
-                        choose(key, !active)
-                        update(setting, { timings: toggleDay(setting.timings, days) })
+                      onClick={toggle}
+                      onKeyDown={(e) => {
+                        if (e.key !== 'Enter' && e.key !== ' ') return
+                        e.preventDefault()
+                        toggle()
                       }}
                     >
                       {active && <IonIcon icon={checkmark} aria-hidden />}

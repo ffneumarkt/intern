@@ -99,6 +99,11 @@
   padding: 0 32px;
 }
 
+/* A note in place of the group (no list in between): it would overlap the header otherwise. */
+.settings-header + .settings-footer {
+  margin-top: 4px;
+}
+
 .settings-footer ion-note {
   font-size: 0.8125rem;
 }

@@ -690,6 +690,14 @@ describe('notification settings', () => {
     expect(ionItem('Wöchentlich bei Überfälligem')).toBeNull()
   })
 
+  it('says why there are no reminders without a permitted category', async () => {
+    data.categories = []
+    await open()
+    expect(await screen.findByText('Noch keine Kategorie freigegeben, daher keine Erinnerungen.')).toBeInTheDocument()
+    expect(ionItem('Atemschutzmasken')).toBeNull()
+    expect(await findIon(() => ionToggle('Nicht stören'))).not.toBeNull()
+  })
+
   it('summarizes a category that is on and shows its reminders', async () => {
     notificationState.settings = [enabled]
     await open()
@@ -751,6 +759,17 @@ describe('notification settings', () => {
     await waitFor(() => expect(notificationState.settings[0].timings).toEqual([14, 7, 3, 0]))
     await waitFor(() => expect(secondLine('Atemschutzmasken')).toBe('14, 7, 3 Tage vorher · Am Tag · wöchentlich'))
     fireEvent.click(ionChip('14')!)
+    await waitFor(() => expect(notificationState.settings[0].timings).toEqual([7, 3, 0]))
+  })
+
+  it('offers the chips as toggle buttons that work with the keyboard', async () => {
+    notificationState.settings = [enabled]
+    await open()
+    const chip = await screen.findByRole('button', { name: '7', pressed: false })
+    expect(chip).toHaveAttribute('tabindex', '0')
+    fireEvent.keyDown(chip, { key: 'Enter' })
+    await waitFor(() => expect(notificationState.settings[0].timings).toEqual([14, 7, 3, 0]))
+    fireEvent.keyDown(await screen.findByRole('button', { name: '14', pressed: true }), { key: ' ' })
     await waitFor(() => expect(notificationState.settings[0].timings).toEqual([7, 3, 0]))
   })
 
