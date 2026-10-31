@@ -3,6 +3,7 @@ module github.com/ffneumarkt/intern/backend
 go 1.27.3
 
 require (
+	github.com/SherClockHolmes/webpush-go v1.4.0
 	github.com/charmbracelet/log v1.0.0
 	github.com/descope/virtualwebauthn v1.0.5
 	github.com/go-ozzo/ozzo-validation/v4 v4.5.0
