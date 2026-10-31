@@ -1,4 +1,4 @@
-import { IonButton, IonList, IonText, useIonViewWillEnter } from '@ionic/react'
+import { IonButton, IonList, IonSelectOption, IonText, useIonViewWillEnter } from '@ionic/react'
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { listCheckTypes, listItems, recordCheck, type CheckInput } from '../api/material'
@@ -59,16 +59,16 @@ export default function RecordCheckPage() {
               <IonList>
                 <SelectField label="Prüfart" value={checkTypeId} onChange={setSelectedType}>
                   {types.map((t) => (
-                    <option key={t.id} value={t.id}>
+                    <IonSelectOption key={t.id} value={t.id}>
                       {t.name}
-                    </option>
+                    </IonSelectOption>
                   ))}
                 </SelectField>
                 <Field label="Datum" type="date" max={today()} value={date} onChange={setDate} />
                 <SelectField label="Ergebnis" value={result} onChange={(value) => setResult(value as CheckInput['result'])}>
-                  <option value="passed">Bestanden</option>
-                  <option value="defect">Mangel</option>
-                  <option value="retired">Ausgeschieden</option>
+                  <IonSelectOption value="passed">Bestanden</IonSelectOption>
+                  <IonSelectOption value="defect">Mangel</IonSelectOption>
+                  <IonSelectOption value="retired">Ausgeschieden</IonSelectOption>
                 </SelectField>
                 <TextAreaField label="Notiz" value={note} onChange={setNote} />
               </IonList>

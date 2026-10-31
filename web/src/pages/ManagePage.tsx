@@ -1,4 +1,4 @@
-import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonSegment, IonSegmentButton, IonText } from '@ionic/react'
+import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonSegment, IonSegmentButton, IonSelectOption, IonText } from '@ionic/react'
 import { addOutline } from 'ionicons/icons'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -49,9 +49,9 @@ export default function ManagePage() {
               <IonList>
                 <SelectField label="Kategorie" value={categoryId} onChange={setChosen}>
                   {manageable.map((c) => (
-                    <option key={c.id} value={c.id}>
+                    <IonSelectOption key={c.id} value={c.id}>
                       {c.name}
-                    </option>
+                    </IonSelectOption>
                   ))}
                 </SelectField>
               </IonList>

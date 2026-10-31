@@ -5,7 +5,7 @@ import { paths } from './routes'
 import { currentUser, signInAs, signOutWithLogin, type Level } from './test/fakeAuth'
 import { passkeyState } from './test/fakePasskeys'
 import { pushDisableMode, pushState } from './test/fakePush'
-import { alertButton, findIon, ionButton, ionTab } from './test/ionic'
+import { alertButton, findIon, ionButton, ionTab, typeInto } from './test/ionic'
 
 vi.mock('./api/auth', () => import('./test/fakeAuth'))
 vi.mock('./api/notifications', () => import('./test/fakeNotifications'))
@@ -23,8 +23,8 @@ const tooManyAttempts = 'Zu viele Versuche. Bitte eine Minute warten.'
 const findTab = (name: string) => findIon(() => ionTab(name))
 
 async function submitLogin(password: string) {
-  fireEvent.change(await screen.findByLabelText('E-Mail'), { target: { value: 'test@example.com' } })
-  fireEvent.change(screen.getByLabelText('Passwort'), { target: { value: password } })
+  typeInto(await screen.findByLabelText('E-Mail'), 'test@example.com')
+  typeInto(screen.getByLabelText('Passwort'), password)
   fireEvent.submit(document.querySelector('form')!)
 }
 
@@ -84,8 +84,8 @@ describe('App shell', () => {
     signOutWithLogin('use')
     render(<App initialPath={paths.login} />)
     expect(pushState.calls).not.toContain('syncPush')
-    fireEvent.change(await screen.findByLabelText('E-Mail'), { target: { value: 'a@b.at' } })
-    fireEvent.change(screen.getByLabelText('Passwort'), { target: { value: 'richtig' } })
+    typeInto(await screen.findByLabelText('E-Mail'), 'a@b.at')
+    typeInto(screen.getByLabelText('Passwort'), 'richtig')
     fireEvent.click(await findIon(() => ionButton('Anmelden')))
     await waitFor(() => expect(pushState.calls).toContain('syncPush'))
   })
@@ -184,13 +184,13 @@ describe('passkeys in settings', () => {
 
   const iPhone = { id: 'k1', name: 'iPhone', created: '2026-10-29' }
   const add = async (name: string, password = 'richtig') => {
-    fireEvent.change(await screen.findByLabelText('Name des Geräts'), { target: { value: name } })
-    fireEvent.change(screen.getByLabelText('Passwort'), { target: { value: password } })
+    typeInto(await screen.findByLabelText('Name des Geräts'), name)
+    typeInto(screen.getByLabelText('Passwort'), password)
     fireEvent.click(await findIon(() => ionButton('Passkey hinzufügen')))
   }
   const confirmAndAdd = async (name: string) => {
     fireEvent.click(await findIon(() => ionButton('Mit Passkey bestätigen')))
-    fireEvent.change(await screen.findByLabelText('Name des Geräts'), { target: { value: name } })
+    typeInto(await screen.findByLabelText('Name des Geräts'), name)
     fireEvent.click(await findIon(() => ionButton('Passkey hinzufügen')))
   }
 

@@ -1,11 +1,11 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from '../App'
 import { today } from '../today'
 import { paths } from '../routes'
 import { levelsFailing, signInAs, type Level } from '../test/fakeAuth'
 import { calls, data, failing } from '../test/fakeMaterial'
-import { alertButton, findIon, ionButton, ionChip, ionItem, ionTab, ionToggle } from '../test/ionic'
+import { alertButton, choose, findIon, ionButton, ionChip, ionItem, ionSelect, ionTab, ionToggle, selectedText, typeInto } from '../test/ionic'
 import { notificationState } from '../test/fakeNotifications'
 import { pushState } from '../test/fakePush'
 
@@ -27,7 +27,7 @@ const offlineNotice = 'Keine Verbindung. Die Materialverwaltung braucht eine Int
 
 async function scan(code: string) {
   const input = await screen.findByLabelText('Code manuell eingeben')
-  fireEvent.change(input, { target: { value: code } })
+  typeInto(input, code)
   fireEvent.submit(input)
 }
 
@@ -207,9 +207,9 @@ describe('saving a use', () => {
   it('saves one use per item with the form values', async () => {
     renderAt(paths.recordUse, 'use')
     await scanAndOpenForm('M-001', 'M-002')
-    fireEvent.change(screen.getByLabelText('Art'), { target: { value: 'exercise' } })
-    fireEvent.change(screen.getByLabelText('Erfasst von'), { target: { value: 'Anna' } })
-    fireEvent.change(screen.getByLabelText('Notiz'), { target: { value: 'Atemschutzübung' } })
+    choose(ionSelect('Art')!, 'exercise')
+    typeInto(screen.getByLabelText('Erfasst von'), 'Anna')
+    typeInto(screen.getByLabelText('Notiz'), 'Atemschutzübung')
     fireEvent.click(ionButton('Speichern')!)
     await screen.findByRole('heading', { name: 'Fällig' })
     const input = { date: today(), kind: 'exercise', recordedByName: 'Anna', note: 'Atemschutzübung' }
@@ -231,7 +231,7 @@ describe('saving a use', () => {
   it('refuses a future date', async () => {
     renderAt(paths.recordUse, 'use')
     await scanAndOpenForm('M-001')
-    fireEvent.change(screen.getByLabelText('Datum'), { target: { value: '2062-01-01' } })
+    typeInto(screen.getByLabelText('Datum'), '2062-01-01')
     fireEvent.click(ionButton('Speichern')!)
     expect(await screen.findByText('Datum darf nicht in der Zukunft liegen.')).toBeInTheDocument()
     expect(calls.uses).toEqual([])
@@ -242,7 +242,7 @@ describe('saving a use', () => {
     renderAt(paths.recordUse, 'use')
     await scanAndOpenForm('M-001')
     expect(screen.getByLabelText('Erfasst von')).toHaveValue('Anna')
-    fireEvent.change(screen.getByLabelText('Erfasst von'), { target: { value: 'Berta' } })
+    typeInto(screen.getByLabelText('Erfasst von'), 'Berta')
     fireEvent.click(ionButton('Speichern')!)
     await waitFor(() => expect(localStorage.getItem('intern.recordedBy')).toBe('Berta'))
   })
@@ -271,40 +271,40 @@ describe('saving a use', () => {
 describe('recording a check', () => {
   it('offers only the check types of the item', async () => {
     renderAt(paths.recordCheck('l01'), 'check')
-    const select = await screen.findByLabelText('Prüfart')
+    const select = await findIon(() => ionSelect('Prüfart'))
     expect(within(select).getAllByRole('option').map((o) => o.textContent)).toEqual(['Jahresprüfung'])
   })
 
   it('preselects the default check type of the category', async () => {
     data.checkTypes = data.checkTypes.map((t) => ({ ...t, isDefault: t.id === 'fuenfjahr' }))
     renderAt(paths.recordCheck('m01'), 'check')
-    expect(await screen.findByLabelText('Prüfart')).toHaveValue('fuenfjahr')
+    expect(await findIon(() => ionSelect('Prüfart'))).toHaveValue('fuenfjahr')
   })
 
   it('ignores the default of another category', async () => {
     data.checkTypes = data.checkTypes.map((t) => ({ ...t, isDefault: t.id === 'la-jahr' }))
     renderAt(paths.recordCheck('m01'), 'check')
-    expect(await screen.findByLabelText('Prüfart')).toHaveValue('maskenpruefung')
+    expect(await findIon(() => ionSelect('Prüfart'))).toHaveValue('maskenpruefung')
   })
 
   it('falls back to the first check type without a default', async () => {
     renderAt(paths.recordCheck('m01'), 'check')
-    expect(await screen.findByLabelText('Prüfart')).toHaveValue('maskenpruefung')
+    expect(await findIon(() => ionSelect('Prüfart'))).toHaveValue('maskenpruefung')
   })
 
   it('still lets the user pick another type than the default', async () => {
     data.checkTypes = data.checkTypes.map((t) => ({ ...t, isDefault: t.id === 'fuenfjahr' }))
     renderAt(paths.recordCheck('m01'), 'check')
-    fireEvent.change(await screen.findByLabelText('Prüfart'), { target: { value: 'maskenpruefung' } })
-    expect(screen.getByLabelText('Prüfart')).toHaveValue('maskenpruefung')
+    choose(await findIon(() => ionSelect('Prüfart')), 'maskenpruefung')
+    expect(ionSelect('Prüfart')!).toHaveValue('maskenpruefung')
   })
 
   it('saves and shows the entry on the item page', async () => {
     renderAt(paths.recordCheck('m01'), 'check')
-    fireEvent.change(await screen.findByLabelText('Prüfart'), { target: { value: 'fuenfjahr' } })
-    fireEvent.change(screen.getByLabelText('Datum'), { target: { value: '2026-10-20' } })
-    fireEvent.change(screen.getByLabelText('Ergebnis'), { target: { value: 'defect' } })
-    fireEvent.change(screen.getByLabelText('Notiz'), { target: { value: 'Riss' } })
+    choose(await findIon(() => ionSelect('Prüfart')), 'fuenfjahr')
+    typeInto(screen.getByLabelText('Datum'), '2026-10-20')
+    choose(ionSelect('Ergebnis')!, 'defect')
+    typeInto(screen.getByLabelText('Notiz'), 'Riss')
     fireEvent.click(ionButton('Speichern')!)
     expect(await screen.findByText('5-Jahres-Prüfung: Mangel')).toBeInTheDocument()
     expect(calls.checks).toEqual([
@@ -314,7 +314,7 @@ describe('recording a check', () => {
 
   it('writes once on a double tap', async () => {
     renderAt(paths.recordCheck('m01'), 'check')
-    await screen.findByLabelText('Prüfart')
+    await findIon(() => ionSelect('Prüfart'))
     fireEvent.click(ionButton('Speichern')!)
     fireEvent.click(ionButton('Speichern')!)
     await waitFor(() => expect(calls.checks.length).toBeGreaterThan(0))
@@ -324,7 +324,7 @@ describe('recording a check', () => {
 
   it('refuses a future date', async () => {
     renderAt(paths.recordCheck('m01'), 'check')
-    fireEvent.change(await screen.findByLabelText('Datum'), { target: { value: '2062-01-01' } })
+    typeInto(await screen.findByLabelText('Datum'), '2062-01-01')
     fireEvent.click(ionButton('Speichern')!)
     expect(await screen.findByText('Datum darf nicht in der Zukunft liegen.')).toBeInTheDocument()
     expect(calls.checks).toEqual([])
@@ -333,12 +333,13 @@ describe('recording a check', () => {
   it('defaults to today and a pass', async () => {
     renderAt(paths.recordCheck('m01'), 'check')
     expect(await screen.findByLabelText('Datum')).toHaveValue(today())
-    expect(screen.getByLabelText('Ergebnis')).toHaveValue('passed')
+    expect(ionSelect('Ergebnis')!).toHaveValue('passed')
+    await waitFor(() => expect(selectedText(ionSelect('Ergebnis')!)).toBe('Bestanden'))
   })
 
   it('reports a failed save', async () => {
     renderAt(paths.recordCheck('m01'), 'check')
-    await screen.findByLabelText('Prüfart')
+    await findIon(() => ionSelect('Prüfart'))
     failing.check = true
     fireEvent.click(ionButton('Speichern')!)
     expect(await screen.findByText('Speichern fehlgeschlagen.')).toBeInTheDocument()
@@ -381,7 +382,7 @@ describe('manage', () => {
   })
 
   const lastChecked = (type: string) => screen.findByLabelText(`Zuletzt geprüft am (${type})`)
-  const set = (label: string, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } })
+  const set = (label: string, value: string) => typeInto(screen.getByLabelText(label), value)
   const openCheckTypes = async () => {
     fireEvent.click(await screen.findByText('Prüfarten'))
     await findIon(() => ionButton('Prüfart anlegen'))
@@ -390,13 +391,13 @@ describe('manage', () => {
   it('lists only categories at manage level', async () => {
     signInAs('use', { masken: 'manage', lungenautomaten: 'use' })
     render(<App initialPath={paths.manage} />)
-    const select = await screen.findByLabelText('Kategorie')
+    const select = await findIon(() => ionSelect('Kategorie'))
     expect(within(select).getAllByRole('option').map((o) => o.textContent)).toEqual(['Atemschutzmasken'])
   })
 
   it('preselects the category from the link', async () => {
     renderAt(paths.manageCategory('lungenautomaten'), 'manage')
-    expect(await screen.findByLabelText('Kategorie')).toHaveValue('lungenautomaten')
+    expect(await findIon(() => ionSelect('Kategorie'))).toHaveValue('lungenautomaten')
     expect(await lastChecked('Jahresprüfung')).toBeInTheDocument()
   })
 
@@ -407,7 +408,7 @@ describe('manage', () => {
 
   it('creates an item with last checked dates of the selected category', async () => {
     renderAt(paths.manage, 'manage')
-    fireEvent.change(await lastChecked('Maskenprüfung'), { target: { value: '2026-01-15' } })
+    typeInto(await lastChecked('Maskenprüfung'), '2026-01-15')
     expect(screen.queryByLabelText('Zuletzt geprüft am (Jahresprüfung)')).not.toBeInTheDocument()
     set('Bezeichnung', 'Maske 07')
     set('Seriennummer', 'DR-07')
@@ -435,7 +436,7 @@ describe('manage', () => {
 
   it('refuses a future last checked date', async () => {
     renderAt(paths.manage, 'manage')
-    fireEvent.change(await lastChecked('Maskenprüfung'), { target: { value: '2062-01-01' } })
+    typeInto(await lastChecked('Maskenprüfung'), '2062-01-01')
     set('Bezeichnung', 'Maske 07')
     fireEvent.click(ionButton('Gerät anlegen')!)
     expect(await screen.findByText('Datum darf nicht in der Zukunft liegen.')).toBeInTheDocument()
@@ -468,13 +469,32 @@ describe('manage', () => {
     const name = await screen.findByLabelText('Bezeichnung')
     expect(name).toHaveValue('Maske 01')
     expect(screen.getByLabelText('Code')).toHaveValue('M-001')
-    fireEvent.change(name, { target: { value: 'Maske 1' } })
+    typeInto(name, 'Maske 1')
     fireEvent.click(ionButton('Speichern')!)
     await waitFor(() => expect(calls.updatedItems).toHaveLength(1))
     expect(calls.updatedItems[0]).toEqual({
       itemId: 'm01',
       input: { name: 'Maske 1', serial: 'DR-4711-01', barcode: 'M-001', manufacturedOn: '2016-03-01', note: '' },
     })
+  })
+
+  it('keeps the typed values after a failed edit, and a reload shows the saved ones', async () => {
+    failing.barcode = true
+    renderAt(paths.itemEdit('m01'), 'manage')
+    const name = await screen.findByLabelText('Bezeichnung')
+    expect(name).toHaveValue('Maske 01')
+    typeInto(name, 'Maske 1')
+    typeInto(screen.getByLabelText('Code'), 'M-002')
+    fireEvent.click(ionButton('Speichern')!)
+    expect(await screen.findByText('Code ist bereits vergeben.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Bezeichnung')).toHaveValue('Maske 1')
+    expect(screen.getByLabelText('Code')).toHaveValue('M-002')
+    expect(calls.updatedItems).toEqual([])
+
+    cleanup()
+    renderAt(paths.itemEdit('m01'), 'manage')
+    expect(await screen.findByLabelText('Bezeichnung')).toHaveValue('Maske 01')
+    expect(screen.getByLabelText('Code')).toHaveValue('M-001')
   })
 
   it('offers no editing below manage', async () => {
@@ -613,7 +633,7 @@ describe('code suggestions', () => {
   it('suggests active items matching the typed code', async () => {
     renderAt(paths.recordUse, 'use')
     const input = await screen.findByLabelText('Code manuell eingeben')
-    fireEvent.change(input, { target: { value: 'm-00' } })
+    typeInto(input, 'm-00')
     const suggestions = await screen.findByRole('list', { name: 'Vorschläge' })
     for (const n of ['01', '02', '03', '04', '05']) {
       expect(within(suggestions).getByText(`Maske ${n}`)).toBeInTheDocument()
@@ -625,7 +645,7 @@ describe('code suggestions', () => {
   it('adds a suggestion on click and clears the input', async () => {
     renderAt(paths.recordUse, 'use')
     const input = await screen.findByLabelText('Code manuell eingeben')
-    fireEvent.change(input, { target: { value: 'M-00' } })
+    typeInto(input, 'M-00')
     fireEvent.click(within(await screen.findByRole('list', { name: 'Vorschläge' })).getByText('Maske 03'))
     const list = screen.getByRole('list', { name: 'Gescannte Geräte' })
     await waitFor(() => expect(within(list).getByText('Maske 03')).toBeInTheDocument())
@@ -636,7 +656,7 @@ describe('code suggestions', () => {
   it('does not suggest items already in the list', async () => {
     renderAt(paths.recordUseFor('m01'), 'use')
     const input = await screen.findByLabelText('Code manuell eingeben')
-    fireEvent.change(input, { target: { value: 'M-00' } })
+    typeInto(input, 'M-00')
     const suggestions = await screen.findByRole('list', { name: 'Vorschläge' })
     expect(within(suggestions).queryByText('Maske 01')).not.toBeInTheDocument()
   })
