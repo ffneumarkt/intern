@@ -115,6 +115,11 @@ func Compute(in Input, today time.Time) Result {
 	return result
 }
 
+// InVienna returns the same instant in Europe/Vienna.
+func InVienna(t time.Time) time.Time {
+	return t.In(vienna)
+}
+
 // ViennaDay returns the calendar date of an instant in Europe/Vienna.
 func ViennaDay(t time.Time) time.Time {
 	y, m, d := t.In(vienna).Date()
