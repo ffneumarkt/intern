@@ -3,6 +3,7 @@ export const paths = {
   login: '/login',
   transportDocument: '/befoerderungspapier',
   dueList: '/material',
+  dueListOf: (ids: string[]) => `/material?geraete=${ids.join(',')}`,
   category: (id = ':categoryId') => `/material/kategorien/${id}`,
   item: (id = ':itemId') => `/material/geraete/${id}`,
   recordUse: '/material/verwendung',

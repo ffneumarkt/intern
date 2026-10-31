@@ -43,6 +43,39 @@ describe('due list', () => {
     expect(within(soon).getByText('LA 01')).toBeInTheDocument()
     expect(screen.queryByText('Maske 04')).not.toBeInTheDocument()
   })
+
+  it('limits the list to the items of a notification', async () => {
+    renderAt(paths.dueListOf(['m01', 'm02']), 'use')
+    const overdue = await screen.findByRole('region', { name: 'Überfällig' })
+    expect(within(overdue).getByText('Maske 01')).toBeInTheDocument()
+    expect(screen.getByText('Maske 02')).toBeInTheDocument()
+    expect(screen.queryByText('Maske 03')).not.toBeInTheDocument()
+    expect(screen.queryByText('Maske 05')).not.toBeInTheDocument()
+    expect(screen.queryByText('LA 01')).not.toBeInTheDocument()
+  })
+
+  it('shows everything after Alle anzeigen', async () => {
+    renderAt(paths.dueListOf(['m01']), 'use')
+    await screen.findByText('Maske 01')
+    expect(screen.queryByText('Maske 03')).not.toBeInTheDocument()
+    fireEvent.click(await findIon(() => ionChip('Alle anzeigen')))
+    expect(await screen.findByText('Maske 03')).toBeInTheDocument()
+    expect(ionChip('Alle anzeigen')).not.toBeInTheDocument()
+  })
+
+  it('says when the items of a notification are done', async () => {
+    renderAt(paths.dueListOf(['m04']), 'use')
+    expect(await screen.findByText('Alles aus dieser Benachrichtigung ist erledigt.')).toBeInTheDocument()
+    expect(ionChip('Alle anzeigen')).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Überfällig' })).not.toBeInTheDocument()
+  })
+
+  it('ignores unknown ids', async () => {
+    renderAt(paths.dueListOf(['m01', 'gibt-es-nicht']), 'use')
+    expect(await screen.findByText('Maske 01')).toBeInTheDocument()
+    expect(screen.queryByText('Maske 02')).not.toBeInTheDocument()
+    expect(screen.queryByText('Alles aus dieser Benachrichtigung ist erledigt.')).not.toBeInTheDocument()
+  })
 })
 
 describe('loading', () => {

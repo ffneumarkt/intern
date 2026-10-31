@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import * as auth from './api/auth'
 import type { Level, User } from './api/auth'
 import * as passkeys from './api/passkeys'
+import * as push from './api/push'
 
 const order: Level[] = ['use', 'check', 'manage']
 
@@ -15,7 +16,7 @@ interface Session {
   reloadLevels(): Promise<void>
   login(email: string, password: string): Promise<void>
   loginWithPasskey(): Promise<void>
-  logout(): void
+  logout(): Promise<void>
 }
 
 const SessionContext = createContext<Session | null>(null)
@@ -43,6 +44,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     return unsubscribe
   }, [reloadLevels])
 
+  const userId = user?.id
+  useEffect(() => {
+    if (userId) void push.syncPush()
+  }, [userId])
+
   const session: Session = {
     user,
     can: (categoryId, required) => reaches(levels[categoryId], required),
@@ -58,7 +64,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setUser(auth.currentUser())
       await reloadLevels()
     },
-    logout: auth.logout,
+    // Push goes off while the session is still valid, so the unsubscribe request is authenticated.
+    logout: async () => {
+      await push.disablePush()
+      auth.logout()
+    },
   }
   return <SessionContext.Provider value={session}>{children}</SessionContext.Provider>
 }

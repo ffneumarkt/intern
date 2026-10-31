@@ -2,8 +2,9 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { paths } from './routes'
-import { signInAs, signOutWithLogin, type Level } from './test/fakeAuth'
+import { currentUser, signInAs, signOutWithLogin, type Level } from './test/fakeAuth'
 import { passkeyState } from './test/fakePasskeys'
+import { pushState } from './test/fakePush'
 import { findIon, ionButton, ionTab } from './test/ionic'
 
 vi.mock('./api/auth', () => import('./test/fakeAuth'))
@@ -47,6 +48,30 @@ describe('App shell', () => {
   it('redirects material to login when logged out', async () => {
     renderAt(paths.dueList, null)
     expect(await screen.findByRole('heading', { name: 'Anmelden' })).toBeInTheDocument()
+  })
+
+  it('logging out turns push off on this device before ending the session', async () => {
+    renderAt(paths.settings, 'use')
+    expect(await screen.findByText('Test Benutzer')).toBeInTheDocument()
+    let signedInDuringDisable: boolean | null = null
+    const original = pushState.calls.push.bind(pushState.calls)
+    pushState.calls.push = (...args: string[]) => {
+      if (args[0] === 'disablePush') signedInDuringDisable = currentUser() !== null
+      return original(...args)
+    }
+    fireEvent.click(await findIon(() => ionButton('Abmelden')))
+    await waitFor(() => expect(tab('Material')).not.toBeInTheDocument())
+    expect(signedInDuringDisable).toBe(true)
+  })
+
+  it('syncs the subscription after login', async () => {
+    signOutWithLogin('use')
+    render(<App initialPath={paths.login} />)
+    expect(pushState.calls).not.toContain('syncPush')
+    fireEvent.change(await screen.findByLabelText('E-Mail'), { target: { value: 'a@b.at' } })
+    fireEvent.change(screen.getByLabelText('Passwort'), { target: { value: 'richtig' } })
+    fireEvent.click(await findIon(() => ionButton('Anmelden')))
+    await waitFor(() => expect(pushState.calls).toContain('syncPush'))
   })
 })
 
