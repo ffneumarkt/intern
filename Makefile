@@ -4,9 +4,10 @@
 debug:
 	LOG_LEVEL=debug $(MAKE) -j2 dev-api dev-web
 
-# Passkeys need the name localhost, so open the app at http://localhost:5173.
+# Passkeys need the name localhost, not an IP. They work on the Vite server (:5173) and on the
+# backend serving the built app (:8090).
 dev-api:
-	cd backend && PASSKEY_RP_ID=localhost PASSKEY_ORIGIN=http://localhost:5173 go run ./cmd/intern serve
+	cd backend && PASSKEY_RP_ID=localhost PASSKEY_ORIGIN=http://localhost:5173,http://localhost:8090 go run ./cmd/intern serve
 
 dev-web:
 	npm --prefix web run dev

@@ -26,7 +26,7 @@ Internal tools for FF Neumarkt at `intern.ffneumarkt.at`. Start with `docs/super
 ## Commands
 
 ```sh
-make dev-api   # backend on :8090, admin UI at /_/; passkeys need http://localhost:5173, not an IP
+make dev-api   # backend on :8090, admin UI at /_/; passkeys need http://localhost:5173 or :8090, not an IP
 make dev-web   # Vite dev server, proxies /api and /_
 make debug     # dev-api and dev-web together with LOG_LEVEL=debug
 make seed      # sample data in backend/pb_data, users keine@, verwendung@, pruefung@,
