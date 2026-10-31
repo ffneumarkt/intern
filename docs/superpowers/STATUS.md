@@ -26,6 +26,8 @@ Last updated: 2026-10-31. Read this first, then the spec
   `internal/push` sender and `/api/push/key|subscribe|test`, `intern vapid`; push service worker
   `web/public/push-sw.js`; the due list filters by the items of a push (`?geraete=`). Checked in headed
   Playwright Chromium against a real FCM endpoint: test push and a timing `0` push after a use arrived.
+  Not observed: tapping the notification (the `?geraete=` link was only opened by hand), Firefox and
+  Safari, iOS and Android devices. Headless Chromium cannot test push; headed Chromium did.
 - Nothing is deployed to the VPS yet. No `deploy/` files exist yet.
 
 ## How the process works here
@@ -47,7 +49,8 @@ line; work happens on branches with PRs against `main` (the user merges).
    confirmation, push on the same devices (iOS only from the home screen), and that rate limits count
    per client with real `CF-Connecting-IP` traffic. Everyone at the station shares one IP and so one
    budget. The container must keep publishing no port, or that header can be spoofed. Generate the VAPID
-   keys with `intern vapid`.
+   keys with `docker run --rm ghcr.io/ffneumarkt/intern vapid`; `VAPID_SUBJECT` (a `mailto:` address or
+   https URL) is set by hand.
 4. **ffneumarkt-web follow-ups** (spec §12): revert #10 there now (production has no iOS icon), redirect
    and cleanup at go-live.
 
@@ -85,18 +88,26 @@ From the phase 3 review:
 From the phase 4 review:
 
 - `intern vapid` bootstraps the app: it creates `pb_data` files and in dev mode prints SQL before the keys.
-- `POST /api/push/subscribe` has no body size limit.
+- `POST /api/push/subscribe` has no limit of its own: only PocketBase's global 32 MB body limit and the
+  5000 character default of text fields apply.
 - subscribe's lookup by endpoint treats any error as not found.
 - Any https endpoint can be subscribed, so the server POSTs to internal HTTPS hosts (SSRF, low impact
-  here); a host check could go in the endpoint hook.
+  here); a host check could go in the endpoint hook. See also the missing cap on subscriptions below,
+  which has the same fix.
 - The quiet time and timing chips: `ion-chip` is not keyboard-operable.
-- `enablePush` asks for permission before checking that the server has a key.
+- `enablePush` asks for permission before checking that the server has a key. Permission must stay
+  first (Safari needs it inside the user gesture); bound the `serviceWorker.ready` wait instead.
 - A failed `/api/push/key` hides the category settings too.
 - The Settings push section waits up to 5 s for a service worker in dev (Vite registers none).
-- A push's item state comes from the first fired due, not the most urgent one.
 - The job's lookup of zero-timing history is unbounded over time.
 - Due list: "erledigt" also shows when a category chip hides everything or all `geraete` ids are unknown.
 - Logout's 4 s timeout for disabling push is never cleared.
+- Subscriptions answered with anything but 404/410 (e.g. 401/403 after a VAPID key rotation, or junk
+  keys) are kept and retried every minute all day, so rotating the VAPID keys needs everyone to
+  subscribe again. A later fix: delete on 401/403 or after N failures.
+- There is no cap on subscriptions per user, so a hostile member could add many endpoints that never
+  answer and slow the sequential sends (15 s timeout each) for everyone. Fix like the SSRF line: host
+  check, a cap of about 10 per user, or parallel sends.
 
 Known dependency findings, checked 2026-10-31 (`govulncheck`, `npm audit`):
 
