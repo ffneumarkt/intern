@@ -4,7 +4,7 @@ import App from './App'
 import { paths } from './routes'
 import { currentUser, signInAs, signOutWithLogin, type Level } from './test/fakeAuth'
 import { passkeyState } from './test/fakePasskeys'
-import { pushState } from './test/fakePush'
+import { pushDisableMode, pushState } from './test/fakePush'
 import { findIon, ionButton, ionTab } from './test/ionic'
 
 vi.mock('./api/auth', () => import('./test/fakeAuth'))
@@ -63,6 +63,22 @@ describe('App shell', () => {
     await waitFor(() => expect(tab('Material')).not.toBeInTheDocument())
     expect(signedInDuringDisable).toBe(true)
   })
+
+  it('logs out even when turning push off fails', async () => {
+    renderAt(paths.settings, 'use')
+    expect(await screen.findByText('Test Benutzer')).toBeInTheDocument()
+    pushDisableMode.value = 'reject'
+    fireEvent.click(await findIon(() => ionButton('Abmelden')))
+    await waitFor(() => expect(tab('Material')).not.toBeInTheDocument())
+  })
+
+  it('logs out even when turning push off hangs', async () => {
+    renderAt(paths.settings, 'use')
+    expect(await screen.findByText('Test Benutzer')).toBeInTheDocument()
+    pushDisableMode.value = 'hang'
+    fireEvent.click(await findIon(() => ionButton('Abmelden')))
+    await waitFor(() => expect(tab('Material')).not.toBeInTheDocument(), { timeout: 6000 })
+  }, 10000)
 
   it('syncs the subscription after login', async () => {
     signOutWithLogin('use')

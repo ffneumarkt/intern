@@ -15,9 +15,13 @@ const fresh = () => ({
   calls: [] as string[],
 })
 
+// How disablePush behaves: normally, rejecting, or never settling.
+export const pushDisableMode = { value: 'ok' as 'ok' | 'reject' | 'hang' }
+
 export let pushState = fresh()
 
 export function resetPush() {
+  pushDisableMode.value = 'ok'
   pushState = fresh()
 }
 
@@ -39,6 +43,8 @@ export async function enablePush() {
 
 export async function disablePush() {
   pushState.calls.push('disablePush')
+  if (pushDisableMode.value === 'reject') throw new Error('unsubscribe failed')
+  if (pushDisableMode.value === 'hang') return new Promise<void>(() => {})
   pushState.enabled = false
 }
 

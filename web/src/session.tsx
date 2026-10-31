@@ -4,6 +4,8 @@ import type { Level, User } from './api/auth'
 import * as passkeys from './api/passkeys'
 import * as push from './api/push'
 
+const pushOffTimeoutMs = 4000
+
 const order: Level[] = ['use', 'check', 'manage']
 
 const reaches = (level: Level | undefined, required: Level) =>
@@ -66,8 +68,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     },
     // Push goes off while the session is still valid, so the unsubscribe request is authenticated.
     logout: async () => {
-      await push.disablePush()
-      auth.logout()
+      try {
+        // Bounded, so a stalled request cannot keep the user signed in.
+        await Promise.race([push.disablePush(), new Promise((resolve) => setTimeout(resolve, pushOffTimeoutMs))])
+      } catch {
+        // Logging out matters more than unsubscribing.
+      } finally {
+        auth.logout()
+      }
     },
   }
   return <SessionContext.Provider value={session}>{children}</SessionContext.Provider>
