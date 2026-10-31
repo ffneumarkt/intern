@@ -1,6 +1,6 @@
 # Project status and handover
 
-Last updated: 2026-10-30. Read this first, then the spec
+Last updated: 2026-10-31. Read this first, then the spec
 (`specs/2026-10-29-intern-platform-design.md`), which is the binding design.
 
 ## Where things stand
@@ -21,6 +21,11 @@ Last updated: 2026-10-30. Read this first, then the spec
 - Since then: items with history can only be retired, not deleted (PR #4); adding a passkey needs the
   password, or an existing passkey for further ones (PR #7, no fresh review was run on it); rate limits
   on password checks and passkey login (PR #10). The licence is MIT (PR #8).
+- **Phase 4 done** (plan `plans/2026-10-31-notifications.md`, PR pending): notification settings per
+  category with timings, weekly overdue reminder and quiet time; `internal/notify` job every minute,
+  `internal/push` sender and `/api/push/key|subscribe|test`, `intern vapid`; push service worker
+  `web/public/push-sw.js`; the due list filters by the items of a push (`?geraete=`). Checked in headed
+  Playwright Chromium against a real FCM endpoint: test push and a timing `0` push after a use arrived.
 - Nothing is deployed to the VPS yet. No `deploy/` files exist yet.
 
 ## How the process works here
@@ -31,13 +36,11 @@ line; work happens on branches with PRs against `main` (the user merges).
 
 ## Next steps (proposed order, each needs its own plan)
 
-1. **Phase 4: notifications and push** (spec §7, `internal/notify`, `internal/push`, VAPID). Skip
-   deactivated users; bring back the Settings sections removed in phase 2.
-2. **Phase 5: camera scanning and QR labels** (spec §9, `barcode-detector`): camera picker and torch
+1. **Phase 5: camera scanning and QR labels** (spec §9, `barcode-detector`): camera picker and torch
    removed in phase 2, the label page's QR placeholder, assigning an unknown code to an item.
-3. **Phase 6: Beförderungspapier port** from `ffneumarkt-web/src/components/features/transportDocument/`
+2. **Phase 6: Beförderungspapier port** from `ffneumarkt-web/src/components/features/transportDocument/`
    (`calc.ts`, `fillForm.ts` + tests unchanged), config from `transport_document_settings`, offline.
-4. **Deploy:** `deploy/` (systemd update timer, backup wrapper, `authorized_keys` example),
+3. **Deploy:** `deploy/` (systemd update timer, backup wrapper, `authorized_keys` example),
    `intern snapshot` (spec §10), VPS setup with its own `cloudflared` and hostname
    `intern.ffneumarkt.at`, restore test. After the first deploy, check what can't be tested locally:
    passkeys on a real iPhone, Android phone and Windows device, including Safari with the two-tap
@@ -45,7 +48,7 @@ line; work happens on branches with PRs against `main` (the user merges).
    per client with real `CF-Connecting-IP` traffic. Everyone at the station shares one IP and so one
    budget. The container must keep publishing no port, or that header can be spoofed. Generate the VAPID
    keys with `intern vapid`.
-5. **ffneumarkt-web follow-ups** (spec §12): revert #10 there now (production has no iOS icon), redirect
+4. **ffneumarkt-web follow-ups** (spec §12): revert #10 there now (production has no iOS icon), redirect
    and cleanup at go-live.
 
 ## Deferred minor findings (from the phase 1 review)
@@ -79,14 +82,33 @@ From the phase 3 review:
   full runs). 210 focused attempts did not reproduce it and the cause is unknown. Nothing is saved in
   that case; the click just has no visible effect.
 
-Known dependency findings, checked 2026-10-30 (`govulncheck`, `npm audit`):
+From the phase 4 review:
+
+- `intern vapid` bootstraps the app: it creates `pb_data` files and in dev mode prints SQL before the keys.
+- `POST /api/push/subscribe` has no body size limit.
+- subscribe's lookup by endpoint treats any error as not found.
+- Any https endpoint can be subscribed, so the server POSTs to internal HTTPS hosts (SSRF, low impact
+  here); a host check could go in the endpoint hook.
+- The quiet time and timing chips: `ion-chip` is not keyboard-operable.
+- `enablePush` asks for permission before checking that the server has a key.
+- A failed `/api/push/key` hides the category settings too.
+- The Settings push section waits up to 5 s for a service worker in dev (Vite registers none).
+- A push's item state comes from the first fired due, not the most urgent one.
+- The job's lookup of zero-timing history is unbounded over time.
+- Due list: "erledigt" also shows when a category chip hides everything or all `geraete` ids are unknown.
+- Logout's 4 s timeout for disabling push is never cleared.
+
+Known dependency findings, checked 2026-10-31 (`govulncheck`, `npm audit`):
 
 - `golang.org/x/crypto/openpgp` (GO-2026-5932): no fix exists, the package is unused here.
 - `react-router` 6.30.6 is the newest 6.x and Ionic 9 requires `<7`. GHSA-wrjc-x8rr-h8h6 needs an
   attacker-controlled path in `<Link>` or `useNavigate`, but all paths come from `routes.ts` and record
   ids. GHSA-337j-9hxr-rhxg needs server-side rendering, which the app does not use. Do not run
   `npm audit fix --force`: it moves to react-router 8. Recheck when Ionic allows react-router 7.
-- Four low findings in `vite-plugin-pwa` and its build tooling, which do not ship to the browser.
+- Low and moderate findings in build tooling that does not ship to the browser: `deepmerge`
+  (GHSA-gcqx-w48m-w2h4), `glob` (GHSA-3g3m-2fjr-6pw4) and `minimatch` (GHSA-g3hv-75wg-m249), via
+  `vite-plugin-pwa`/`workbox-build` and via `ts-morph` under `@ionic/react`'s
+  `@stencil/react-output-target`. `glob` and `minimatch` were new on 2026-10-31.
 
 ## Environment notes
 
@@ -97,6 +119,9 @@ Known dependency findings, checked 2026-10-30 (`govulncheck`, `npm audit`):
   by hand, and `actionlint` after changing a workflow.
 - Rate limits also apply in development, so repeated test logins from one machine can hit them. Browser
   test scripts that log in often should use a fresh data dir and stay under 5 password checks a minute.
+- Push in a browser test: headless Chromium (old or new) has no push service ("push service not
+  available") and reports `Notification.permission` as denied; headed Playwright Chromium with a
+  persistent context (not incognito) subscribes at FCM and shows real pushes.
 - Screenshots for UI checks: Playwright's Chromium at
   `~/.cache/ms-playwright/chromium-1140/chrome-linux/chrome` with **`--headless=old`** (the new
   headless mode enforces a minimum width of 500 px), `--window-size=390,844`,
