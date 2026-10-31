@@ -17,7 +17,8 @@ export interface PromptOptions {
 
 // Confirm and prompt dialogs as IonAlerts. Only the confirm button acts; Abbrechen, the backdrop
 // and Escape resolve false/null. One dialog at a time: a call while another is open answers
-// false/null at once and never opens a second alert.
+// false/null at once and never opens a second alert. An alert that cannot be created answers
+// false/null as well.
 export function useDialogs() {
   const [present] = useIonAlert()
   const open = useRef(false)
@@ -28,7 +29,7 @@ export function useDialogs() {
         if (open.current) return resolve(cancelled)
         open.current = true
         let answer = cancelled
-        void present({
+        present({
           ...config,
           onDidDismiss: () => {
             open.current = false
@@ -44,6 +45,9 @@ export function useDialogs() {
               },
             },
           ],
+        }).catch(() => {
+          open.current = false
+          resolve(cancelled)
         })
       }),
     [present],

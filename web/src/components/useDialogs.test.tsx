@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { alertController } from '@ionic/core/components'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { alertButton, findIon } from '../test/ionic'
 import { useDialogs, type ConfirmOptions } from './useDialogs'
 
@@ -87,6 +88,20 @@ describe('useDialogs', () => {
     await settled(1)
     expect(results).toEqual([false])
     expect(alerts()).toHaveLength(1)
+    await press('Löschen')
+    await settled(2)
+    expect(results).toEqual([false, true])
+  })
+
+  it('answers no when the alert cannot be created, and the next dialog opens normally', async () => {
+    const create = vi.spyOn(alertController, 'create').mockRejectedValueOnce(new Error('no alert'))
+    render(<Harness />)
+    open('confirm')
+    await settled(1)
+    expect(results).toEqual([false])
+    create.mockRestore()
+    open('confirm')
+    expect(await screen.findByText('Wirklich?')).toBeInTheDocument()
     await press('Löschen')
     await settled(2)
     expect(results).toEqual([false, true])

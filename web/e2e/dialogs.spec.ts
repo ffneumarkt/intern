@@ -82,8 +82,8 @@ test.describe('verwaltung', () => {
     }
   })
 
-  test('closes the alert on the backdrop without acting', async ({ page, request }) => {
-    const id = await createItem(request, `E2E Backdrop ${randomBytes(3).toString('hex')}`)
+  test('closes the alert with Escape without acting', async ({ page, request }) => {
+    const id = await createItem(request, `E2E Escape ${randomBytes(3).toString('hex')}`)
     try {
       await page.goto(`/material/geraete/${id}/bearbeiten`)
       await page.getByRole('button', { name: 'Gerät löschen' }).click()
