@@ -9,6 +9,8 @@ const toggle = (page: Page, name: string) => page.getByRole('switch', { name, ex
 const secondLine = (page: Page, name: string) =>
   page.locator('ion-item').filter({ has: toggle(page, name) }).locator('p')
 const chip = (page: Page, name: string) => page.getByRole('button', { name, exact: true })
+// Every group has an empty alert region from the start; the message is the one with text.
+const announced = (page: Page) => page.getByRole('alert').filter({ hasText: /\S/ })
 const time = (page: Page, label: 'Von' | 'Bis') => page.getByLabel(label, { exact: true })
 
 async function open(page: Page) {
@@ -132,13 +134,13 @@ test.describe('signed in with the use level', () => {
     await expect(secondLine(page, 'Nicht stören')).toHaveText('21:30 bis 07:00')
 
     await time(page, 'Bis').fill('21:30')
-    await expect(page.getByRole('alert')).toHaveText('Von und Bis dürfen nicht gleich sein.')
+    await expect(announced(page)).toHaveText('Von und Bis dürfen nicht gleich sein.')
     await expect(secondLine(page, 'Nicht stören')).toHaveText('21:30 bis 07:00')
 
     await page.reload()
     await expect(time(page, 'Von')).toHaveValue('21:30')
     await expect(time(page, 'Bis')).toHaveValue('07:00')
-    await expect(page.getByRole('alert')).toHaveCount(0)
+    await expect(announced(page)).toHaveCount(0)
   })
 
   test('quiet time: off survives a reload', async ({ page }) => {
@@ -187,7 +189,7 @@ test.describe('signed in with the use level', () => {
       )
 
       await toggle(page, 'Atemschutzmasken').click()
-      await expect(page.getByRole('alert')).toHaveText('Speichern fehlgeschlagen.')
+      await expect(announced(page)).toHaveText('Speichern fehlgeschlagen.')
       await expect(toggle(page, 'Atemschutzmasken')).not.toBeChecked()
       await expect(secondLine(page, 'Atemschutzmasken')).toHaveText('Aus')
       await expect(chip(page, '14')).toHaveCount(0)
@@ -196,6 +198,20 @@ test.describe('signed in with the use level', () => {
       await page.reload()
       await expect(toggle(page, 'Nicht stören')).toBeVisible()
       await expect(toggle(page, 'Atemschutzmasken')).not.toBeChecked()
+    })
+
+    test('puts the times back after a failed quiet time save', async ({ page }) => {
+      await open(page)
+      await page.route('**/api/collections/notification_preferences/records**', (route) =>
+        route.request().method() === 'GET'
+          ? route.fallback()
+          : route.fulfill({ status: 500, json: { status: 500, message: 'e2e', data: {} } }),
+      )
+
+      await time(page, 'Von').fill('21:30')
+      await expect(announced(page)).toHaveText('Speichern fehlgeschlagen.')
+      await expect(time(page, 'Von')).toHaveValue('22:00')
+      await expect(secondLine(page, 'Nicht stören')).toHaveText('22:00 bis 07:00')
     })
   })
 
@@ -217,7 +233,7 @@ test.describe('signed in with the use level', () => {
     test.skip(browserName !== 'chromium', 'headless Chromium refuses the permission prompt; the others differ')
     await open(page)
     await toggle(page, 'Push-Nachrichten').click()
-    await expect(page.getByRole('alert')).toHaveText('Benachrichtigungen sind im Browser blockiert.')
+    await expect(announced(page)).toHaveText('Benachrichtigungen sind im Browser blockiert.')
     await expect(toggle(page, 'Push-Nachrichten')).not.toBeChecked()
     await expect(secondLine(page, 'Push-Nachrichten')).toHaveText('Aus')
   })

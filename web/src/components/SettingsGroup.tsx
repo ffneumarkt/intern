@@ -16,17 +16,17 @@ export function SettingsHeader({ children }: { children: ReactNode }) {
   )
 }
 
-// The explanation under an inset group, followed by the message of the group's last action.
+// The explanation under an inset group, followed by the message of the group's last action. Both
+// live regions are always there, empty until a message comes: screen readers often skip a region
+// that is inserted together with its text.
 export function SettingsFooter({ text, message }: { text?: string; message?: Message | null }) {
-  if (!text && !message) return null
+  const note = (role: Message['role']) =>
+    message?.role === role && <IonNote color={role === 'alert' ? 'danger' : 'success'}>{message.text}</IonNote>
   return (
     <div className="settings-footer">
       {text && <IonNote>{text}</IonNote>}
-      {message && (
-        <IonNote role={message.role} color={message.role === 'alert' ? 'danger' : 'success'}>
-          {message.text}
-        </IonNote>
-      )}
+      <div role="status">{note('status')}</div>
+      <div role="alert">{note('alert')}</div>
     </div>
   )
 }

@@ -11,6 +11,8 @@ const fresh = () => ({
   // Only writes fail; loading still works.
   failingSaves: false,
   savedQuiet: [] as QuietTime[],
+  // When set, saveQuietTime waits for it: a save that is still running.
+  quietGate: null as Promise<void> | null,
 })
 
 export let notificationState = fresh()
@@ -57,6 +59,7 @@ export async function loadQuietTime() {
 }
 
 export async function saveQuietTime(quiet: QuietTime) {
+  if (notificationState.quietGate) await notificationState.quietGate
   checkSave()
   notificationState.quiet = quiet
   notificationState.savedQuiet.push(quiet)

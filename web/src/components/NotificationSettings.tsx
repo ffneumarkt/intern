@@ -50,6 +50,16 @@ function Content({ data, reload }: { data: LoadedAll; reload(): void }) {
   // The last entered times, kept while quiet time is off so turning it on again restores them.
   const [from, setFrom] = useState(data.quiet.from || defaultQuietTime.from)
   const [until, setUntil] = useState(data.quiet.until || defaultQuietTime.until)
+  // Each load puts the inputs back to the server's times (after a failed save too), unless quiet
+  // time is off there: then the entered times stay for switching it on again.
+  const [synced, setSynced] = useState(data)
+  if (synced !== data) {
+    setSynced(data)
+    if (data.quiet.from && data.quiet.until) {
+      setFrom(data.quiet.from)
+      setUntil(data.quiet.until)
+    }
+  }
   // Times entered while another save runs; saved right after it.
   const queuedQuiet = useRef<QuietTime | null>(null)
   const { busy, once } = useBusy()
@@ -114,10 +124,8 @@ function Content({ data, reload }: { data: LoadedAll; reload(): void }) {
     setUntil(quiet.until)
     // An incomplete time input reports an empty value.
     if (!quiet.from || !quiet.until) return
-    if (quiet.from === data.quiet.from && quiet.until === data.quiet.until) {
-      if (messageFor('quiet')?.text === sameTimes) setMessage(null)
-      return
-    }
+    // No shortcut for "same as loaded": a save may be pending, so the loaded times can be stale.
+    // Saving the same times again is harmless.
     saveQuiet(quiet)
   }
 
@@ -173,7 +181,7 @@ function Content({ data, reload }: { data: LoadedAll; reload(): void }) {
         <IonItem>
           <IonLabel>
             Nicht stören
-            <p>{quietSummary(data.quiet)}</p>
+            <p className="settings-summary">{quietSummary(data.quiet)}</p>
           </IonLabel>
           <IonToggle
             slot="end"
@@ -230,7 +238,7 @@ function Push({
           <IonIcon slot="start" icon={notificationsOutline} aria-hidden />
           <IonLabel>
             Push-Nachrichten
-            <p>{on ? 'Aktiv auf diesem Gerät' : 'Aus'}</p>
+            <p className="settings-summary">{on ? 'Aktiv auf diesem Gerät' : 'Aus'}</p>
           </IonLabel>
           <IonToggle
             slot="end"
@@ -275,10 +283,11 @@ function Category({
 }) {
   return (
     <>
-      <IonItem>
+      {/* While on, the category and its detail rows read as one block, closed by a full line. */}
+      <IonItem lines={setting ? 'none' : undefined}>
         <IonLabel>
           {name}
-          <p>{setting ? summarize(setting.timings, setting.weeklyOverdue) : 'Aus'}</p>
+          <p className="settings-summary">{setting ? summarize(setting.timings, setting.weeklyOverdue) : 'Aus'}</p>
         </IonLabel>
         <IonToggle
           slot="end"
@@ -295,7 +304,7 @@ function Category({
       </IonItem>
       {setting && (
         <>
-          <IonItem>
+          <IonItem className="settings-detail">
             <IonLabel className="ion-text-wrap">
               Erinnerung vor Fälligkeit
               <div className="day-chips">
@@ -332,7 +341,7 @@ function Category({
               </div>
             </IonLabel>
           </IonItem>
-          <IonItem>
+          <IonItem className="settings-detail" lines="full">
             <IonLabel>Wöchentlich bei Überfälligem</IonLabel>
             <IonToggle
               slot="end"
