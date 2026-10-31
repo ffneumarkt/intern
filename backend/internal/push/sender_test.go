@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/SherClockHolmes/webpush-go"
 	"github.com/charmbracelet/log"
@@ -64,7 +65,10 @@ func newEnv(t *testing.T) *env {
 
 type testWriter struct{ t *testing.T }
 
-func (w testWriter) Write(p []byte) (int, error) { w.t.Log(strings.TrimSpace(string(p))); return len(p), nil }
+func (w testWriter) Write(p []byte) (int, error) {
+	w.t.Log(strings.TrimSpace(string(p)))
+	return len(p), nil
+}
 
 func (e *env) subscribe(userID, path string) string {
 	e.t.Helper()
@@ -190,5 +194,41 @@ func TestKeysFromEnv(t *testing.T) {
 	t.Setenv("VAPID_SUBJECT", "")
 	if _, ok := push.KeysFromEnv(); ok {
 		t.Error("ok with missing subject")
+	}
+}
+
+func TestSendWithNilClientDoesNotPanic(t *testing.T) {
+	e := newEnv(t)
+	id := e.subscribe(e.w.Use.Id, "/a")
+	e.sender.Client = nil // the default client does not trust the test certificate
+	n, err := e.sender.Send(e.w.Use.Id, msg)
+	if err != nil || n != 0 {
+		t.Fatalf("delivered %d, err %v", n, err)
+	}
+	if !e.exists(id) {
+		t.Error("subscription should be kept")
+	}
+}
+
+func TestSendTimesOutOnHangingServer(t *testing.T) {
+	e := newEnv(t)
+	release := make(chan struct{})
+	hang := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { <-release }))
+	t.Cleanup(func() { close(release); hang.Close() })
+	e.server = hang
+	id := e.subscribe(e.w.Use.Id, "/slow")
+	e.sender.Client = hang.Client() // no client timeout of its own
+	e.sender.Timeout = 200 * time.Millisecond
+
+	start := time.Now()
+	n, err := e.sender.Send(e.w.Use.Id, msg)
+	if err != nil || n != 0 {
+		t.Fatalf("delivered %d, err %v", n, err)
+	}
+	if d := time.Since(start); d > 3*time.Second {
+		t.Errorf("Send took %v", d)
+	}
+	if !e.exists(id) {
+		t.Error("subscription should be kept")
 	}
 }

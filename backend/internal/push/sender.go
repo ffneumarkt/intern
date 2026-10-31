@@ -1,11 +1,13 @@
 package push
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/SherClockHolmes/webpush-go"
 	"github.com/charmbracelet/log"
@@ -17,6 +19,10 @@ import (
 
 // ttlSeconds is how long a push service keeps a message for an offline device.
 const ttlSeconds = 86400
+
+// defaultTimeout bounds one send when Sender.Timeout is zero, so a hanging push service cannot
+// stall the notification job.
+const defaultTimeout = 15 * time.Second
 
 // Keys are the VAPID key pair and the contact (mailto: address or https URL) of the sender.
 type Keys struct{ Public, Private, Subject string }
@@ -35,8 +41,10 @@ func KeysFromEnv() (keys Keys, ok bool) {
 type Sender struct {
 	App    core.App
 	Keys   Keys
-	Client *http.Client // nil means http.DefaultClient
-	Logger *log.Logger
+	Client *http.Client // nil means a plain client; the per-send Timeout applies either way
+	// Timeout bounds each send including an injected Client; zero means 15 seconds.
+	Timeout time.Duration
+	Logger  *log.Logger
 }
 
 var _ notify.Sender = (*Sender)(nil)
@@ -55,23 +63,35 @@ func (s *Sender) Send(userID string, message notify.Message) (int, error) {
 	// webpush-go prefixes anything that is not an https: URL with "mailto:".
 	subject := strings.TrimPrefix(s.Keys.Subject, "mailto:")
 
+	client := s.Client
+	if client == nil {
+		client = &http.Client{}
+	}
+	timeout := s.Timeout
+	if timeout <= 0 {
+		timeout = defaultTimeout
+	}
+
 	delivered := 0
 	for _, sub := range subs {
-		resp, err := webpush.SendNotification(payload, &webpush.Subscription{
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		resp, err := webpush.SendNotificationWithContext(ctx, payload, &webpush.Subscription{
 			Endpoint: sub.GetString("endpoint"),
 			Keys:     webpush.Keys{P256dh: sub.GetString("p256dh"), Auth: sub.GetString("auth")},
 		}, &webpush.Options{
-			HTTPClient:      s.Client,
+			HTTPClient:      client,
 			VAPIDPublicKey:  s.Keys.Public,
 			VAPIDPrivateKey: s.Keys.Private,
 			Subscriber:      subject,
 			TTL:             ttlSeconds,
 		})
 		if err != nil {
+			cancel()
 			s.Logger.Error("web push failed", "user", userID, "subscription", sub.Id, "err", err)
 			continue
 		}
 		_ = resp.Body.Close()
+		cancel()
 
 		switch {
 		case resp.StatusCode >= 200 && resp.StatusCode < 300:
