@@ -1,6 +1,10 @@
 package material
 
 import (
+	"encoding/json"
+	"net/url"
+	"time"
+
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
@@ -15,6 +19,9 @@ func Register(app core.App) {
 	app.OnRecordCreateExecute("check_types").BindFunc(keepOneDefault)
 	app.OnRecordUpdateExecute("check_types").BindFunc(keepOneDefault)
 	app.OnRecordValidate("uses", "checks").BindFunc(rejectFutureDate)
+	app.OnRecordValidate("notification_settings").BindFunc(validateTimings)
+	app.OnRecordValidate("notification_preferences").BindFunc(validateQuietTime)
+	app.OnRecordValidate("push_subscriptions").BindFunc(validateEndpoint)
 	app.OnRecordAuthRequest("users").BindFunc(rejectDeactivated)
 	app.OnRecordUpdate("users").BindFunc(endSessionsOnDeactivation)
 }
@@ -120,6 +127,59 @@ func rejectDeactivated(e *core.RecordAuthRequestEvent) error {
 func endSessionsOnDeactivation(e *core.RecordEvent) error {
 	if e.Record.GetBool("deactivated") && !e.Record.Original().GetBool("deactivated") {
 		e.Record.RefreshTokenKey()
+	}
+	return e.Next()
+}
+
+// maxTimingDays is how far ahead of a due date a notification can be asked for.
+const maxTimingDays = 14
+
+// validateTimings accepts a list of distinct whole days from 0 to 14, or nothing.
+func validateTimings(e *core.RecordEvent) error {
+	raw, err := json.Marshal(e.Record.Get("timings"))
+	if err != nil {
+		return err
+	}
+	var days []float64
+	if err := json.Unmarshal(raw, &days); err != nil {
+		return validation.Errors{"timings": validation.NewError("validation_timings", "must be a list of days")}
+	}
+	seen := map[float64]bool{}
+	for _, day := range days {
+		if day != float64(int(day)) || day < 0 || day > maxTimingDays || seen[day] {
+			return validation.Errors{"timings": validation.NewError("validation_timings", "must be distinct whole days from 0 to 14")}
+		}
+		seen[day] = true
+	}
+	return e.Next()
+}
+
+// validateQuietTime requires both times as HH:MM, and different from each other.
+func validateQuietTime(e *core.RecordEvent) error {
+	from, until := e.Record.GetString("quiet_from"), e.Record.GetString("quiet_until")
+	if from == "" && until == "" {
+		return e.Next()
+	}
+	_, errFrom := time.Parse("15:04", from)
+	_, errUntil := time.Parse("15:04", until)
+	if errFrom != nil || len(from) != 5 {
+		return validation.Errors{"quiet_from": validation.NewError("validation_quiet_time", "must be a time as HH:MM")}
+	}
+	if errUntil != nil || len(until) != 5 {
+		return validation.Errors{"quiet_until": validation.NewError("validation_quiet_time", "must be a time as HH:MM")}
+	}
+	if from == until {
+		return validation.Errors{"quiet_until": validation.NewError("validation_quiet_time", "must differ from the start")}
+	}
+	return e.Next()
+}
+
+// validateEndpoint requires HTTPS, so a user cannot point the server's requests at plain internal
+// addresses.
+func validateEndpoint(e *core.RecordEvent) error {
+	u, err := url.Parse(e.Record.GetString("endpoint"))
+	if err != nil || u.Scheme != "https" || u.Host == "" {
+		return validation.Errors{"endpoint": validation.NewError("validation_endpoint", "must be an https URL")}
 	}
 	return e.Next()
 }

@@ -236,6 +236,21 @@ func TestNotificationSettingsAreOwnOnly(t *testing.T) {
 	e.run(t, "owner deletes", request{as: w.Check, method: "DELETE", url: record("notification_settings", theirs.Id), status: 204})
 }
 
+func TestNotificationPreferencesRules(t *testing.T) {
+	e := newRulesEnv(t)
+	w := e.w
+	theirs := testenv.Create(t, e.app, "notification_preferences", map[string]any{"user": w.Check.Id})
+	body := func(user *core.Record) string { return fmt.Sprintf(`{"user":%q}`, user.Id) }
+	e.run(t, "creates own", request{as: w.Use, method: "POST", url: records("notification_preferences"), body: body(w.Use), status: 200})
+	e.run(t, "not for others", request{as: w.Manage, method: "POST", url: records("notification_preferences"), body: body(w.Use), status: 400})
+	e.run(t, "not reading others", request{as: w.Use, method: "GET", url: record("notification_preferences", theirs.Id), status: 404})
+	e.run(t, "owner updates", request{as: w.Check, method: "PATCH", url: record("notification_preferences", theirs.Id),
+		body: `{"quiet_from":"22:00","quiet_until":"07:00"}`, status: 200})
+	e.run(t, "owner cannot reassign", request{as: w.Check, method: "PATCH", url: record("notification_preferences", theirs.Id),
+		body: fmt.Sprintf(`{"user":%q}`, w.Use.Id), status: 404})
+	e.run(t, "owner deletes", request{as: w.Check, method: "DELETE", url: record("notification_preferences", theirs.Id), status: 204})
+}
+
 func TestPushSubscriptionsAreOwnOnly(t *testing.T) {
 	e := newRulesEnv(t)
 	w := e.w
@@ -272,7 +287,7 @@ func TestTransportDocumentSettingsArePublicToRead(t *testing.T) {
 
 func TestMigrationsRevert(t *testing.T) {
 	app := testenv.New(t)
-	if _, err := core.NewMigrationsRunner(app, core.AppMigrations).Down(6); err != nil {
+	if _, err := core.NewMigrationsRunner(app, core.AppMigrations).Down(7); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := app.FindCollectionByNameOrId("items"); err == nil {

@@ -12,7 +12,7 @@ func TestCollectionsExist(t *testing.T) {
 	app := testenv.New(t)
 	for _, name := range []string{
 		"users", "categories", "permissions", "check_types", "items", "uses", "checks", "notification_settings",
-		"push_subscriptions", "passkeys", "notification_log", "transport_document_settings",
+		"push_subscriptions", "notification_preferences", "passkeys", "notification_log", "transport_document_settings",
 	} {
 		if _, err := app.FindCollectionByNameOrId(name); err != nil {
 			t.Errorf("%s: %v", name, err)
@@ -36,10 +36,11 @@ func TestUniqueConstraints(t *testing.T) {
 	w := testenv.Seed(t, app)
 
 	unique := map[string]map[string]any{
-		"permissions":           {"user": w.Use.Id, "category": w.CategoryA.Id, "level": "manage"},
-		"notification_settings": {"user": w.Use.Id, "category": w.CategoryA.Id},
-		"push_subscriptions":    {"user": w.Use.Id, "endpoint": "https://push.example.com/1"},
-		"passkeys":              {"user": w.Use.Id, "credential_id": "cred", "public_key": "key", "name": "Telefon"},
+		"permissions":              {"user": w.Use.Id, "category": w.CategoryA.Id, "level": "manage"},
+		"notification_settings":    {"user": w.Use.Id, "category": w.CategoryA.Id},
+		"push_subscriptions":       {"user": w.Use.Id, "endpoint": "https://push.example.com/1"},
+		"notification_preferences": {"user": w.Use.Id},
+		"passkeys":                 {"user": w.Use.Id, "credential_id": "cred", "public_key": "key", "name": "Telefon"},
 		"notification_log": {"user": w.Use.Id, "item": w.ItemA.Id, "reason": "end_of_life",
 			"due_date": "2026-10-30", "timing": "0", "sent_on": "2026-10-30"},
 	}
