@@ -13,6 +13,7 @@ import {
   type Passkey,
 } from '../api/passkeys'
 import { Field } from '../components/Field'
+import NotificationSettings from '../components/NotificationSettings'
 import Loaded from '../components/Loaded'
 import Page from '../components/Page'
 import { useSession } from '../session'
@@ -99,6 +100,7 @@ export default function SettingsPage() {
           </IonLabel>
         </IonItem>
       </IonList>
+      <NotificationSettings />
       <IonList>
         <IonListHeader>
           <IonLabel>Passkeys</IonLabel>

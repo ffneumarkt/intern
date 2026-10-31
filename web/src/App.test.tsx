@@ -7,7 +7,9 @@ import { passkeyState } from './test/fakePasskeys'
 import { findIon, ionButton, ionTab } from './test/ionic'
 
 vi.mock('./api/auth', () => import('./test/fakeAuth'))
+vi.mock('./api/notifications', () => import('./test/fakeNotifications'))
 vi.mock('./api/passkeys', () => import('./test/fakePasskeys'))
+vi.mock('./api/push', () => import('./test/fakePush'))
 
 function renderAt(path: string, level: Level | null) {
   signInAs(level)
