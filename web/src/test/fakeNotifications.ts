@@ -8,6 +8,8 @@ const fresh = () => ({
   settings: [] as NotificationSetting[],
   quiet: null as QuietTime | null,
   failing: false,
+  // Only writes fail; loading still works.
+  failingSaves: false,
   savedQuiet: [] as QuietTime[],
 })
 
@@ -21,13 +23,18 @@ function check() {
   if (notificationState.failing) throw new TypeError('Failed to fetch')
 }
 
+function checkSave() {
+  check()
+  if (notificationState.failingSaves) throw new TypeError('Failed to fetch')
+}
+
 export async function listNotificationSettings() {
   check()
   return notificationState.settings
 }
 
 export async function enableCategory(categoryId: string) {
-  check()
+  checkSave()
   notificationState.settings = [
     ...notificationState.settings,
     { id: `n${notificationState.settings.length + 1}`, categoryId, timings: defaultTimings, weeklyOverdue: true },
@@ -35,12 +42,12 @@ export async function enableCategory(categoryId: string) {
 }
 
 export async function updateSetting(id: string, change: { timings?: number[]; weeklyOverdue?: boolean }) {
-  check()
+  checkSave()
   notificationState.settings = notificationState.settings.map((s) => (s.id === id ? { ...s, ...change } : s))
 }
 
 export async function disableCategory(id: string) {
-  check()
+  checkSave()
   notificationState.settings = notificationState.settings.filter((s) => s.id !== id)
 }
 
@@ -50,7 +57,7 @@ export async function loadQuietTime() {
 }
 
 export async function saveQuietTime(quiet: QuietTime) {
-  check()
+  checkSave()
   notificationState.quiet = quiet
   notificationState.savedQuiet.push(quiet)
 }

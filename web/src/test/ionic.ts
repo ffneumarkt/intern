@@ -16,3 +16,10 @@ export const findIon = <T,>(get: () => T | null) =>
   })
 
 export const ionChip = (text: string) => byText('ion-chip', text)
+
+// Items whose text starts with the label (a second line may follow).
+export const ionItem = (label: string) =>
+  [...document.querySelectorAll('ion-item')].find((el) => el.textContent?.trim().startsWith(label)) ?? null
+
+// Toggles carry their label as aria-label, which Ionic passes to the input in its shadow DOM.
+export const ionToggle = (label: string) => document.querySelector<HTMLElement>(`ion-toggle[aria-label="${label}"]`)

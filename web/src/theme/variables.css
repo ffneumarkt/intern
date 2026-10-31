@@ -75,3 +75,43 @@
   border: 1px solid var(--ion-color-light-shade);
   border-radius: 6px;
 }
+
+/* Einstellungen: small headers above and notes below the inset groups, as in the iOS settings. */
+.settings-header {
+  min-height: 0;
+  margin-top: 16px;
+  padding-inline-start: 32px;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  color: var(--ion-color-medium);
+}
+
+.settings-header + ion-list.list-inset {
+  margin-top: 6px;
+}
+
+.settings-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: -8px 0 8px;
+  padding: 0 32px;
+}
+
+.settings-footer ion-note {
+  font-size: 0.8125rem;
+}
+
+.day-chips {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.time-input {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: none;
+}
