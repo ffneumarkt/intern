@@ -3,7 +3,9 @@ import { cleanup } from '@testing-library/react'
 import { setupIonicReact } from '@ionic/react'
 import { afterEach, beforeEach, vi } from 'vitest'
 import { resetMaterial } from './fakeMaterial'
+import { resetNotifications } from './fakeNotifications'
 import { resetPasskeys } from './fakePasskeys'
+import { resetPush } from './fakePush'
 
 setupIonicReact({ mode: 'md' })
 
@@ -24,6 +26,8 @@ Object.defineProperty(window, 'matchMedia', {
 beforeEach(() => {
   resetMaterial()
   resetPasskeys()
+  resetNotifications()
+  resetPush()
 })
 
 afterEach(() => {

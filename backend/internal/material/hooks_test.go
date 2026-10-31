@@ -2,6 +2,7 @@ package material_test
 
 import (
 	"errors"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"net/http"
 	"strings"
 	"testing"
@@ -283,4 +284,125 @@ func TestOtherUserChangesKeepTheToken(t *testing.T) {
 	}
 	s := authRequest(app, "refresh", http.MethodPost, "/api/collections/users/auth-refresh", "", token, 200)
 	s.Test(t)
+}
+
+// rejectedField returns the field an error from a save names, or "" for no error.
+func rejectedField(t *testing.T, err error) string {
+	t.Helper()
+	if err == nil {
+		return ""
+	}
+	var errs validation.Errors
+	if !errors.As(err, &errs) || len(errs) != 1 {
+		t.Fatalf("not a single validation error: %v", err)
+	}
+	for field := range errs {
+		return field
+	}
+	return ""
+}
+
+func TestTimingsValidation(t *testing.T) {
+	tests := []struct {
+		name    string
+		timings any
+		ok      bool
+	}{
+		{"nil", nil, true},
+		{"empty", `[]`, true},
+		{"several", `[14, 3, 0]`, true},
+		{"zero", `[0]`, true},
+		{"too long ahead", `[15]`, false},
+		{"negative", `[-1]`, false},
+		{"duplicate", `[3, 3]`, false},
+		{"fraction", `[1.5]`, false},
+		{"string element", `["3"]`, false},
+		{"not a list", `"14"`, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			app := testenv.New(t)
+			w := testenv.Seed(t, app)
+			c, err := app.FindCollectionByNameOrId("notification_settings")
+			if err != nil {
+				t.Fatal(err)
+			}
+			record := core.NewRecord(c)
+			record.Load(map[string]any{"user": w.Use.Id, "category": w.CategoryA.Id, "timings": tt.timings})
+			got := rejectedField(t, app.Save(record))
+			if tt.ok && got != "" {
+				t.Errorf("rejected: %s", got)
+			}
+			if !tt.ok && got != "timings" {
+				t.Errorf("rejected field = %q, want timings", got)
+			}
+		})
+	}
+}
+
+func TestQuietTimeValidation(t *testing.T) {
+	tests := []struct {
+		from, until string
+		ok          bool
+	}{
+		{"", "", true},
+		{"22:00", "07:00", true},
+		{"00:00", "23:59", true},
+		{"22:00", "", false},
+		{"", "07:00", false},
+		{"7:00", "08:00", false},
+		{"24:00", "07:00", false},
+		{"22:60", "07:00", false},
+		{"22:00", "22:00", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.from+"-"+tt.until, func(t *testing.T) {
+			app := testenv.New(t)
+			w := testenv.Seed(t, app)
+			c, err := app.FindCollectionByNameOrId("notification_preferences")
+			if err != nil {
+				t.Fatal(err)
+			}
+			record := core.NewRecord(c)
+			record.Load(map[string]any{"user": w.Use.Id, "quiet_from": tt.from, "quiet_until": tt.until})
+			got := rejectedField(t, app.Save(record))
+			if tt.ok && got != "" {
+				t.Errorf("rejected: %s", got)
+			}
+			if !tt.ok && got != "quiet_from" && got != "quiet_until" {
+				t.Errorf("rejected field = %q, want quiet_from or quiet_until", got)
+			}
+		})
+	}
+}
+
+func TestSubscriptionEndpointMustBeHTTPS(t *testing.T) {
+	tests := []struct {
+		endpoint string
+		ok       bool
+	}{
+		{"https://push.example.com/1", true},
+		{"http://push.example.com/1", false},
+		{"ftp://x", false},
+		{"not a url", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.endpoint, func(t *testing.T) {
+			app := testenv.New(t)
+			w := testenv.Seed(t, app)
+			c, err := app.FindCollectionByNameOrId("push_subscriptions")
+			if err != nil {
+				t.Fatal(err)
+			}
+			record := core.NewRecord(c)
+			record.Load(map[string]any{"user": w.Use.Id, "endpoint": tt.endpoint})
+			got := rejectedField(t, app.Save(record))
+			if tt.ok && got != "" {
+				t.Errorf("rejected: %s", got)
+			}
+			if !tt.ok && got != "endpoint" {
+				t.Errorf("rejected field = %q, want endpoint", got)
+			}
+		})
+	}
 }

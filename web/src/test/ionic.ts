@@ -14,3 +14,5 @@ export const findIon = <T,>(get: () => T | null) =>
     if (!el) throw new Error('element not found')
     return el
   })
+
+export const ionChip = (text: string) => byText('ion-chip', text)

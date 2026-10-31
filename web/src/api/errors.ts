@@ -24,3 +24,6 @@ export const tooManyAttemptsMessage = 'Zu viele Versuche. Bitte eine Minute wart
 export function explainRateLimit(err: unknown): unknown {
   return err instanceof ClientResponseError && err.status === 429 ? new TooManyAttemptsError() : err
 }
+
+// The browser refused the notification permission.
+export class PushDeniedError extends Error {}

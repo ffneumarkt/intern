@@ -238,3 +238,20 @@ func TestViennaDay(t *testing.T) {
 		}
 	}
 }
+
+func TestInVienna(t *testing.T) {
+	tests := []struct{ instant, clock string }{
+		{"2026-07-01T22:30:00Z", "00:30"},
+		{"2026-01-01T23:30:00Z", "00:30"},
+	}
+	for _, tt := range tests {
+		instant, err := time.Parse(time.RFC3339, tt.instant)
+		if err != nil {
+			t.Fatal(err)
+		}
+		got := InVienna(instant)
+		if !got.Equal(instant) || got.Format("15:04") != tt.clock {
+			t.Errorf("%s = %s, want %s", tt.instant, got, tt.clock)
+		}
+	}
+}

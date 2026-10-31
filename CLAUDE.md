@@ -12,9 +12,9 @@ Internal tools for FF Neumarkt at `intern.ffneumarkt.at`. Start with `docs/super
 - UI text is German only; code, comments and identifiers are English.
 - Routes are defined once in `web/src/routes.ts` (`paths`).
 - Frontend tests: Ionic components are found by visible text with `web/src/test/ionic.ts`
-  (`ionButton`, `ionTab`, `findIon`) and inputs are driven with `fireEvent`; jsdom does not model
+  (`ionButton`, `ionTab`, `ionChip`, `findIon`) and inputs are driven with `fireEvent`; jsdom does not model
   Ionic's shadow DOM roles or focus. `web/src/api/` is replaced by `test/fakeAuth.ts`,
-  `test/fakeMaterial.ts` and `test/fakePasskeys.ts`.
+  `test/fakeMaterial.ts`, `test/fakePasskeys.ts`, `test/fakeNotifications.ts` and `test/fakePush.ts`.
 - Form fields are native inputs through `web/src/components/Field.tsx`, not `IonInput`/`IonSelect`.
 - Data pages load with `useResource`, not an effect: Ionic keeps pages mounted.
 - Go tests that use `internal/testenv` live in external `_test` packages.
@@ -35,6 +35,9 @@ make test      # go vet + go test, tsc, vitest
 make build     # frontend into backend/ui/dist + binary backend/intern
 make image     # docker build -t intern:local .
 ```
+
+Push needs `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` (from `intern vapid`) and `VAPID_SUBJECT` set for
+`make dev-api`. Vite's dev server registers no service worker, so test push against `make build` output.
 
 `make test` does not run the security scans: `govulncheck ./...` in `backend/`, `npm audit` in `web/`,
 and `actionlint` after changing a workflow.

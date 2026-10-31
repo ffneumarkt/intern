@@ -5,11 +5,15 @@ import { today } from '../today'
 import { paths } from '../routes'
 import { levelsFailing, signInAs, type Level } from '../test/fakeAuth'
 import { calls, data, failing } from '../test/fakeMaterial'
-import { findIon, ionButton, ionTab } from '../test/ionic'
+import { findIon, ionButton, ionChip, ionTab } from '../test/ionic'
+import { notificationState } from '../test/fakeNotifications'
+import { pushState } from '../test/fakePush'
 
 vi.mock('../api/auth', () => import('../test/fakeAuth'))
 vi.mock('../api/material', () => import('../test/fakeMaterial'))
+vi.mock('../api/notifications', () => import('../test/fakeNotifications'))
 vi.mock('../api/passkeys', () => import('../test/fakePasskeys'))
+vi.mock('../api/push', () => import('../test/fakePush'))
 
 function renderAt(path: string, level: Level) {
   signInAs(level)
@@ -38,6 +42,39 @@ describe('due list', () => {
     expect(within(soon).getByText('Maske 03')).toBeInTheDocument()
     expect(within(soon).getByText('LA 01')).toBeInTheDocument()
     expect(screen.queryByText('Maske 04')).not.toBeInTheDocument()
+  })
+
+  it('limits the list to the items of a notification', async () => {
+    renderAt(paths.dueListOf(['m01', 'm02']), 'use')
+    const overdue = await screen.findByRole('region', { name: 'Überfällig' })
+    expect(within(overdue).getByText('Maske 01')).toBeInTheDocument()
+    expect(screen.getByText('Maske 02')).toBeInTheDocument()
+    expect(screen.queryByText('Maske 03')).not.toBeInTheDocument()
+    expect(screen.queryByText('Maske 05')).not.toBeInTheDocument()
+    expect(screen.queryByText('LA 01')).not.toBeInTheDocument()
+  })
+
+  it('shows everything after Alle anzeigen', async () => {
+    renderAt(paths.dueListOf(['m01']), 'use')
+    await screen.findByText('Maske 01')
+    expect(screen.queryByText('Maske 03')).not.toBeInTheDocument()
+    fireEvent.click(await findIon(() => ionChip('Alle anzeigen')))
+    expect(await screen.findByText('Maske 03')).toBeInTheDocument()
+    expect(ionChip('Alle anzeigen')).not.toBeInTheDocument()
+  })
+
+  it('says when the items of a notification are done', async () => {
+    renderAt(paths.dueListOf(['m04']), 'use')
+    expect(await screen.findByText('Alles aus dieser Benachrichtigung ist erledigt.')).toBeInTheDocument()
+    expect(ionChip('Alle anzeigen')).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Überfällig' })).not.toBeInTheDocument()
+  })
+
+  it('ignores unknown ids', async () => {
+    renderAt(paths.dueListOf(['m01', 'gibt-es-nicht']), 'use')
+    expect(await screen.findByText('Maske 01')).toBeInTheDocument()
+    expect(screen.queryByText('Maske 02')).not.toBeInTheDocument()
+    expect(screen.queryByText('Alles aus dieser Benachrichtigung ist erledigt.')).not.toBeInTheDocument()
   })
 })
 
@@ -626,5 +663,142 @@ describe('category', () => {
     expect(screen.queryByText('Maske 06')).not.toBeInTheDocument()
     fireEvent.click(await findIon(() => ionButton('Ausgeschiedene anzeigen')))
     expect(await screen.findByText('Maske 06')).toBeInTheDocument()
+  })
+})
+
+describe('notification settings', () => {
+  const open = async () => {
+    renderAt(paths.settings, 'use')
+    await screen.findByText('Benachrichtigungen')
+  }
+  const chipActive = (text: string) => ionChip(text)!.getAttribute('aria-pressed') === 'true'
+  const enabled = { id: 'n1', categoryId: 'masken', timings: [14, 3, 0], weeklyOverdue: true }
+
+  it('offers each permitted category', async () => {
+    await open()
+    expect(await screen.findByLabelText('Atemschutzmasken')).not.toBeChecked()
+    expect(screen.getByLabelText('Lungenautomaten')).not.toBeChecked()
+  })
+
+  it('turning a category on creates its setting with chips', async () => {
+    await open()
+    fireEvent.click(await screen.findByLabelText('Atemschutzmasken'))
+    await findIon(() => ionChip('14'))
+    expect(['14', '7', '3', '1', 'Am Tag'].map((t) => ionChip(t) !== null)).toEqual([true, true, true, true, true])
+    await waitFor(() => expect(chipActive('14')).toBe(true))
+    expect(chipActive('3')).toBe(true)
+    expect(chipActive('Am Tag')).toBe(true)
+    expect(chipActive('7')).toBe(false)
+    expect(chipActive('1')).toBe(false)
+    expect(notificationState.settings).toEqual([{ id: 'n1', categoryId: 'masken', timings: [14, 3, 0], weeklyOverdue: true }])
+  })
+
+  it('toggling a chip saves the timings', async () => {
+    notificationState.settings = [enabled]
+    await open()
+    fireEvent.click(await findIon(() => ionChip('7')))
+    await waitFor(() => expect(notificationState.settings[0].timings).toEqual([14, 7, 3, 0]))
+    fireEvent.click(ionChip('14')!)
+    await waitFor(() => expect(notificationState.settings[0].timings).toEqual([7, 3, 0]))
+  })
+
+  it('keeps timings outside the chips when a chip is toggled', async () => {
+    notificationState.settings = [{ ...enabled, timings: [30, 3] }]
+    await open()
+    fireEvent.click(await findIon(() => ionChip('1')))
+    await waitFor(() => expect(notificationState.settings[0].timings).toEqual([30, 3, 1]))
+  })
+
+  it('turning a category off deletes the setting', async () => {
+    notificationState.settings = [enabled]
+    await open()
+    const box = await screen.findByLabelText('Atemschutzmasken')
+    await waitFor(() => expect(box).toBeChecked())
+    fireEvent.click(box)
+    await waitFor(() => expect(notificationState.settings).toEqual([]))
+    await waitFor(() => expect(ionChip('14')).toBeNull())
+  })
+
+  it('shows the default quiet time before anything is saved', async () => {
+    await open()
+    expect(await screen.findByLabelText('Ruhezeit')).toBeChecked()
+    expect(screen.getByLabelText('Von')).toHaveValue('22:00')
+    expect(screen.getByLabelText('Bis')).toHaveValue('07:00')
+  })
+
+  it('saves a changed quiet time', async () => {
+    await open()
+    fireEvent.change(await screen.findByLabelText('Von'), { target: { value: '21:30' } })
+    fireEvent.change(screen.getByLabelText('Bis'), { target: { value: '06:00' } })
+    fireEvent.click(await findIon(() => ionButton('Ruhezeit speichern')))
+    await waitFor(() => expect(notificationState.savedQuiet).toEqual([{ from: '21:30', until: '06:00' }]))
+  })
+
+  it('turning quiet time off saves empty times', async () => {
+    await open()
+    fireEvent.click(await screen.findByLabelText('Ruhezeit'))
+    await waitFor(() => expect(notificationState.savedQuiet).toEqual([{ from: '', until: '' }]))
+    await waitFor(() => expect(screen.queryByLabelText('Von')).not.toBeInTheDocument())
+  })
+
+  it('rejects equal times', async () => {
+    await open()
+    fireEvent.change(await screen.findByLabelText('Bis'), { target: { value: '22:00' } })
+    fireEvent.click(await findIon(() => ionButton('Ruhezeit speichern')))
+    expect(await screen.findByText('Von und Bis dürfen nicht gleich sein.')).toBeInTheDocument()
+    expect(notificationState.savedQuiet).toEqual([])
+  })
+
+  it('shows a save failure', async () => {
+    await open()
+    await screen.findByLabelText('Atemschutzmasken')
+    notificationState.failing = true
+    fireEvent.click(screen.getByLabelText('Atemschutzmasken'))
+    expect(await screen.findByText('Speichern fehlgeschlagen.')).toBeInTheDocument()
+  })
+
+  it('enables push on this device', async () => {
+    await open()
+    const box = await screen.findByLabelText('Push auf diesem Gerät')
+    expect(box).not.toBeChecked()
+    fireEvent.click(box)
+    await waitFor(() => expect(pushState.calls).toContain('enablePush'))
+    await waitFor(() => expect(screen.getByLabelText('Push auf diesem Gerät')).toBeChecked())
+  })
+
+  it('shows the install guide on iOS', async () => {
+    pushState.support = 'needsInstall'
+    await open()
+    expect(await screen.findByText(/Zum Home-Bildschirm hinzufügen/)).toBeInTheDocument()
+    expect(screen.queryByLabelText('Push auf diesem Gerät')).not.toBeInTheDocument()
+  })
+
+  it('says when push is not set up', async () => {
+    pushState.available = false
+    await open()
+    expect(await screen.findByText('Push ist auf diesem Server nicht eingerichtet.')).toBeInTheDocument()
+  })
+
+  it('says when permission was refused', async () => {
+    pushState.denied = true
+    await open()
+    fireEvent.click(await screen.findByLabelText('Push auf diesem Gerät'))
+    expect(await screen.findByText('Benachrichtigungen sind im Browser blockiert.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Push auf diesem Gerät')).not.toBeChecked()
+  })
+
+  it('sends a test push', async () => {
+    pushState.enabled = true
+    await open()
+    fireEvent.click(await findIon(() => ionButton('Testnachricht senden')))
+    expect(await screen.findByText('Testnachricht an 1 Gerät gesendet.')).toBeInTheDocument()
+  })
+
+  it('reports the rate limit of the test push', async () => {
+    pushState.enabled = true
+    pushState.tooMany = true
+    await open()
+    fireEvent.click(await findIon(() => ionButton('Testnachricht senden')))
+    expect(await screen.findByText('Zu viele Versuche. Bitte eine Minute warten.')).toBeInTheDocument()
   })
 })

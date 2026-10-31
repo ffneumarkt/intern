@@ -1,6 +1,7 @@
 import { IonChip, IonFab, IonFabButton, IonIcon, IonItem, IonLabel, IonList, IonListHeader } from '@ionic/react'
 import { barcodeOutline } from 'ionicons/icons'
 import { useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { listCategories, listItems } from '../api/material'
 import { dueStateLabel, type DueState } from '../components/DueStateBadge'
 import ItemRow from '../components/ItemRow'
@@ -19,12 +20,16 @@ const load = async () => {
 export default function DueListPage() {
   const [category, setCategory] = useState<string | null>(null)
   const resource = useResource(load)
+  const navigate = useNavigate()
+  // The filter lives in the URL, so a notification tap on the open list changes it too.
+  const param = new URLSearchParams(useLocation().search).get('geraete')
+  const only = param ? new Set(param.split(',').filter(Boolean)) : null
   return (
     <Page title="Fällig">
       <Loaded resource={resource}>
         {({ categories, items }) => {
           if (categories.length === 0) return <p>Noch keine Kategorie freigegeben.</p>
-          const visible = items.filter((i) => i.status !== 'retired' && (!category || i.categoryId === category))
+          const visible = items.filter((i) => i.status !== 'retired' && (!category || i.categoryId === category) && (!only || only.has(i.id)))
           const categoryName = (id: string) => categories.find((c) => c.id === id)?.name
           return (
             <>
@@ -38,6 +43,14 @@ export default function DueListPage() {
                   </IonChip>
                 ))}
               </div>
+              {only && (
+                <div>
+                  <IonChip onClick={() => navigate(paths.dueList, { replace: true })}>Alle anzeigen</IonChip>
+                </div>
+              )}
+              {only && !visible.some((i) => groups.includes(i.dueState)) && (
+                <p>Alles aus dieser Benachrichtigung ist erledigt.</p>
+              )}
               {groups.map((state) => {
                 const inGroup = visible.filter((i) => i.dueState === state)
                 if (inGroup.length === 0) return null
