@@ -19,6 +19,7 @@ import { CheckboxField, Field, SelectField } from '../components/Field'
 import ItemForm from '../components/ItemForm'
 import Loaded from '../components/Loaded'
 import Page from '../components/Page'
+import { useDialogs } from '../components/useDialogs'
 import { paths } from '../routes'
 import { useSession } from '../session'
 import { useBusy } from '../useBusy'
@@ -184,6 +185,7 @@ function CheckTypeForm({ categoryId, checkType, others, onDone }: CheckTypeFormP
   const [alsoSatisfies, setAlsoSatisfies] = useState(checkType?.alsoSatisfies ?? [])
   const [error, setError] = useState<string | null>(null)
   const { busy, once } = useBusy()
+  const { confirm } = useDialogs()
 
   const save = async () => {
     const intervalMonths = Number(months) || 0
@@ -203,7 +205,7 @@ function CheckTypeForm({ categoryId, checkType, others, onDone }: CheckTypeFormP
   }
 
   const remove = async (target: CheckType) => {
-    if (!window.confirm(`${target.name} löschen?`)) return
+    if (!(await confirm({ message: `${target.name} löschen?`, confirmText: 'Löschen', destructive: true }))) return
     setError(null)
     try {
       await deleteCheckType(target.id)

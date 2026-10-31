@@ -23,3 +23,9 @@ export const ionItem = (label: string) =>
 
 // Toggles carry their label as aria-label, which Ionic passes to the input in its shadow DOM.
 export const ionToggle = (label: string) => document.querySelector<HTMLElement>(`ion-toggle[aria-label="${label}"]`)
+
+// A button of the open ion-alert; its buttons are real <button>s in the alert's light DOM. Ionic
+// marks an alert overlay-hidden until it is presented, and a click before that is ignored, so
+// the buttons of an alert still being presented are not offered.
+export const alertButton = (text: string) =>
+  byText('ion-alert:not(.overlay-hidden) button', text) as HTMLElement | null

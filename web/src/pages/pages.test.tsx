@@ -5,7 +5,7 @@ import { today } from '../today'
 import { paths } from '../routes'
 import { levelsFailing, signInAs, type Level } from '../test/fakeAuth'
 import { calls, data, failing } from '../test/fakeMaterial'
-import { findIon, ionButton, ionChip, ionItem, ionTab, ionToggle } from '../test/ionic'
+import { alertButton, findIon, ionButton, ionChip, ionItem, ionTab, ionToggle } from '../test/ionic'
 import { notificationState } from '../test/fakeNotifications'
 import { pushState } from '../test/fakePush'
 
@@ -351,17 +351,18 @@ describe('retiring', () => {
   })
 
   it('retires after confirmation', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
     renderAt(paths.item('m01'), 'check')
     fireEvent.click(await findIon(() => ionButton('Ausscheiden')))
+    expect(await screen.findByText('Maske 01 ausscheiden?')).toBeInTheDocument()
+    fireEvent.click(await findIon(() => alertButton('Ausscheiden')))
     await waitFor(() => expect(calls.retired).toEqual(['m01']))
-    expect(window.confirm).toHaveBeenCalledWith('Maske 01 ausscheiden?')
   })
 
   it('does nothing when dismissed', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(false)
     renderAt(paths.item('m01'), 'check')
     fireEvent.click(await findIon(() => ionButton('Ausscheiden')))
+    fireEvent.click(await findIon(() => alertButton('Abbrechen')))
+    await waitFor(() => expect(document.querySelector('ion-alert')).not.toBeInTheDocument())
     expect(calls.retired).toEqual([])
   })
 
@@ -482,18 +483,19 @@ describe('manage', () => {
   })
 
   it('deletes an item without history after confirmation', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
     renderAt(paths.itemEdit('m02'), 'manage')
     fireEvent.click(await findIon(() => ionButton('Gerät löschen')))
+    expect(await screen.findByText('Maske 02 löschen?')).toBeInTheDocument()
+    fireEvent.click(await findIon(() => alertButton('Löschen')))
     await waitFor(() => expect(calls.deletedItems).toEqual(['m02']))
-    expect(window.confirm).toHaveBeenCalledWith('Maske 02 löschen?')
     expect(await screen.findByRole('heading', { name: 'Atemschutzmasken' })).toBeInTheDocument()
   })
 
   it('keeps an item when deletion is dismissed', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(false)
     renderAt(paths.itemEdit('m02'), 'manage')
     fireEvent.click(await findIon(() => ionButton('Gerät löschen')))
+    fireEvent.click(await findIon(() => alertButton('Abbrechen')))
+    await waitFor(() => expect(document.querySelector('ion-alert')).not.toBeInTheDocument())
     expect(calls.deletedItems).toEqual([])
   })
 
@@ -504,10 +506,10 @@ describe('manage', () => {
   })
 
   it('explains when the server refuses because history appeared meanwhile', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
     failing.deleteItem = true
     renderAt(paths.itemEdit('m02'), 'manage')
     fireEvent.click(await findIon(() => ionButton('Gerät löschen')))
+    fireEvent.click(await findIon(() => alertButton('Löschen')))
     expect(await screen.findByText(historyNotice)).toBeInTheDocument()
     expect(calls.deletedItems).toEqual([])
   })
@@ -582,12 +584,12 @@ describe('manage', () => {
   })
 
   it('explains why a used check type cannot be deleted', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
     failing.deleteCheckType = true
     renderAt(paths.manage, 'manage')
     await openCheckTypes()
     fireEvent.click(screen.getByText('Maskenprüfung'))
     fireEvent.click(await findIon(() => ionButton('Prüfart löschen')))
+    fireEvent.click(await findIon(() => alertButton('Löschen')))
     expect(await screen.findByText('Prüfart wird noch verwendet und kann nicht gelöscht werden.')).toBeInTheDocument()
   })
 })

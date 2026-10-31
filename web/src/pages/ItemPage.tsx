@@ -5,6 +5,7 @@ import { listHistory, listItems, retireItem, type Item } from '../api/material'
 import DueStateBadge from '../components/DueStateBadge'
 import Loaded from '../components/Loaded'
 import Page from '../components/Page'
+import { useDialogs } from '../components/useDialogs'
 import { paths } from '../routes'
 import { useSession } from '../session'
 import { useResource } from '../useResource'
@@ -19,10 +20,11 @@ export default function ItemPage() {
     return { item: items.find((i) => i.id === itemId), history }
   })
   const [failed, setFailed] = useState(false)
+  const { confirm } = useDialogs()
   const item = resource.data?.item
 
   const retire = async (target: Item) => {
-    if (!window.confirm(`${target.name} ausscheiden?`)) return
+    if (!(await confirm({ message: `${target.name} ausscheiden?`, confirmText: 'Ausscheiden', destructive: true }))) return
     setFailed(false)
     try {
       await retireItem(target.id)

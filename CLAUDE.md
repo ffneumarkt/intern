@@ -18,6 +18,8 @@ Internal tools for FF Neumarkt at `intern.ffneumarkt.at`. Start with `docs/super
   alias in `web/vite.config.ts`; real-browser behaviour is covered by `make e2e`. `web/src/api/` is replaced by `test/fakeAuth.ts`,
   `test/fakeMaterial.ts`, `test/fakePasskeys.ts`, `test/fakeNotifications.ts` and `test/fakePush.ts`.
 - Form fields are native inputs through `web/src/components/Field.tsx`, not `IonInput`/`IonSelect`.
+- Confirm and prompt dialogs are IonAlerts through `useDialogs` (`web/src/components/useDialogs.ts`), never
+  `window.confirm`/`prompt`; tests press the alert buttons with `alertButton` from `web/src/test/ionic.ts`.
 - Data pages load with `useResource`, not an effect: Ionic keeps pages mounted.
 - Never redirect from a page or route element (`<Navigate>`): Ionic keeps visited pages mounted, so each
   one would redirect and the stack breaks (the next login stays on the login page in Firefox). Redirect in

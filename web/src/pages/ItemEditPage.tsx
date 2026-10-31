@@ -6,6 +6,7 @@ import { deleteItem, listHistory, listItems, updateItem, type Item } from '../ap
 import ItemForm from '../components/ItemForm'
 import Loaded from '../components/Loaded'
 import Page from '../components/Page'
+import { useDialogs } from '../components/useDialogs'
 import { paths } from '../routes'
 import { useSession } from '../session'
 import { useResource } from '../useResource'
@@ -21,9 +22,10 @@ export default function ItemEditPage() {
     return { items, hasHistory: history.length > 0 }
   })
   const [error, setError] = useState<string | null>(null)
+  const { confirm } = useDialogs()
 
   const remove = async (item: Item) => {
-    if (!window.confirm(`${item.name} löschen?`)) return
+    if (!(await confirm({ message: `${item.name} löschen?`, confirmText: 'Löschen', destructive: true }))) return
     setError(null)
     try {
       await deleteItem(item.id)
