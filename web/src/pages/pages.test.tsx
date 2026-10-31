@@ -666,8 +666,8 @@ describe('category', () => {
   })
 })
 
-// Only rendering and React click handlers run here: under vitest, Ionic's form controls get neither
-// their properties (`checked`, `disabled`) nor their events. Switching is covered by e2e/settings.
+// Ionic switches are driven by clicking the ion-toggle host; vite.config.ts makes their properties
+// and events work under vitest. Real-browser behaviour is covered by `make e2e`.
 describe('notification settings', () => {
   const open = async () => {
     renderAt(paths.settings, 'use')
@@ -675,6 +675,8 @@ describe('notification settings', () => {
   }
   const chipActive = (text: string) => ionChip(text)!.getAttribute('aria-pressed') === 'true'
   const secondLine = (label: string) => ionItem(label)!.querySelector('p')!.textContent
+  const checked = (label: string) => (ionToggle(label) as HTMLInputElement).checked
+  const flip = async (label: string) => fireEvent.click(await findIon(() => ionToggle(label)))
   const enabled = { id: 'n1', categoryId: 'masken', timings: [14, 3, 0], weeklyOverdue: true }
 
   it('lists each permitted category with a switch, off without a setting', async () => {
@@ -682,8 +684,8 @@ describe('notification settings', () => {
     await findIon(() => ionItem('Atemschutzmasken'))
     expect(secondLine('Atemschutzmasken')).toBe('Aus')
     expect(secondLine('Lungenautomaten')).toBe('Aus')
-    expect(ionToggle('Atemschutzmasken')).not.toBeNull()
-    expect(ionToggle('Lungenautomaten')).not.toBeNull()
+    expect(checked('Atemschutzmasken')).toBe(false)
+    expect(checked('Lungenautomaten')).toBe(false)
     expect(ionChip('14')).toBeNull()
     expect(ionItem('Wöchentlich bei Überfälligem')).toBeNull()
   })
@@ -696,8 +698,50 @@ describe('notification settings', () => {
     expect(secondLine('Lungenautomaten')).toBe('Aus')
     expect(ionItem('Erinnerung vor Fälligkeit')).not.toBeNull()
     expect(['14', '7', '3', '1', 'Am Tag'].map(chipActive)).toEqual([true, false, true, false, true])
-    expect(ionToggle('Wöchentlich bei Überfälligem')).not.toBeNull()
+    expect(checked('Atemschutzmasken')).toBe(true)
+    expect(checked('Wöchentlich bei Überfälligem')).toBe(true)
     expect(document.querySelectorAll('ion-chip')).toHaveLength(5)
+  })
+
+  it('turning a category on creates its setting with chips', async () => {
+    await open()
+    await flip('Atemschutzmasken')
+    await findIon(() => ionChip('14'))
+    expect(['14', '7', '3', '1', 'Am Tag'].map(chipActive)).toEqual([true, false, true, false, true])
+    expect(notificationState.settings).toEqual([{ id: 'n1', categoryId: 'masken', timings: [14, 3, 0], weeklyOverdue: true }])
+    expect(checked('Atemschutzmasken')).toBe(true)
+    expect(secondLine('Atemschutzmasken')).toBe('14, 3 Tage vorher · Am Tag · wöchentlich')
+  })
+
+  it('turning a category off deletes the setting', async () => {
+    notificationState.settings = [enabled]
+    await open()
+    await waitFor(() => expect(checked('Atemschutzmasken')).toBe(true))
+    await flip('Atemschutzmasken')
+    await waitFor(() => expect(notificationState.settings).toEqual([]))
+    await waitFor(() => expect(ionChip('14')).toBeNull())
+    expect(checked('Atemschutzmasken')).toBe(false)
+    expect(secondLine('Atemschutzmasken')).toBe('Aus')
+  })
+
+  it('switching the weekly reminder saves it', async () => {
+    notificationState.settings = [enabled]
+    await open()
+    await flip('Wöchentlich bei Überfälligem')
+    await waitFor(() => expect(notificationState.settings[0].weeklyOverdue).toBe(false))
+    await waitFor(() => expect(secondLine('Atemschutzmasken')).toBe('14, 3 Tage vorher · Am Tag'))
+    expect(checked('Wöchentlich bei Überfälligem')).toBe(false)
+  })
+
+  it('flips a switch back when its save fails', async () => {
+    await open()
+    notificationState.failingSaves = true
+    await flip('Atemschutzmasken')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Speichern fehlgeschlagen.')
+    await waitFor(() => expect(checked('Atemschutzmasken')).toBe(false))
+    expect(notificationState.settings).toEqual([])
+    expect(secondLine('Atemschutzmasken')).toBe('Aus')
+    expect(ionChip('14')).toBeNull()
   })
 
   it('toggling a chip saves the timings', async () => {
@@ -732,7 +776,7 @@ describe('notification settings', () => {
     await open()
     await findIon(() => ionItem('Nicht stören'))
     expect(secondLine('Nicht stören')).toBe('22:00 bis 07:00')
-    expect(ionToggle('Nicht stören')).not.toBeNull()
+    expect(checked('Nicht stören')).toBe(true)
     expect(screen.getByLabelText('Von')).toHaveValue('22:00')
     expect(screen.getByLabelText('Bis')).toHaveValue('07:00')
     expect(ionButton('Ruhezeit speichern')).toBeNull()
@@ -743,8 +787,32 @@ describe('notification settings', () => {
     await open()
     await findIon(() => ionItem('Nicht stören'))
     expect(secondLine('Nicht stören')).toBe('Aus')
+    expect(checked('Nicht stören')).toBe(false)
     expect(screen.queryByLabelText('Von')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Bis')).not.toBeInTheDocument()
+  })
+
+  it('turning quiet time off saves empty times', async () => {
+    await open()
+    await screen.findByLabelText('Von')
+    await flip('Nicht stören')
+    await waitFor(() => expect(notificationState.savedQuiet).toEqual([{ from: '', until: '' }]))
+    await waitFor(() => expect(screen.queryByLabelText('Von')).not.toBeInTheDocument())
+    expect(secondLine('Nicht stören')).toBe('Aus')
+    expect(checked('Nicht stören')).toBe(false)
+  })
+
+  it('restores the entered times when quiet time is turned on again', async () => {
+    await open()
+    fireEvent.change(await screen.findByLabelText('Von'), { target: { value: '21:30' } })
+    await waitFor(() => expect(secondLine('Nicht stören')).toBe('21:30 bis 07:00'))
+    await flip('Nicht stören')
+    await waitFor(() => expect(secondLine('Nicht stören')).toBe('Aus'))
+    await flip('Nicht stören')
+    await waitFor(() => expect(secondLine('Nicht stören')).toBe('21:30 bis 07:00'))
+    expect(notificationState.savedQuiet.at(-1)).toEqual({ from: '21:30', until: '07:00' })
+    expect(screen.getByLabelText('Von')).toHaveValue('21:30')
+    expect(checked('Nicht stören')).toBe(true)
   })
 
   it('saves a changed quiet time right away', async () => {
@@ -777,6 +845,7 @@ describe('notification settings', () => {
     await open()
     expect(await screen.findByText(/Zum Home-Bildschirm hinzufügen/)).toBeInTheDocument()
     expect(secondLine('Push-Nachrichten')).toBe('Aus')
+    expect((ionToggle('Push-Nachrichten') as HTMLInputElement).disabled).toBe(true)
     expect(ionItem('Testnachricht senden')).toBeNull()
   })
 
@@ -791,7 +860,26 @@ describe('notification settings', () => {
     await open()
     expect(await screen.findByText('Ohne Push auf diesem Gerät kommen keine Nachrichten an.')).toBeInTheDocument()
     expect(secondLine('Push-Nachrichten')).toBe('Aus')
-    expect(ionToggle('Push-Nachrichten')).not.toBeNull()
+    expect(checked('Push-Nachrichten')).toBe(false)
+    expect(ionItem('Testnachricht senden')).toBeNull()
+  })
+
+  it('enables push on this device', async () => {
+    await open()
+    await flip('Push-Nachrichten')
+    await waitFor(() => expect(pushState.calls).toContain('enablePush'))
+    await waitFor(() => expect(secondLine('Push-Nachrichten')).toBe('Aktiv auf diesem Gerät'))
+    expect(checked('Push-Nachrichten')).toBe(true)
+    expect(ionItem('Testnachricht senden')).not.toBeNull()
+  })
+
+  it('says when permission was refused', async () => {
+    pushState.denied = true
+    await open()
+    await flip('Push-Nachrichten')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Benachrichtigungen sind im Browser blockiert.')
+    await waitFor(() => expect(checked('Push-Nachrichten')).toBe(false))
+    expect(secondLine('Push-Nachrichten')).toBe('Aus')
     expect(ionItem('Testnachricht senden')).toBeNull()
   })
 

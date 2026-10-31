@@ -12,8 +12,10 @@ Internal tools for FF Neumarkt at `intern.ffneumarkt.at`. Start with `docs/super
 - UI text is German only; code, comments and identifiers are English.
 - Routes are defined once in `web/src/routes.ts` (`paths`).
 - Frontend tests: Ionic components are found by visible text with `web/src/test/ionic.ts`
-  (`ionButton`, `ionTab`, `ionChip`, `findIon`) and inputs are driven with `fireEvent`; jsdom does not model
-  Ionic's shadow DOM roles or focus. `web/src/api/` is replaced by `test/fakeAuth.ts`,
+  (`ionButton`, `ionTab`, `ionChip`, `ionItem`, `ionToggle`, `findIon`) and inputs are driven with `fireEvent`;
+  jsdom does not model Ionic's shadow DOM roles or focus. Ionic controls can be tested in jsdom (props such
+  as `checked` reach the element, a click on an `ion-toggle` fires `onIonChange`) thanks to the `@lit/react`
+  alias in `web/vite.config.ts`; real-browser behaviour is covered by `make e2e`. `web/src/api/` is replaced by `test/fakeAuth.ts`,
   `test/fakeMaterial.ts`, `test/fakePasskeys.ts`, `test/fakeNotifications.ts` and `test/fakePush.ts`.
 - Form fields are native inputs through `web/src/components/Field.tsx`, not `IonInput`/`IonSelect`.
 - Data pages load with `useResource`, not an effect: Ionic keeps pages mounted.

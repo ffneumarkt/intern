@@ -58,5 +58,9 @@ export default defineConfig({
     setupFiles: 'src/test/setup.ts',
     // Playwright runs e2e/ (npm run e2e).
     exclude: [...configDefaults.exclude, 'e2e/**'],
+    // Ionic's React wrappers load @lit/react's Node build under vitest, which sets no properties
+    // (checked, disabled) and attaches no custom event listeners (onIonChange). Use its browser build.
+    alias: [{ find: /^@lit\/react$/, replacement: resolve(import.meta.dirname, 'node_modules/@lit/react/development/index.js') }],
+    server: { deps: { inline: [/@ionic\/react/, /@stencil\/react-output-target/] } },
   },
 })

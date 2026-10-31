@@ -22,11 +22,10 @@ export function SettingsFooter({ text, message }: { text?: string; message?: Mes
   return (
     <div className="settings-footer">
       {text && <IonNote>{text}</IonNote>}
-      {/* The role sits on a plain element: React hands it to Ionic components as a property. */}
       {message && (
-        <div role={message.role}>
-          <IonNote color={message.role === 'alert' ? 'danger' : 'success'}>{message.text}</IonNote>
-        </div>
+        <IonNote role={message.role} color={message.role === 'alert' ? 'danger' : 'success'}>
+          {message.text}
+        </IonNote>
       )}
     </div>
   )
