@@ -6,8 +6,10 @@ import { listCategories, listItems } from '../api/material'
 import { dueStateLabel, type DueState } from '../components/DueStateBadge'
 import ItemRow from '../components/ItemRow'
 import Loaded from '../components/Loaded'
+import { maxLeadDays } from '../components/notificationText'
 import Page from '../components/Page'
 import { paths } from '../routes'
+import { addDays, today } from '../today'
 import { useResource } from '../useResource'
 
 const groups: DueState[] = ['overdue', 'dueToday', 'dueSoon']
@@ -31,6 +33,10 @@ export default function DueListPage() {
           if (categories.length === 0) return <p>Noch keine Kategorie freigegeben.</p>
           const visible = items.filter((i) => i.status !== 'retired' && (!category || i.categoryId === category) && (!only || only.has(i.id)))
           const categoryName = (id: string) => categories.find((c) => c.id === id)?.name
+          // A reminder can come weeks before an item is "bald fällig". Such items show up only when the list
+          // is filtered by a notification; later due dates, such as after a check, count as done.
+          const horizon = addDays(today(), maxLeadDays)
+          const upcoming = only ? visible.filter((i) => i.dueState === 'ok' && (i.dues[0]?.date ?? '9999') <= horizon) : []
           return (
             <>
               <div>
@@ -48,7 +54,7 @@ export default function DueListPage() {
                   <IonChip onClick={() => navigate(paths.dueList, { replace: true })}>Alle anzeigen</IonChip>
                 </div>
               )}
-              {only && !visible.some((i) => groups.includes(i.dueState)) && (
+              {only && upcoming.length === 0 && !visible.some((i) => groups.includes(i.dueState)) && (
                 <p>Alles aus dieser Benachrichtigung ist erledigt.</p>
               )}
               {groups.map((state) => {
@@ -67,6 +73,18 @@ export default function DueListPage() {
                   </section>
                 )
               })}
+              {upcoming.length > 0 && (
+                <section aria-label="Demnächst">
+                  <IonList>
+                    <IonListHeader>
+                      <IonLabel>Demnächst</IonLabel>
+                    </IonListHeader>
+                    {upcoming.map((i) => (
+                      <ItemRow key={i.id} item={i} categoryName={categoryName(i.categoryId)} />
+                    ))}
+                  </IonList>
+                </section>
+              )}
               <IonList>
                 <IonListHeader>
                   <IonLabel>Kategorien</IonLabel>
