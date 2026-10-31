@@ -14,3 +14,7 @@ export const paths = {
   itemEdit: (id = ':itemId') => `/material/geraete/${id}/bearbeiten`,
   settings: '/einstellungen',
 }
+
+// Everything under the material tool and the settings need a login.
+export const requiresLogin = (pathname: string) =>
+  pathname === paths.dueList || pathname.startsWith(`${paths.dueList}/`) || pathname === paths.settings
