@@ -35,6 +35,9 @@ make debug     # dev-api and dev-web together with LOG_LEVEL=debug
 make seed      # sample data in backend/pb_data, users keine@, verwendung@, pruefung@,
                # verwaltung@ffneumarkt.local, password intern-dev-1234
 make test      # go vet + go test, tsc, vitest
+make e2e       # Playwright in Chromium, Firefox, WebKit against the built binary on :8099 with a
+               # seeded temp data dir; once: cd web && npx playwright install chromium firefox webkit;
+               # E2E_SKIP_BUILD=1 reuses the last frontend and binaries in backend/.e2e
 make build     # frontend into backend/ui/dist + binary backend/intern
 make image     # docker build -t intern:local .
 ```

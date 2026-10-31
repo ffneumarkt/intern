@@ -3,7 +3,7 @@ import { resolve } from 'node:path'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import type { Plugin } from 'vite'
-import { defineConfig } from 'vitest/config'
+import { configDefaults, defineConfig } from 'vitest/config'
 
 const outDir = resolve(import.meta.dirname, '../backend/ui/dist')
 
@@ -56,5 +56,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: 'src/test/setup.ts',
+    // Playwright runs e2e/ (npm run e2e).
+    exclude: [...configDefaults.exclude, 'e2e/**'],
   },
 })

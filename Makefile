@@ -1,4 +1,4 @@
-.PHONY: dev-api dev-web debug seed test build image run
+.PHONY: dev-api dev-web debug seed test e2e build image run
 
 # Runs backend and frontend together with debug logging; Ctrl-C stops both.
 debug:
@@ -20,6 +20,10 @@ test:
 	cd backend && go vet ./... && go test ./...
 	npm --prefix web run typecheck
 	npm --prefix web test
+
+# Real-browser tests (Playwright) against the built binary with a seeded temporary data dir.
+e2e:
+	npm --prefix web run e2e
 
 # Builds the frontend into backend/ui/dist and the binary to backend/intern.
 build:
