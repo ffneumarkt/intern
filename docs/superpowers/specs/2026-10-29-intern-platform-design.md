@@ -4,7 +4,8 @@ Status: approved 2026-10-29, implemented through phase 3; see
 `docs/superpowers/STATUS.md` for the current state and next steps. Updated 2026-10-29 with the
 decisions made during phase 1 (layout, logging, versions, record use details) and 2026-10-30 with
 those of phases 2 and 3 (settled rules, immutable history, member deactivation, passkey confirmation,
-rate limits, CI split).
+rate limits, CI split) and 2026-10-31 with the design of phase 4 (notifications checked every minute,
+quiet time per user, device subscriptions).
 
 ## 1. Goal
 
@@ -49,8 +50,8 @@ Cloudflare ── tunnel ── cloudflared container
                         ├─ internal/passkey   WebAuthn registration and login → PocketBase auth token
                         ├─ internal/due       due date calculation (pure functions, no DB access)
                         ├─ internal/material  record hooks and the due list route
-                        ├─ internal/notify    daily job: due items × notification settings → messages
-                        ├─ internal/push      Web Push sending (VAPID), removes expired subscriptions
+                        ├─ internal/notify    job every minute: due items × notification settings → messages
+                        ├─ internal/push      Web Push sending (VAPID), removes expired subscriptions, push routes
                         ├─ internal/snapshot  consistent gzipped copy of data.db to stdout
                         └─ migrations/        collections, rules, indexes (Go migrations)
                               │
@@ -77,9 +78,9 @@ Cloudflare ── tunnel ── cloudflared container
 | Unit | Does | Depends on |
 |---|---|---|
 | `internal/due` | Computes due dates for an item from its category, check types, checks and uses | nothing (plain structs in, structs out) |
-| `internal/material` | Record hooks (check status, default check type, validation, deactivation) and `GET /api/material/due` | PocketBase app, `due` |
-| `internal/notify` | Loads data, calls `due`, applies notification settings and timings, deduplicates, hands grouped messages to a sender | PocketBase app, `due`, a `Sender` interface |
-| `internal/push` | Implements `Sender` with Web Push; deletes subscriptions answered with 404/410 | `webpush-go`, VAPID keys from env |
+| `internal/material` | Record hooks (check status, default check type, validation, deactivation), `GET /api/material/due` and the loader that gives items their due dates | PocketBase app, `due` |
+| `internal/notify` | Takes items and due dates from `material`, applies notification settings, timings and quiet time, deduplicates, hands grouped messages to a sender | PocketBase app, `due`, `material`, a `Sender` interface |
+| `internal/push` | Implements `Sender` with Web Push; deletes subscriptions answered with 404/410; routes for the public key, subscribing and a test push; `intern vapid` | `webpush-go`, VAPID keys from env |
 | `internal/passkey` | Custom routes for passkey registration and login | PocketBase app, `go-webauthn` |
 | `internal/snapshot` | `intern snapshot` subcommand | SQLite (via PocketBase's DB) |
 | `migrations/` | Schema, rules and indexes | PocketBase |
@@ -124,10 +125,11 @@ All collections are PocketBase collections created by Go migrations. `?` marks o
 | `items` | category → categories, name (e.g. inventory number), serial?, `barcode`? (unique when set), `manufactured_on`? (date), status (`active` \| `defective` \| `retired`), note? | |
 | `uses` | item → items, date, kind (`operation` \| `exercise` \| `other`), `recorded_by_name`?, note?, created_by → users | |
 | `checks` | item → items, check_type → check_types, date, result (`passed` \| `defect` \| `retired`), performed_by → users, note? | |
-| `notification_settings` | user → users, category → categories, timings (JSON array of days before due, e.g. `[14, 3, 0]`), `weekly_overdue` (bool) | unique on (user, category) |
-| `push_subscriptions` | user → users, endpoint (unique), p256dh, auth, device_label | |
+| `notification_settings` | user → users, category → categories, timings (JSON array of days before due, e.g. `[14, 3, 0]`), `weekly_overdue` (bool) | unique on (user, category); a hook allows only whole numbers from 0 to 14, without repeats |
+| `notification_preferences` | user → users, `quiet_from`?, `quiet_until`? (`HH:MM`) | unique on user; separate from `users` because logged-in users can read each other's user records; a hook requires both times or neither, and that they differ; both empty means no quiet time; no row means 22:00 to 07:00 |
+| `push_subscriptions` | user → users, endpoint (unique), p256dh, auth, device_label | device_label holds the browser's user agent |
 | `passkeys` | user → users, credential_id (unique), public_key, sign_count, aaguid?, name, `backup_eligible` (bool), `backup_state` (bool), created | |
-| `notification_log` | user → users, item → items, reason (`check:<check_type id>` \| `end_of_life`), due_date, timing (days before, or `overdue`), sent_on | dedupe key (user, item, reason, due_date, timing, sent_on) |
+| `notification_log` | user → users, item → items, reason (`check:<check_type id>` \| `end_of_life` \| `defect`), due_date, timing (days before, or `overdue`), sent_on | dedupe key (user, item, reason, due_date, timing, sent_on) |
 | `transport_document_settings` | station name, station address (street, postal code, town), cylinder label, cylinder litres in tenths, points limit, filling station (name, street, postal code, town), checklist (JSON array of strings) | single record |
 
 ### Status side effects (hooks on `checks` create)
@@ -169,7 +171,8 @@ No roles. Each user has at most one permission per category:
   clearing the flag restores the account. Users with history cannot be deleted. Passkey login (section
   5) and notifications (section 7) must honour the flag.
 - `transport_document_settings`: list and view public, write superuser only.
-- Users manage only their own `notification_settings`, `push_subscriptions` and `passkeys`.
+- Users manage only their own `notification_settings`, `notification_preferences`,
+  `push_subscriptions` and `passkeys`.
 
 ## 5. Authentication
 
@@ -196,7 +199,8 @@ No roles. Each user has at most one permission per category:
 - User verification is left to the device (`preferred`); no second factor is forced.
 - Rate limits, per client IP (`CF-Connecting-IP` behind the tunnel; the container publishes no port, so
   only Cloudflare can set it): 5 password logins and 5 `confirm/finish` per minute, each counted
-  separately, and 30 requests per minute on `/api/passkey/login/`. Only these routes are limited.
+  separately, 30 requests per minute on `/api/passkey/login/`, and 5 test pushes per minute (section
+  7). Only these routes are limited.
 - All login failures answer alike; the reason goes to the log. A user may remove their last passkey,
   since the password still works.
 - Flow: the admin creates the account with a password; the user logs in once with it and adds one or
@@ -248,22 +252,47 @@ the logic exists only once.
 
 ## 7. Notifications
 
-- **Daily job at 07:00 Europe/Vienna** (PocketBase cron). At startup, the job runs once if today's run
-  has not happened yet. Timings missed while the server was down are not sent afterwards; overdue
-  reminders continue normally.
-- For each active user and each of their `notification_settings` (only categories they have permission for):
-  a due date fires when it is exactly N days away for an N in `timings`, and, if `weekly_overdue`, on
-  every 7th day after the due date while it is overdue.
-- **One grouped push per user per day**, e.g. "Masks: 2 overdue, 1 due today". Tapping it opens the due
-  list filtered to the affected items.
-- `notification_log` records every fired (user, item, reason, due date, timing, day); a repeated run on
-  the same day sends nothing new.
+- **The job runs every minute** (PocketBase cron), so nothing depends on it running at one exact time,
+  and it needs no timer or startup catch-up. Runs do not overlap. All times are Europe/Vienna.
+- Each run looks at every active user with at least one subscription and each of their
+  `notification_settings` (only categories they have permission for):
+  1. **In the user's quiet time:** skip the user. What was held back goes out on the first run after
+     it ends. Quiet time may cross midnight.
+  2. **At any time outside quiet time:** a due date that is today or past fires if 0 is in `timings`
+     and it has never fired for this user, item, reason and due date (timing `0`, any `sent_on`). This
+     is the immediate push: a use, a `defect` check or a new item with no check is reported within a
+     minute, because the job at a fixed hour would only see it as already overdue.
+  3. **From 07:00, also:** a due date fires when it is exactly N days away for an N in `timings` with
+     N > 0, and, if `weekly_overdue`, on every 7th day after the due date while it is overdue (timing
+     `overdue`).
+- Timings and weekly reminders not sent by the end of their day are dropped, for example while the
+  server is down or when quiet time lasts until the next day. Rule 2 is not lost this way, since it has
+  no fixed day.
+- A user who first subscribes, or adds 0 to `timings`, gets one push with everything rule 2 finds.
+- **One grouped push per user per run**, one line per category, e.g. „Masken: 2 überfällig, 1 heute
+  fällig“. Each item counts once, under its most urgent state: `überfällig`, `heute fällig`,
+  `bald fällig`. Tapping it opens the due list filtered to the affected items,
+  `/material?geraete=<id>,<id>`; with more than 50 items it opens the plain due list, to stay within
+  the size limit of a push message. A run can split one use form into two pushes, which is accepted.
+- `notification_log` records every fired (user, item, reason, due date, timing, day), written only
+  after at least one device accepted the message, so a repeated run sends nothing new and a failed
+  delivery is retried by the next run. A unique index conflict counts as already sent.
 - The message goes to all of the user's `push_subscriptions`. Subscriptions answered with 404 or 410
   are deleted. A user without a working subscription gets nothing. No email fallback.
+- **Device subscriptions:** `POST /api/push/subscribe` (authenticated) creates or takes over the
+  subscription with that endpoint, because a browser keeps its endpoint when another user logs in and
+  the endpoint is unique. Knowing the endpoint proves being on that device. The app syncs an existing
+  subscription on start. Logout deletes this device's row and unsubscribes the browser, so the next
+  person on the device does not receive the previous user's pushes.
+- **Test push:** `POST /api/push/test` (authenticated, section 5 limit) sends a fixed message to the
+  user's own subscriptions. It ignores quiet time and writes nothing to `notification_log`.
 - Web Push works on Android and desktop browsers, and on iOS 16.4+ only when installed to the home
   screen.
 - VAPID keys come from environment variables (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`,
-  `VAPID_SUBJECT`); the public key is exposed to the frontend via a public route.
+  `VAPID_SUBJECT`); the public key is exposed to the frontend via the public route
+  `GET /api/push/key`. `intern vapid` prints a new key pair, since the image has no openssl. Without keys
+  the server logs a warning at startup, the job is not scheduled, the key route answers 404 and Settings
+  says that push is not set up.
 
 ## 8. Frontend
 
@@ -273,14 +302,20 @@ Ionic tabs; tabs appear only when they apply to the logged-in user.
 |---|---|---|
 | Start | everyone | Tool tiles: Beförderungspapier (always), Material (logged in); login |
 | Beförderungspapier | public, offline | Generator rebuilt with Ionic components; `calc.ts`, `fillForm.ts` and their tests are copied unchanged from `ffneumarkt-web/src/components/features/transportDocument/` |
-| Due list | `use`+ | Home of the material tool: overdue, due today, due soon across permitted categories; category filter |
+| Due list | `use`+ | Home of the material tool: overdue, due today, due soon across permitted categories; category filter. `?geraete=<ids>` limits it to those items, with an "Alle anzeigen" chip that clears the filter |
 | Category → items | `use`+ | Items with state badge; retired items hidden behind a show/hide button |
 | Item detail | `use`+ | Due date per check type, end of life, combined history of checks and uses; actions by level |
 | Record use | `use`+ | Scan loop (section 9), then one form: date (today), kind, "recorded by" (remembered per device), note; saves one use per item. Opened from an item's detail page via `/material/verwendung?geraet=<id>`, it starts with that item in the list |
 | Record check | `check`+ | Check type (preselects the category's default, else the first), date, result, note |
 | Manage | `manage` | Create and edit items (incl. "last checked on" per check type) and check types (incl. the category's default) |
 | QR label | `manage` | Printable QR label for an item; if the item has no barcode, one is generated from its ID and saved |
-| Settings | logged in | Notification settings per category, enable push on this device (iOS outside home screen: "Add to Home Screen first" guide), passkeys, logout |
+| Settings | logged in | Notification settings per category (chips for 14, 7, 3, 1 and 0 days, weekly reminder; new rows default to `[14, 3, 0]` with the reminder on), quiet time once per user (toggle, from, until), push on this device with a test button (iOS outside home screen: "Add to Home Screen first" guide), passkeys, logout |
+
+### Service worker
+
+`vite-plugin-pwa` keeps generating the worker. Its `workbox.importScripts` loads a small handwritten
+`web/public/push-sw.js` with the `push` and `notificationclick` handlers. A tap focuses an open window
+and navigates it, otherwise it opens a new one.
 
 ### Offline and caching
 
@@ -353,15 +388,18 @@ Ionic tabs; tabs appear only when they apply to the logged-in user.
 
 - `internal/due`: table-driven tests for both triggers, `also_satisfies`, same-day check and use, no
   check yet, defect, end of life, retired.
-- `internal/notify`: fake `Sender`; timings, weekly overdue, grouping per user, deduplication, startup
-  catch-up, permission filtering.
+- `internal/notify`: fake `Sender`; timings, the once-only rule, weekly overdue, the 07:00 limit, quiet
+  time across midnight, grouping per user, deduplication, retry after a failed delivery, deactivated
+  users, permission filtering.
+- `internal/push`: public key, subscribing incl. taking over an endpoint, removal on 404/410, test
+  push and its limit.
 - Collection rules: API tests with users at each level, incl. the shared `use` account trying to
   record a check (must fail) and a user without permission (must see nothing).
 - `internal/passkey`: registration and login flows with a software authenticator, sign count
   regression rejected.
 - `internal/snapshot`: snapshot of a test database restores to identical data.
-- Frontend: carried-over `calc.ts` and `fillForm.ts` tests; component tests for the scan loop and the
-  record use form.
+- Frontend: carried-over `calc.ts` and `fillForm.ts` tests; component tests for the scan loop, the
+  record use form, the notification settings and the due list filter.
 
 ## 12. Follow-ups in `ffneumarkt-web`
 

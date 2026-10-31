@@ -41,9 +41,10 @@ line; work happens on branches with PRs against `main` (the user merges).
    `intern snapshot` (spec §10), VPS setup with its own `cloudflared` and hostname
    `intern.ffneumarkt.at`, restore test. After the first deploy, check what can't be tested locally:
    passkeys on a real iPhone, Android phone and Windows device, including Safari with the two-tap
-   confirmation, and that rate limits count per client with real `CF-Connecting-IP` traffic. Everyone
-   at the station shares one IP and so one budget. The container must keep publishing no port, or that
-   header can be spoofed.
+   confirmation, push on the same devices (iOS only from the home screen), and that rate limits count
+   per client with real `CF-Connecting-IP` traffic. Everyone at the station shares one IP and so one
+   budget. The container must keep publishing no port, or that header can be spoofed. Generate the VAPID
+   keys with `intern vapid`.
 5. **ffneumarkt-web follow-ups** (spec §12): revert #10 there now (production has no iOS icon), redirect
    and cleanup at go-live.
 
