@@ -1,5 +1,5 @@
-import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonNote, IonText } from '@ionic/react'
-import { addOutline, keyOutline } from 'ionicons/icons'
+import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonNote } from '@ionic/react'
+import { addOutline, keyOutline, personCircleOutline } from 'ionicons/icons'
 import { useState } from 'react'
 import { PasskeyCancelledError, PasskeyExistsError, TooManyAttemptsError, tooManyAttemptsMessage, WrongPasswordError } from '../api/errors'
 import {
@@ -16,6 +16,7 @@ import { Field } from '../components/Field'
 import NotificationSettings from '../components/NotificationSettings'
 import Loaded from '../components/Loaded'
 import Page from '../components/Page'
+import { SettingsFooter, SettingsHeader } from '../components/SettingsGroup'
 import { useSession } from '../session'
 import { useBusy } from '../useBusy'
 import { useResource } from '../useResource'
@@ -91,9 +92,10 @@ export default function SettingsPage() {
   const canAdd = passkeysSupported() && loaded && !needsConfirmation
 
   return (
-    <Page title="Einstellungen">
-      <IonList>
+    <Page title="Einstellungen" grouped>
+      <IonList inset>
         <IonItem>
+          <IonIcon slot="start" icon={personCircleOutline} aria-hidden />
           <IonLabel>
             <h3>{user?.name}</h3>
             <p>{user?.email}</p>
@@ -101,10 +103,8 @@ export default function SettingsPage() {
         </IonItem>
       </IonList>
       <NotificationSettings />
-      <IonList>
-        <IonListHeader>
-          <IonLabel>Passkeys</IonLabel>
-        </IonListHeader>
+      <SettingsHeader>Passkeys</SettingsHeader>
+      <IonList inset>
         <Loaded resource={resource}>
           {(keys) =>
             keys.length === 0 ? (
@@ -135,27 +135,29 @@ export default function SettingsPage() {
           <Field label="Passwort" type="password" autoComplete="current-password" value={password} onChange={setPassword} />
         )}
       </IonList>
-      {error && <IonText color="danger">{error}</IonText>}
-      {canAdd && (
-        <IonButton expand="block" fill="outline" disabled={busy || !name.trim()} onClick={() => once(add)}>
-          <IonIcon slot="start" icon={addOutline} aria-hidden />
-          Passkey hinzufügen
-        </IonButton>
-      )}
-      {needsConfirmation && (
-        <>
-          <IonButton expand="block" fill="outline" disabled={busy} onClick={() => once(confirm)}>
-            <IonIcon slot="start" icon={keyOutline} aria-hidden />
-            Mit Passkey bestätigen
+      <SettingsFooter message={error ? { text: error, role: 'alert' } : null} />
+      <div className="ion-padding-horizontal">
+        {canAdd && (
+          <IonButton expand="block" fill="outline" disabled={busy || !name.trim()} onClick={() => once(add)}>
+            <IonIcon slot="start" icon={addOutline} aria-hidden />
+            Passkey hinzufügen
           </IonButton>
-          <IonNote className="ion-text-center ion-margin-vertical" style={{ display: 'block' }}>
-            Kein Zugriff auf den Passkey? Nach dem Entfernen genügt das Passwort.
-          </IonNote>
-        </>
-      )}
-      <IonButton expand="block" color="medium" fill="clear" onClick={logout}>
-        Abmelden
-      </IonButton>
+        )}
+        {needsConfirmation && (
+          <>
+            <IonButton expand="block" fill="outline" disabled={busy} onClick={() => once(confirm)}>
+              <IonIcon slot="start" icon={keyOutline} aria-hidden />
+              Mit Passkey bestätigen
+            </IonButton>
+            <IonNote className="ion-text-center ion-margin-vertical" style={{ display: 'block' }}>
+              Kein Zugriff auf den Passkey? Nach dem Entfernen genügt das Passwort.
+            </IonNote>
+          </>
+        )}
+        <IonButton expand="block" fill="clear" color="danger" onClick={logout}>
+          Abmelden
+        </IonButton>
+      </div>
     </Page>
   )
 }

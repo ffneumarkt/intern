@@ -5,7 +5,7 @@ import { today } from '../today'
 import { paths } from '../routes'
 import { levelsFailing, signInAs, type Level } from '../test/fakeAuth'
 import { calls, data, failing } from '../test/fakeMaterial'
-import { findIon, ionButton, ionChip, ionTab } from '../test/ionic'
+import { findIon, ionButton, ionChip, ionItem, ionTab, ionToggle } from '../test/ionic'
 import { notificationState } from '../test/fakeNotifications'
 import { pushState } from '../test/fakePush'
 
@@ -666,31 +666,107 @@ describe('category', () => {
   })
 })
 
+// Ionic switches are driven by clicking the ion-toggle host; vite.config.ts makes their properties
+// and events work under vitest. Real-browser behaviour is covered by `make e2e`.
 describe('notification settings', () => {
   const open = async () => {
     renderAt(paths.settings, 'use')
-    await screen.findByText('Benachrichtigungen')
+    await screen.findByText('Erinnerungen')
   }
   const chipActive = (text: string) => ionChip(text)!.getAttribute('aria-pressed') === 'true'
+  const secondLine = (label: string) => ionItem(label)!.querySelector('p')!.textContent
+  const checked = (label: string) => (ionToggle(label) as HTMLInputElement).checked
+  const flip = async (label: string) => fireEvent.click(await findIon(() => ionToggle(label)))
   const enabled = { id: 'n1', categoryId: 'masken', timings: [14, 3, 0], weeklyOverdue: true }
+  // Every group has empty live regions from the start; the message goes into the matching one.
+  const announced = (role: 'alert' | 'status') =>
+    waitFor(() => {
+      const region = screen.getAllByRole(role).find((el) => el.textContent?.trim())
+      if (!region) throw new Error(`no ${role} with text`)
+      return region
+    })
 
-  it('offers each permitted category', async () => {
+  it('has empty live regions before any action', async () => {
     await open()
-    expect(await screen.findByLabelText('Atemschutzmasken')).not.toBeChecked()
-    expect(screen.getByLabelText('Lungenautomaten')).not.toBeChecked()
+    await findIon(() => ionItem('Nicht stören'))
+    const statuses = screen.getAllByRole('status')
+    const alerts = screen.getAllByRole('alert')
+    expect(statuses.length).toBeGreaterThanOrEqual(3)
+    expect(alerts.length).toBeGreaterThanOrEqual(3)
+    expect([...statuses, ...alerts].every((el) => el.textContent === '')).toBe(true)
+  })
+
+  it('lists each permitted category with a switch, off without a setting', async () => {
+    await open()
+    await findIon(() => ionItem('Atemschutzmasken'))
+    expect(secondLine('Atemschutzmasken')).toBe('Aus')
+    expect(secondLine('Lungenautomaten')).toBe('Aus')
+    expect(checked('Atemschutzmasken')).toBe(false)
+    expect(checked('Lungenautomaten')).toBe(false)
+    expect(ionChip('14')).toBeNull()
+    expect(ionItem('Wöchentlich bei Überfälligem')).toBeNull()
+  })
+
+  it('says why there are no reminders without a permitted category', async () => {
+    data.categories = []
+    await open()
+    expect(await screen.findByText('Noch keine Kategorie freigegeben, daher keine Erinnerungen.')).toBeInTheDocument()
+    expect(ionItem('Atemschutzmasken')).toBeNull()
+    expect(await findIon(() => ionToggle('Nicht stören'))).not.toBeNull()
+  })
+
+  it('summarizes a category that is on and shows its reminders', async () => {
+    notificationState.settings = [enabled]
+    await open()
+    await findIon(() => ionChip('14'))
+    expect(secondLine('Atemschutzmasken')).toBe('14, 3 Tage vorher · Am Tag · wöchentlich')
+    expect(secondLine('Lungenautomaten')).toBe('Aus')
+    expect(ionItem('Erinnerung vor Fälligkeit')).not.toBeNull()
+    expect(['14', '7', '3', '1', 'Am Tag'].map(chipActive)).toEqual([true, false, true, false, true])
+    expect(checked('Atemschutzmasken')).toBe(true)
+    expect(checked('Wöchentlich bei Überfälligem')).toBe(true)
+    expect(document.querySelectorAll('ion-chip')).toHaveLength(5)
   })
 
   it('turning a category on creates its setting with chips', async () => {
     await open()
-    fireEvent.click(await screen.findByLabelText('Atemschutzmasken'))
+    await flip('Atemschutzmasken')
     await findIon(() => ionChip('14'))
-    expect(['14', '7', '3', '1', 'Am Tag'].map((t) => ionChip(t) !== null)).toEqual([true, true, true, true, true])
-    await waitFor(() => expect(chipActive('14')).toBe(true))
-    expect(chipActive('3')).toBe(true)
-    expect(chipActive('Am Tag')).toBe(true)
-    expect(chipActive('7')).toBe(false)
-    expect(chipActive('1')).toBe(false)
+    expect(['14', '7', '3', '1', 'Am Tag'].map(chipActive)).toEqual([true, false, true, false, true])
     expect(notificationState.settings).toEqual([{ id: 'n1', categoryId: 'masken', timings: [14, 3, 0], weeklyOverdue: true }])
+    expect(checked('Atemschutzmasken')).toBe(true)
+    expect(secondLine('Atemschutzmasken')).toBe('14, 3 Tage vorher · Am Tag · wöchentlich')
+  })
+
+  it('turning a category off deletes the setting', async () => {
+    notificationState.settings = [enabled]
+    await open()
+    await waitFor(() => expect(checked('Atemschutzmasken')).toBe(true))
+    await flip('Atemschutzmasken')
+    await waitFor(() => expect(notificationState.settings).toEqual([]))
+    await waitFor(() => expect(ionChip('14')).toBeNull())
+    expect(checked('Atemschutzmasken')).toBe(false)
+    expect(secondLine('Atemschutzmasken')).toBe('Aus')
+  })
+
+  it('switching the weekly reminder saves it', async () => {
+    notificationState.settings = [enabled]
+    await open()
+    await flip('Wöchentlich bei Überfälligem')
+    await waitFor(() => expect(notificationState.settings[0].weeklyOverdue).toBe(false))
+    await waitFor(() => expect(secondLine('Atemschutzmasken')).toBe('14, 3 Tage vorher · Am Tag'))
+    expect(checked('Wöchentlich bei Überfälligem')).toBe(false)
+  })
+
+  it('flips a switch back when its save fails', async () => {
+    await open()
+    notificationState.failingSaves = true
+    await flip('Atemschutzmasken')
+    expect(await announced('alert')).toHaveTextContent('Speichern fehlgeschlagen.')
+    await waitFor(() => expect(checked('Atemschutzmasken')).toBe(false))
+    expect(notificationState.settings).toEqual([])
+    expect(secondLine('Atemschutzmasken')).toBe('Aus')
+    expect(ionChip('14')).toBeNull()
   })
 
   it('toggling a chip saves the timings', async () => {
@@ -698,7 +774,19 @@ describe('notification settings', () => {
     await open()
     fireEvent.click(await findIon(() => ionChip('7')))
     await waitFor(() => expect(notificationState.settings[0].timings).toEqual([14, 7, 3, 0]))
+    await waitFor(() => expect(secondLine('Atemschutzmasken')).toBe('14, 7, 3 Tage vorher · Am Tag · wöchentlich'))
     fireEvent.click(ionChip('14')!)
+    await waitFor(() => expect(notificationState.settings[0].timings).toEqual([7, 3, 0]))
+  })
+
+  it('offers the chips as toggle buttons that work with the keyboard', async () => {
+    notificationState.settings = [enabled]
+    await open()
+    const chip = await screen.findByRole('button', { name: '7', pressed: false })
+    expect(chip).toHaveAttribute('tabindex', '0')
+    fireEvent.keyDown(chip, { key: 'Enter' })
+    await waitFor(() => expect(notificationState.settings[0].timings).toEqual([14, 7, 3, 0]))
+    fireEvent.keyDown(await screen.findByRole('button', { name: '14', pressed: true }), { key: ' ' })
     await waitFor(() => expect(notificationState.settings[0].timings).toEqual([7, 3, 0]))
   })
 
@@ -709,96 +797,171 @@ describe('notification settings', () => {
     await waitFor(() => expect(notificationState.settings[0].timings).toEqual([30, 3, 1]))
   })
 
-  it('turning a category off deletes the setting', async () => {
+  it('shows a failed save and goes back to what the server has', async () => {
     notificationState.settings = [enabled]
     await open()
-    const box = await screen.findByLabelText('Atemschutzmasken')
-    await waitFor(() => expect(box).toBeChecked())
-    fireEvent.click(box)
-    await waitFor(() => expect(notificationState.settings).toEqual([]))
-    await waitFor(() => expect(ionChip('14')).toBeNull())
+    notificationState.failingSaves = true
+    fireEvent.click(await findIon(() => ionChip('7')))
+    expect(await announced('alert')).toHaveTextContent('Speichern fehlgeschlagen.')
+    await waitFor(() => expect(chipActive('7')).toBe(false))
+    expect(notificationState.settings[0].timings).toEqual([14, 3, 0])
+    expect(secondLine('Atemschutzmasken')).toBe('14, 3 Tage vorher · Am Tag · wöchentlich')
   })
 
   it('shows the default quiet time before anything is saved', async () => {
     await open()
-    expect(await screen.findByLabelText('Ruhezeit')).toBeChecked()
+    await findIon(() => ionItem('Nicht stören'))
+    expect(secondLine('Nicht stören')).toBe('22:00 bis 07:00')
+    expect(checked('Nicht stören')).toBe(true)
     expect(screen.getByLabelText('Von')).toHaveValue('22:00')
     expect(screen.getByLabelText('Bis')).toHaveValue('07:00')
+    expect(ionButton('Ruhezeit speichern')).toBeNull()
   })
 
-  it('saves a changed quiet time', async () => {
+  it('shows no times while quiet time is off', async () => {
+    notificationState.quiet = { from: '', until: '' }
     await open()
-    fireEvent.change(await screen.findByLabelText('Von'), { target: { value: '21:30' } })
-    fireEvent.change(screen.getByLabelText('Bis'), { target: { value: '06:00' } })
-    fireEvent.click(await findIon(() => ionButton('Ruhezeit speichern')))
-    await waitFor(() => expect(notificationState.savedQuiet).toEqual([{ from: '21:30', until: '06:00' }]))
+    await findIon(() => ionItem('Nicht stören'))
+    expect(secondLine('Nicht stören')).toBe('Aus')
+    expect(checked('Nicht stören')).toBe(false)
+    expect(screen.queryByLabelText('Von')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Bis')).not.toBeInTheDocument()
   })
 
   it('turning quiet time off saves empty times', async () => {
     await open()
-    fireEvent.click(await screen.findByLabelText('Ruhezeit'))
+    await screen.findByLabelText('Von')
+    await flip('Nicht stören')
     await waitFor(() => expect(notificationState.savedQuiet).toEqual([{ from: '', until: '' }]))
     await waitFor(() => expect(screen.queryByLabelText('Von')).not.toBeInTheDocument())
+    expect(secondLine('Nicht stören')).toBe('Aus')
+    expect(checked('Nicht stören')).toBe(false)
+  })
+
+  it('restores the entered times when quiet time is turned on again', async () => {
+    await open()
+    fireEvent.change(await screen.findByLabelText('Von'), { target: { value: '21:30' } })
+    await waitFor(() => expect(secondLine('Nicht stören')).toBe('21:30 bis 07:00'))
+    await flip('Nicht stören')
+    await waitFor(() => expect(secondLine('Nicht stören')).toBe('Aus'))
+    await flip('Nicht stören')
+    await waitFor(() => expect(secondLine('Nicht stören')).toBe('21:30 bis 07:00'))
+    expect(notificationState.savedQuiet.at(-1)).toEqual({ from: '21:30', until: '07:00' })
+    expect(screen.getByLabelText('Von')).toHaveValue('21:30')
+    expect(checked('Nicht stören')).toBe(true)
+  })
+
+  it('saves a changed quiet time right away', async () => {
+    await open()
+    fireEvent.change(await screen.findByLabelText('Von'), { target: { value: '21:30' } })
+    await waitFor(() => expect(notificationState.savedQuiet).toEqual([{ from: '21:30', until: '07:00' }]))
+    await waitFor(() => expect(secondLine('Nicht stören')).toBe('21:30 bis 07:00'))
+    fireEvent.change(screen.getByLabelText('Bis'), { target: { value: '06:00' } })
+    await waitFor(() => expect(notificationState.savedQuiet).toHaveLength(2))
+    expect(notificationState.savedQuiet[1]).toEqual({ from: '21:30', until: '06:00' })
+  })
+
+  it('puts the times back to the saved ones after a failed save', async () => {
+    await open()
+    notificationState.failingSaves = true
+    fireEvent.change(await screen.findByLabelText('Von'), { target: { value: '21:30' } })
+    expect(await announced('alert')).toHaveTextContent('Speichern fehlgeschlagen.')
+    await waitFor(() => expect(screen.getByLabelText('Von')).toHaveValue('22:00'))
+    expect(secondLine('Nicht stören')).toBe('22:00 bis 07:00')
+  })
+
+  it('saves a time changed back while the first save is pending', async () => {
+    notificationState.quiet = { from: '22:00', until: '07:00' }
+    let release = () => {}
+    notificationState.quietGate = new Promise<void>((resolve) => (release = resolve))
+    await open()
+    fireEvent.change(await screen.findByLabelText('Von'), { target: { value: '23:00' } })
+    fireEvent.change(screen.getByLabelText('Von'), { target: { value: '22:00' } })
+    release()
+    await waitFor(() => expect(notificationState.savedQuiet.at(-1)).toEqual({ from: '22:00', until: '07:00' }))
+    await waitFor(() => expect(secondLine('Nicht stören')).toBe('22:00 bis 07:00'))
+    expect(notificationState.quiet).toEqual({ from: '22:00', until: '07:00' })
+    expect(screen.getByLabelText('Von')).toHaveValue('22:00')
+  })
+
+  it('saves nothing while a time is incomplete', async () => {
+    await open()
+    fireEvent.change(await screen.findByLabelText('Von'), { target: { value: '' } })
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(notificationState.savedQuiet).toEqual([])
   })
 
   it('rejects equal times', async () => {
     await open()
     fireEvent.change(await screen.findByLabelText('Bis'), { target: { value: '22:00' } })
-    fireEvent.click(await findIon(() => ionButton('Ruhezeit speichern')))
-    expect(await screen.findByText('Von und Bis dürfen nicht gleich sein.')).toBeInTheDocument()
+    expect(await announced('alert')).toHaveTextContent('Von und Bis dürfen nicht gleich sein.')
     expect(notificationState.savedQuiet).toEqual([])
-  })
-
-  it('shows a save failure', async () => {
-    await open()
-    await screen.findByLabelText('Atemschutzmasken')
-    notificationState.failing = true
-    fireEvent.click(screen.getByLabelText('Atemschutzmasken'))
-    expect(await screen.findByText('Speichern fehlgeschlagen.')).toBeInTheDocument()
-  })
-
-  it('enables push on this device', async () => {
-    await open()
-    const box = await screen.findByLabelText('Push auf diesem Gerät')
-    expect(box).not.toBeChecked()
-    fireEvent.click(box)
-    await waitFor(() => expect(pushState.calls).toContain('enablePush'))
-    await waitFor(() => expect(screen.getByLabelText('Push auf diesem Gerät')).toBeChecked())
+    expect(screen.getByLabelText('Bis')).toHaveValue('22:00')
   })
 
   it('shows the install guide on iOS', async () => {
     pushState.support = 'needsInstall'
     await open()
     expect(await screen.findByText(/Zum Home-Bildschirm hinzufügen/)).toBeInTheDocument()
-    expect(screen.queryByLabelText('Push auf diesem Gerät')).not.toBeInTheDocument()
+    expect(secondLine('Push-Nachrichten')).toBe('Aus')
+    expect((ionToggle('Push-Nachrichten') as HTMLInputElement).disabled).toBe(true)
+    expect(ionItem('Testnachricht senden')).toBeNull()
   })
 
   it('says when push is not set up', async () => {
     pushState.available = false
     await open()
     expect(await screen.findByText('Push ist auf diesem Server nicht eingerichtet.')).toBeInTheDocument()
+    expect(secondLine('Push-Nachrichten')).toBe('Aus')
+  })
+
+  it('explains push that is off', async () => {
+    await open()
+    expect(await screen.findByText('Ohne Push auf diesem Gerät kommen keine Nachrichten an.')).toBeInTheDocument()
+    expect(secondLine('Push-Nachrichten')).toBe('Aus')
+    expect(checked('Push-Nachrichten')).toBe(false)
+    expect(ionItem('Testnachricht senden')).toBeNull()
+  })
+
+  it('enables push on this device', async () => {
+    await open()
+    await flip('Push-Nachrichten')
+    await waitFor(() => expect(pushState.calls).toContain('enablePush'))
+    await waitFor(() => expect(secondLine('Push-Nachrichten')).toBe('Aktiv auf diesem Gerät'))
+    expect(checked('Push-Nachrichten')).toBe(true)
+    expect(ionItem('Testnachricht senden')).not.toBeNull()
   })
 
   it('says when permission was refused', async () => {
     pushState.denied = true
     await open()
-    fireEvent.click(await screen.findByLabelText('Push auf diesem Gerät'))
-    expect(await screen.findByText('Benachrichtigungen sind im Browser blockiert.')).toBeInTheDocument()
-    expect(screen.getByLabelText('Push auf diesem Gerät')).not.toBeChecked()
+    await flip('Push-Nachrichten')
+    expect(await announced('alert')).toHaveTextContent('Benachrichtigungen sind im Browser blockiert.')
+    await waitFor(() => expect(checked('Push-Nachrichten')).toBe(false))
+    expect(secondLine('Push-Nachrichten')).toBe('Aus')
+    expect(ionItem('Testnachricht senden')).toBeNull()
+  })
+
+  it('offers the test push when push is on', async () => {
+    pushState.enabled = true
+    await open()
+    await findIon(() => ionItem('Testnachricht senden'))
+    expect(secondLine('Push-Nachrichten')).toBe('Aktiv auf diesem Gerät')
+    expect(screen.getByText('Dieses Gerät bekommt Erinnerungen, auch wenn die App geschlossen ist.')).toBeInTheDocument()
   })
 
   it('sends a test push', async () => {
     pushState.enabled = true
     await open()
-    fireEvent.click(await findIon(() => ionButton('Testnachricht senden')))
-    expect(await screen.findByText('Testnachricht an 1 Gerät gesendet.')).toBeInTheDocument()
+    fireEvent.click(await findIon(() => ionItem('Testnachricht senden')))
+    expect(await announced('status')).toHaveTextContent('Testnachricht an 1 Gerät gesendet.')
   })
 
   it('reports the rate limit of the test push', async () => {
     pushState.enabled = true
     pushState.tooMany = true
     await open()
-    fireEvent.click(await findIon(() => ionButton('Testnachricht senden')))
-    expect(await screen.findByText('Zu viele Versuche. Bitte eine Minute warten.')).toBeInTheDocument()
+    fireEvent.click(await findIon(() => ionItem('Testnachricht senden')))
+    expect(await announced('alert')).toHaveTextContent('Zu viele Versuche. Bitte eine Minute warten.')
   })
 })

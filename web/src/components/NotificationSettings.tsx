@@ -1,5 +1,6 @@
-import { IonButton, IonChip, IonItem, IonLabel, IonList, IonListHeader, IonNote, IonText } from '@ionic/react'
-import { useState } from 'react'
+import { IonChip, IonIcon, IonItem, IonLabel, IonList, IonToggle } from '@ionic/react'
+import { checkmark, notificationsOutline } from 'ionicons/icons'
+import { useRef, useState } from 'react'
 import { PushDeniedError, TooManyAttemptsError, tooManyAttemptsMessage } from '../api/errors'
 import { listCategories } from '../api/material'
 import {
@@ -11,21 +12,14 @@ import {
   saveQuietTime,
   updateSetting,
   type NotificationSetting,
+  type QuietTime,
 } from '../api/notifications'
 import { enablePush, disablePush, pushAvailable, pushEnabled, pushSupport, sendTestPush } from '../api/push'
 import { useBusy } from '../useBusy'
 import { useResource } from '../useResource'
-import { CheckboxField, Field } from './Field'
 import Loaded from './Loaded'
-
-// Days before the due date; 0 is the day itself.
-const chips = [
-  { days: 14, label: '14' },
-  { days: 7, label: '7' },
-  { days: 3, label: '3' },
-  { days: 1, label: '1' },
-  { days: 0, label: 'Am Tag' },
-]
+import { dayChips, quietSummary, summarize, toggleDay } from './notificationText'
+import { SettingsFooter, SettingsHeader, type Message } from './SettingsGroup'
 
 async function loadAll() {
   const support = pushSupport()
@@ -39,153 +33,339 @@ async function loadAll() {
   return { categories, settings, quiet, push: { support, available, enabled } }
 }
 
-type Loadedall = Awaited<ReturnType<typeof loadAll>>
+type LoadedAll = Awaited<ReturnType<typeof loadAll>>
+type Group = 'push' | 'reminders' | 'quiet'
+// A switch's state on screen: the user's pending choice, else the server's.
+type Shown = (key: string, server: boolean) => boolean
+
+const sameTimes = 'Von und Bis dürfen nicht gleich sein.'
 
 export default function NotificationSettings() {
   const resource = useResource(loadAll)
-  return (
-    <IonList>
-      <IonListHeader>
-        <IonLabel>Benachrichtigungen</IonLabel>
-      </IonListHeader>
-      <Loaded resource={resource}>{(data) => <Content data={data} reload={resource.reload} />}</Loaded>
-    </IonList>
-  )
+  return <Loaded resource={resource}>{(data) => <Content data={data} reload={resource.reload} />}</Loaded>
 }
 
-function Content({ data, reload }: { data: Loadedall; reload(): void }) {
-  const [error, setError] = useState<string | null>(null)
-  const [message, setMessage] = useState<string | null>(null)
+function Content({ data, reload }: { data: LoadedAll; reload(): void }) {
+  const [message, setMessage] = useState<(Message & { group: Group }) | null>(null)
+  // The last entered times, kept while quiet time is off so turning it on again restores them.
   const [from, setFrom] = useState(data.quiet.from || defaultQuietTime.from)
   const [until, setUntil] = useState(data.quiet.until || defaultQuietTime.until)
+  // Each load puts the inputs back to the server's times (after a failed save too), unless quiet
+  // time is off there: then the entered times stay for switching it on again.
+  const [synced, setSynced] = useState(data)
+  if (synced !== data) {
+    setSynced(data)
+    if (data.quiet.from && data.quiet.until) {
+      setFrom(data.quiet.from)
+      setUntil(data.quiet.until)
+    }
+  }
+  // Times entered while another save runs; saved right after it.
+  const queuedQuiet = useRef<QuietTime | null>(null)
   const { busy, once } = useBusy()
+  // What the user just chose, shown while it saves. It belongs to one load: the reload after each
+  // change replaces it with what the server has, so a failed save flips the switch back.
+  const [chosen, setChosen] = useState<{ data: LoadedAll; values: Record<string, boolean> }>({ data, values: {} })
+  const values = chosen.data === data ? chosen.values : {}
+  const shown: Shown = (key, server) => values[key] ?? server
+  const choose = (key: string, value: boolean) => setChosen({ data, values: { ...values, [key]: value } })
   const quietOn = data.quiet.from !== '' && data.quiet.until !== ''
 
-  const change = async (action: () => Promise<void>) => {
-    setError(null)
-    setMessage(null)
+  const say = (group: Group, text: string, role: Message['role']) => setMessage({ group, text, role })
+  const messageFor = (group: Group) => (message?.group === group ? message : null)
+
+  const attempt = async (group: Group, action: () => Promise<void>) => {
     try {
       await action()
-      reload()
     } catch (err) {
-      setError(err instanceof PushDeniedError ? 'Benachrichtigungen sind im Browser blockiert.' : 'Speichern fehlgeschlagen.')
+      say(group, err instanceof PushDeniedError ? 'Benachrichtigungen sind im Browser blockiert.' : 'Speichern fehlgeschlagen.', 'alert')
     }
   }
 
-  const toggleChip = (setting: NotificationSetting, days: number) => {
-    // Values outside the chips (set in the admin UI) stay.
-    const timings = setting.timings.includes(days) ? setting.timings.filter((d) => d !== days) : [...setting.timings, days]
-    void change(() => updateSetting(setting.id, { timings: timings.sort((a, b) => b - a) }))
+  // One save at a time. Reloads after success and failure alike, so a switch the user flipped never
+  // keeps a state the server does not have.
+  const change = (group: Group, action: () => Promise<void>) =>
+    once(async () => {
+      setMessage(null)
+      await attempt(group, action)
+      for (let quiet = queuedQuiet.current; quiet !== null; quiet = queuedQuiet.current) {
+        queuedQuiet.current = null
+        await attempt('quiet', () => saveQuietTime(quiet))
+      }
+      reload()
+    })
+
+  const saveQuiet = (quiet: QuietTime) => {
+    if (quiet.from === quiet.until) {
+      say('quiet', sameTimes, 'alert')
+      return false
+    }
+    queuedQuiet.current = quiet
+    void change('quiet', async () => {})
+    return true
   }
 
-  const saveQuiet = (quiet: { from: string; until: string }) => {
-    if (quiet.from !== '' && quiet.from === quiet.until) {
-      setError('Von und Bis dürfen nicht gleich sein.')
+  const switchQuiet = (on: boolean) => {
+    if (!on) {
+      choose('quiet', false)
+      void change('quiet', () => saveQuietTime({ from: '', until: '' }))
       return
     }
-    void change(() => saveQuietTime(quiet))
+    // The last entered times; an incomplete one falls back to the default.
+    const quiet = { from: from || defaultQuietTime.from, until: until || defaultQuietTime.until }
+    setFrom(quiet.from)
+    setUntil(quiet.until)
+    // A refused switch re-renders with the server's state, which flips it back.
+    if (saveQuiet(quiet)) choose('quiet', true)
   }
 
-  const test = async () => {
-    setError(null)
-    setMessage(null)
-    try {
-      const n = await sendTestPush()
-      setMessage(n === 0 ? 'Kein Gerät erreicht.' : `Testnachricht an ${n} ${n === 1 ? 'Gerät' : 'Geräte'} gesendet.`)
-    } catch (err) {
-      setError(err instanceof TooManyAttemptsError ? tooManyAttemptsMessage : 'Testnachricht fehlgeschlagen.')
-    }
+  const changeTime = (quiet: QuietTime) => {
+    setFrom(quiet.from)
+    setUntil(quiet.until)
+    // An incomplete time input reports an empty value.
+    if (!quiet.from || !quiet.until) return
+    // No shortcut for "same as loaded": a save may be pending, so the loaded times can be stale.
+    // Saving the same times again is harmless.
+    saveQuiet(quiet)
   }
+
+  const test = () =>
+    once(async () => {
+      setMessage(null)
+      try {
+        const n = await sendTestPush()
+        say('push', n === 0 ? 'Kein Gerät erreicht.' : `Testnachricht an ${n} ${n === 1 ? 'Gerät' : 'Geräte'} gesendet.`, 'status')
+      } catch (err) {
+        say('push', err instanceof TooManyAttemptsError ? tooManyAttemptsMessage : 'Testnachricht fehlgeschlagen.', 'alert')
+      }
+    })
 
   return (
     <>
-      {data.categories.map((category) => {
-        const setting = data.settings.find((s) => s.categoryId === category.id)
-        return (
-          <div key={category.id}>
-            <CheckboxField
-              label={category.name}
-              checked={setting !== undefined}
-              onChange={(on) => void change(() => (setting && !on ? disableCategory(setting.id) : !setting && on ? enableCategory(category.id) : Promise.resolve()))}
-            />
-            {setting && (
-              <IonItem>
-                <IonLabel className="ion-text-wrap">
-                  <p>Erinnerung (Tage vorher)</p>
-                  {chips.map(({ days, label }) => {
-                    const active = setting.timings.includes(days)
-                    return (
-                      <IonChip key={days} outline={!active} aria-pressed={active ? 'true' : 'false'} onClick={() => toggleChip(setting, days)}>
-                        {label}
-                      </IonChip>
-                    )
-                  })}
-                  <CheckboxField
-                    label="Wöchentlich an Überfälliges erinnern"
-                    checked={setting.weeklyOverdue}
-                    onChange={(on) => void change(() => updateSetting(setting.id, { weeklyOverdue: on }))}
-                  />
-                </IonLabel>
-              </IonItem>
-            )}
-          </div>
-        )
-      })}
-      <CheckboxField
-        label="Ruhezeit"
-        checked={quietOn}
-        onChange={(on) => (on ? saveQuiet({ from, until }) : void change(() => saveQuietTime({ from: '', until: '' })))}
+      <Push
+        push={data.push}
+        busy={busy}
+        shown={shown}
+        message={messageFor('push')}
+        change={(on) => {
+          choose('push', on)
+          void change('push', on ? enablePush : disablePush)
+        }}
+        test={() => void test()}
       />
-      {quietOn && (
+      <SettingsHeader>Erinnerungen</SettingsHeader>
+      {data.categories.length === 0 && <SettingsFooter text="Noch keine Kategorie freigegeben, daher keine Erinnerungen." />}
+      {data.categories.length > 0 && (
         <>
-          <Field label="Von" type="time" value={from} onChange={setFrom} />
-          <Field label="Bis" type="time" value={until} onChange={setUntil} />
-          <IonButton expand="block" fill="outline" disabled={busy || !from || !until} onClick={() => once(async () => saveQuiet({ from, until }))}>
-            Ruhezeit speichern
-          </IonButton>
+          <IonList inset>
+            {data.categories.map((category) => (
+              <Category
+                key={category.id}
+                name={category.name}
+                id={category.id}
+                setting={data.settings.find((s) => s.categoryId === category.id)}
+                busy={busy}
+                shown={shown}
+                choose={choose}
+                enable={() => void change('reminders', () => enableCategory(category.id))}
+                disable={(setting) => void change('reminders', () => disableCategory(setting.id))}
+                update={(setting, update) => void change('reminders', () => updateSetting(setting.id, update))}
+              />
+            ))}
+          </IonList>
+          <SettingsFooter text="Neue Fälligkeiten werden sofort gemeldet, wenn „Am Tag“ gewählt ist." message={messageFor('reminders')} />
         </>
       )}
-      <Push push={data.push} change={change} test={test} busy={busy} />
-      {message && <IonText color="success">{message}</IonText>}
-      {error && <IonText color="danger">{error}</IonText>}
+      <SettingsHeader>Ruhezeit</SettingsHeader>
+      <IonList inset>
+        <IonItem>
+          <IonLabel>
+            Nicht stören
+            <p className="settings-summary">{quietSummary(data.quiet)}</p>
+          </IonLabel>
+          <IonToggle
+            slot="end"
+            color="success"
+            aria-label="Nicht stören"
+            checked={shown('quiet', quietOn)}
+            disabled={busy}
+            onIonChange={(e) => switchQuiet(e.detail.checked)}
+          />
+        </IonItem>
+        {quietOn && (
+          <>
+            <TimeItem label="Von" value={from} onChange={(value) => changeTime({ from: value, until })} />
+            <TimeItem label="Bis" value={until} onChange={(value) => changeTime({ from, until: value })} />
+          </>
+        )}
+      </IonList>
+      <SettingsFooter text="In dieser Zeit kommen keine Push-Nachrichten." message={messageFor('quiet')} />
     </>
   )
 }
 
 function Push({
   push,
+  busy,
+  shown,
+  message,
   change,
   test,
-  busy,
 }: {
-  push: Loadedall['push']
-  change(action: () => Promise<void>): Promise<void>
-  test(): Promise<void>
+  push: LoadedAll['push']
   busy: boolean
+  shown: Shown
+  message: Message | null
+  change(on: boolean): void
+  test(): void
 }) {
-  if (push.support === 'needsInstall') {
-    return (
-      <IonNote className="ion-margin-vertical" style={{ display: 'block' }}>
-        Für Push-Nachrichten die App zum Home-Bildschirm hinzufügen: Teilen-Symbol antippen, „Zum Home-Bildschirm hinzufügen“ wählen und die App von dort öffnen.
-      </IonNote>
-    )
-  }
-  if (push.support === 'unsupported') {
-    return <IonNote>Dieser Browser unterstützt keine Push-Nachrichten.</IonNote>
-  }
-  if (!push.available) return <IonNote>Push ist auf diesem Server nicht eingerichtet.</IonNote>
+  const footer =
+    push.support === 'needsInstall'
+      ? 'Für Push-Nachrichten die App zum Home-Bildschirm hinzufügen: Teilen-Symbol antippen, „Zum Home-Bildschirm hinzufügen“ wählen und die App von dort öffnen.'
+      : push.support === 'unsupported'
+        ? 'Dieser Browser unterstützt keine Push-Nachrichten.'
+        : !push.available
+          ? 'Push ist auf diesem Server nicht eingerichtet.'
+          : push.enabled
+            ? 'Dieses Gerät bekommt Erinnerungen, auch wenn die App geschlossen ist.'
+            : 'Ohne Push auf diesem Gerät kommen keine Nachrichten an.'
+  const on = push.available && push.enabled
   return (
     <>
-      <CheckboxField
-        label="Push auf diesem Gerät"
-        checked={push.enabled}
-        onChange={(on) => void change(on ? enablePush : disablePush)}
-      />
-      {push.enabled && (
-        <IonButton expand="block" fill="outline" disabled={busy} onClick={() => void test()}>
-          Testnachricht senden
-        </IonButton>
+      <SettingsHeader>Dieses Gerät</SettingsHeader>
+      <IonList inset>
+        <IonItem>
+          <IonIcon slot="start" icon={notificationsOutline} aria-hidden />
+          <IonLabel>
+            Push-Nachrichten
+            <p className="settings-summary">{on ? 'Aktiv auf diesem Gerät' : 'Aus'}</p>
+          </IonLabel>
+          <IonToggle
+            slot="end"
+            color="success"
+            aria-label="Push-Nachrichten"
+            checked={shown('push', on)}
+            disabled={busy || !push.available}
+            onIonChange={(e) => change(e.detail.checked)}
+          />
+        </IonItem>
+        {on && (
+          <IonItem button detail={false} disabled={busy} onClick={test}>
+            <IonLabel color="primary">Testnachricht senden</IonLabel>
+          </IonItem>
+        )}
+      </IonList>
+      <SettingsFooter text={footer} message={message} />
+    </>
+  )
+}
+
+function Category({
+  name,
+  id,
+  setting,
+  busy,
+  shown,
+  choose,
+  enable,
+  disable,
+  update,
+}: {
+  name: string
+  id: string
+  setting: NotificationSetting | undefined
+  busy: boolean
+  shown: Shown
+  choose(key: string, value: boolean): void
+  enable(): void
+  disable(setting: NotificationSetting): void
+  update(setting: NotificationSetting, update: { timings?: number[]; weeklyOverdue?: boolean }): void
+}) {
+  return (
+    <>
+      {/* While on, the category and its detail rows read as one block, closed by a full line. */}
+      <IonItem lines={setting ? 'none' : undefined}>
+        <IonLabel>
+          {name}
+          <p className="settings-summary">{setting ? summarize(setting.timings, setting.weeklyOverdue) : 'Aus'}</p>
+        </IonLabel>
+        <IonToggle
+          slot="end"
+          color="success"
+          aria-label={name}
+          checked={shown(`category:${id}`, setting !== undefined)}
+          disabled={busy}
+          onIonChange={(e) => {
+            choose(`category:${id}`, e.detail.checked)
+            if (e.detail.checked) enable()
+            else if (setting) disable(setting)
+          }}
+        />
+      </IonItem>
+      {setting && (
+        <>
+          <IonItem className="settings-detail">
+            <IonLabel className="ion-text-wrap">
+              Erinnerung vor Fälligkeit
+              <div className="day-chips">
+                {dayChips.map(({ days, label }) => {
+                  const key = `day:${setting.id}:${days}`
+                  const active = shown(key, setting.timings.includes(days))
+                  const toggle = () => {
+                    if (busy) return
+                    choose(key, !active)
+                    update(setting, { timings: toggleDay(setting.timings, days) })
+                  }
+                  // ion-chip is a plain element: role, tab stop and keys make it a toggle button.
+                  return (
+                    <IonChip
+                      key={days}
+                      role="button"
+                      tabIndex={busy ? -1 : 0}
+                      color={active ? 'primary' : undefined}
+                      outline={!active}
+                      disabled={busy}
+                      aria-pressed={active ? 'true' : 'false'}
+                      onClick={toggle}
+                      onKeyDown={(e) => {
+                        if (e.key !== 'Enter' && e.key !== ' ') return
+                        e.preventDefault()
+                        toggle()
+                      }}
+                    >
+                      {active && <IonIcon icon={checkmark} aria-hidden />}
+                      <IonLabel>{label}</IonLabel>
+                    </IonChip>
+                  )
+                })}
+              </div>
+            </IonLabel>
+          </IonItem>
+          <IonItem className="settings-detail" lines="full">
+            <IonLabel>Wöchentlich bei Überfälligem</IonLabel>
+            <IonToggle
+              slot="end"
+              color="success"
+              aria-label="Wöchentlich bei Überfälligem"
+              checked={shown(`weekly:${setting.id}`, setting.weeklyOverdue)}
+              disabled={busy}
+              onIonChange={(e) => {
+                choose(`weekly:${setting.id}`, e.detail.checked)
+                update(setting, { weeklyOverdue: e.detail.checked })
+              }}
+            />
+          </IonItem>
+        </>
       )}
     </>
+  )
+}
+
+function TimeItem({ label, value, onChange }: { label: string; value: string; onChange(value: string): void }) {
+  return (
+    <IonItem>
+      <IonLabel>{label}</IonLabel>
+      <input slot="end" className="time-input" type="time" aria-label={label} value={value} onChange={(e) => onChange(e.target.value)} />
+    </IonItem>
   )
 }

@@ -40,8 +40,15 @@ async function currentSubscription(): Promise<PushSubscription | null> {
   }
 }
 
+// A browser whose push service is off (Firefox without its connection) cannot read the
+// subscription; push is then off here rather than the settings failing to load.
 export async function pushEnabled(): Promise<boolean> {
-  return pushSupport() === 'ready' && (await currentSubscription()) !== null
+  if (pushSupport() !== 'ready') return false
+  try {
+    return (await currentSubscription()) !== null
+  } catch {
+    return false
+  }
 }
 
 function keyBytes(base64url: string): Uint8Array<ArrayBuffer> {

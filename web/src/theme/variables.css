@@ -75,3 +75,76 @@
   border: 1px solid var(--ion-color-light-shade);
   border-radius: 6px;
 }
+
+/* Einstellungen: small headers above and notes below the inset groups, as in the iOS settings. */
+.settings-header {
+  min-height: 0;
+  margin-top: 16px;
+  padding-inline-start: 32px;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  color: var(--ion-color-medium);
+}
+
+.settings-header + ion-list.list-inset {
+  margin-top: 6px;
+}
+
+.settings-footer {
+  margin: -8px 0 8px;
+  padding: 0 32px;
+}
+
+/* Footer text and messages as blocks; the live regions stay in place even when empty. */
+.settings-footer ion-note {
+  display: block;
+  font-size: 0.8125rem;
+}
+
+.settings-footer [role] ion-note {
+  margin-top: 4px;
+}
+
+/* Darker than Ionic's iOS note grey (#a6a6a6, 2.2:1 on the grey page), for WCAG AA. */
+.settings-footer > ion-note {
+  --color: var(--ion-color-medium-shade);
+}
+
+/* The second line of a settings row („Aus“ or the summary) is the on/off cue: AA contrast. Beats
+   Ionic's scoped `.sc-ion-label-ios-s > p` (#999). */
+ion-label > p.settings-summary {
+  color: var(--ion-color-medium-shade);
+}
+
+/* Rows that belong to the category above: indented, a little smaller. */
+ion-item.settings-detail {
+  --padding-start: 32px;
+  font-size: 0.9375rem;
+}
+
+ion-chip:focus-visible {
+  outline: 2px solid var(--ion-color-primary);
+  outline-offset: 2px;
+}
+
+/* A note in place of the group (no list in between): it would overlap the header otherwise. */
+.settings-header + .settings-footer {
+  margin-top: 4px;
+}
+
+.day-chips {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.time-input {
+  min-height: 36px;
+  padding: 6px 10px;
+  font: inherit;
+  color: inherit;
+  background: var(--ion-color-light);
+  border: none;
+  border-radius: 8px;
+}

@@ -28,6 +28,21 @@ Last updated: 2026-10-31. Read this first, then the spec
   Playwright Chromium against a real FCM endpoint: test push and a timing `0` push after a use arrived.
   Not observed: tapping the notification (the `?geraete=` link was only opened by hand), Firefox and
   Safari, iOS and Android devices. Headless Chromium cannot test push; headed Chromium did.
+- **End-to-end suite** (Playwright in `web/e2e/`, `make e2e`, CI `e2e.yml` on PRs touching `web/` or
+  `backend/`): drives the built binary with a seeded temp data dir in Chromium, Firefox and WebKit.
+  WebKit on Linux is not a real iPhone, it only catches engine differences. Passkey tests run in
+  Chromium only (virtual authenticator); push delivery is not testable. Locally on Arch, WebKit does not
+  run natively (it needs the Playwright Docker image), so use
+  `npm --prefix web run e2e -- --project=chromium --project=firefox`; CI runs all three.
+- **Einstellungen rework done** (plan `plans/2026-10-31-e2e-and-settings-ui.md`): Ionic switches in
+  inset groups (Dieses Gerät, Erinnerungen, Ruhezeit, Passkeys), every change saves right away (no
+  Ruhezeit save button), one save at a time with a busy guard, a failed save flips the switch back,
+  messages carry `role="status"`/`"alert"`, and the day chips are toggle buttons (`role="button"`,
+  `aria-pressed`, Enter and Space). A user without a permitted category sees a hint under
+  „Erinnerungen“. A browser without a working push service (Playwright's Firefox) now shows push as off
+  instead of „Keine Verbindung“ for the whole section. jsdom tests in `pages.test.tsx`, real-browser
+  tests in `web/e2e/settings.spec.ts`. The other forms still use `Field`; they move to `IonInput` one
+  by one, each with end-to-end coverage (next steps).
 - Nothing is deployed to the VPS yet. No `deploy/` files exist yet.
 
 ## How the process works here
@@ -53,6 +68,8 @@ line; work happens on branches with PRs against `main` (the user merges).
    https URL) is set by hand.
 4. **ffneumarkt-web follow-ups** (spec §12): revert #10 there now (production has no iOS icon), redirect
    and cleanup at go-live.
+5. **E2E follow-ups:** `image.yml` may gate on `e2e.yml` once it has run stably. The other forms move
+   from `Field` to `IonInput` one by one, each with end-to-end coverage.
 
 ## Deferred minor findings (from the phase 1 review)
 
@@ -94,7 +111,6 @@ From the phase 4 review:
 - Any https endpoint can be subscribed, so the server POSTs to internal HTTPS hosts (SSRF, low impact
   here); a host check could go in the endpoint hook. See also the missing cap on subscriptions below,
   which has the same fix.
-- The quiet time and timing chips: `ion-chip` is not keyboard-operable.
 - `enablePush` asks for permission before checking that the server has a key. Permission must stay
   first (Safari needs it inside the user gesture); bound the `serviceWorker.ready` wait instead.
 - A failed `/api/push/key` hides the category settings too.
@@ -133,6 +149,13 @@ Known dependency findings, checked 2026-10-31 (`govulncheck`, `npm audit`):
 - Push in a browser test: headless Chromium (old or new) has no push service ("push service not
   available") and reports `Notification.permission` as denied; headed Playwright Chromium with a
   persistent context (not incognito) subscribes at FCM and shows real pushes.
+- Screenshots of Einstellungen: `E2E_SCREENSHOTS=1 npm --prefix web run e2e -- e2e/screens.spec.ts`
+  writes `web/test-results/screens/<project>-<state>.png` (WebKit = iOS look, Chromium and Firefox =
+  Material). They are not committed, and the next Playwright run clears `test-results/`. The native
+  time inputs show AM/PM in Playwright's Chromium and Firefox despite `locale: 'de-AT'` (the browser's
+  own locale decides); a German browser shows 24 h.
+- `page.route` in WebKit does not see requests of a page that the PWA service worker controls; block
+  service workers in such a test (`serviceWorkers: 'block'`, see `settings.spec.ts`).
 - Screenshots for UI checks: Playwright's Chromium at
   `~/.cache/ms-playwright/chromium-1140/chrome-linux/chrome` with **`--headless=old`** (the new
   headless mode enforces a minimum width of 500 px), `--window-size=390,844`,

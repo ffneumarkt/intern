@@ -5,3 +5,7 @@ web/node_modules/
 backend/ui/dist/*
 !backend/ui/dist/.gitkeep
 .env
+web/test-results/
+web/playwright-report/
+web/e2e/.auth/
+backend/.e2e/

@@ -12,8 +12,10 @@ Internal tools for FF Neumarkt at `intern.ffneumarkt.at`. Start with `docs/super
 - UI text is German only; code, comments and identifiers are English.
 - Routes are defined once in `web/src/routes.ts` (`paths`).
 - Frontend tests: Ionic components are found by visible text with `web/src/test/ionic.ts`
-  (`ionButton`, `ionTab`, `ionChip`, `findIon`) and inputs are driven with `fireEvent`; jsdom does not model
-  Ionic's shadow DOM roles or focus. `web/src/api/` is replaced by `test/fakeAuth.ts`,
+  (`ionButton`, `ionTab`, `ionChip`, `ionItem`, `ionToggle`, `findIon`) and inputs are driven with `fireEvent`;
+  jsdom does not model Ionic's shadow DOM roles or focus. Ionic controls can be tested in jsdom (props such
+  as `checked` reach the element, a click on an `ion-toggle` fires `onIonChange`) thanks to the `@lit/react`
+  alias in `web/vite.config.ts`; real-browser behaviour is covered by `make e2e`. `web/src/api/` is replaced by `test/fakeAuth.ts`,
   `test/fakeMaterial.ts`, `test/fakePasskeys.ts`, `test/fakeNotifications.ts` and `test/fakePush.ts`.
 - Form fields are native inputs through `web/src/components/Field.tsx`, not `IonInput`/`IonSelect`.
 - Data pages load with `useResource`, not an effect: Ionic keeps pages mounted.
@@ -35,6 +37,11 @@ make debug     # dev-api and dev-web together with LOG_LEVEL=debug
 make seed      # sample data in backend/pb_data, users keine@, verwendung@, pruefung@,
                # verwaltung@ffneumarkt.local, password intern-dev-1234
 make test      # go vet + go test, tsc, vitest
+make e2e       # Playwright in Chromium, Firefox, WebKit against the built binary on :8099 with a
+               # seeded temp data dir; once: cd web && npx playwright install chromium firefox webkit;
+               # on Arch WebKit needs the Playwright Docker image: npm --prefix web run e2e --
+               # --project=chromium --project=firefox; CI (e2e.yml) runs all three
+               # E2E_SKIP_BUILD=1 reuses the last frontend and binaries in backend/.e2e
 make build     # frontend into backend/ui/dist + binary backend/intern
 make image     # docker build -t intern:local .
 ```
