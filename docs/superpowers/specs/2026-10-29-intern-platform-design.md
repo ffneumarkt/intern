@@ -125,7 +125,7 @@ All collections are PocketBase collections created by Go migrations. `?` marks o
 | `items` | category → categories, name (e.g. inventory number), serial?, `barcode`? (unique when set), `manufactured_on`? (date), status (`active` \| `defective` \| `retired`), note? | |
 | `uses` | item → items, date, kind (`operation` \| `exercise` \| `other`), `recorded_by_name`?, note?, created_by → users | |
 | `checks` | item → items, check_type → check_types, date, result (`passed` \| `defect` \| `retired`), performed_by → users, note? | |
-| `notification_settings` | user → users, category → categories, timings (JSON array of days before due, e.g. `[14, 3, 0]`), `weekly_overdue` (bool) | unique on (user, category); a hook allows only whole numbers from 0 to 14, without repeats |
+| `notification_settings` | user → users, category → categories, timings (JSON array of days before due, e.g. `[14, 3, 0]`), `weekly_overdue` (bool) | unique on (user, category); a hook allows only whole numbers from 0 to 90, without repeats |
 | `notification_preferences` | user → users, `quiet_from`?, `quiet_until`? (`HH:MM`) | unique on user; separate from `users` because logged-in users can read each other's user records; a hook requires both times or neither, and that they differ; both empty means no quiet time; no row means 22:00 to 07:00 |
 | `push_subscriptions` | user → users, endpoint (unique), p256dh, auth, device_label | device_label holds the browser's user agent |
 | `passkeys` | user → users, credential_id (unique), public_key, sign_count, aaguid?, name, `backup_eligible` (bool), `backup_state` (bool), created | |
@@ -302,14 +302,14 @@ Ionic tabs; tabs appear only when they apply to the logged-in user.
 |---|---|---|
 | Start | everyone | Tool tiles: Beförderungspapier (always), Material (logged in); login |
 | Beförderungspapier | public, offline | Generator rebuilt with Ionic components; `calc.ts`, `fillForm.ts` and their tests are copied unchanged from `ffneumarkt-web/src/components/features/transportDocument/` |
-| Due list | `use`+ | Home of the material tool: overdue, due today, due soon across permitted categories; category filter. `?geraete=<ids>` limits it to those items, with an "Alle anzeigen" chip that clears the filter |
+| Due list | `use`+ | Home of the material tool: overdue, due today, due soon across permitted categories; category filter. `?geraete=<ids>` limits it to those items, with an "Alle anzeigen" chip that clears the filter; items that are still "ok" but due within 90 days (the longest reminder lead time) are shown under „Demnächst“ then, so a reminder weeks ahead never opens an empty list |
 | Category → items | `use`+ | Items with state badge; retired items hidden behind a show/hide button |
 | Item detail | `use`+ | Due date per check type, end of life, combined history of checks and uses; actions by level |
 | Record use | `use`+ | Scan loop (section 9), then one form: date (today), kind, "recorded by" (remembered per device), note; saves one use per item. Opened from an item's detail page via `/material/verwendung?geraet=<id>`, it starts with that item in the list |
 | Record check | `check`+ | Check type (preselects the category's default, else the first), date, result, note |
 | Manage | `manage` | Create and edit items (incl. "last checked on" per check type) and check types (incl. the category's default) |
 | QR label | `manage` | Printable QR label for an item; if the item has no barcode, one is generated from its ID and saved |
-| Settings | logged in | Notification settings per category (chips for 14, 7, 3, 1 and 0 days, weekly reminder; new rows default to `[14, 3, 0]` with the reminder on), quiet time once per user (toggle, from, until), push on this device with a test button (iOS outside home screen: "Add to Home Screen first" guide), passkeys, logout |
+| Settings | logged in | Notification settings per category (chips for 30, 14, 7, 3, 1 and 0 days, weekly reminder; other values up to 90 only in `/_/`; new rows default to `[14, 3, 0]` with the reminder on), quiet time once per user (toggle, from, until), push on this device with a test button (iOS outside home screen: "Add to Home Screen first" guide), passkeys, logout |
 
 ### Service worker
 
