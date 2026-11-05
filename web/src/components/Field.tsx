@@ -15,9 +15,12 @@ interface FieldProps {
   max?: string
   // 'off' for code-like text (codes, serial numbers): no capitalisation, autocorrect or spellcheck.
   autoCapitalize?: 'sentences' | 'off'
+  inputMode?: 'numeric'
+  // Shown under the field in red.
+  error?: string
 }
 
-export function Field({ label, value, onChange, type = 'text', autoComplete, required, max, autoCapitalize }: FieldProps) {
+export function Field({ label, value, onChange, type = 'text', autoComplete, required, max, autoCapitalize, inputMode, error }: FieldProps) {
   const typingHelp = (autoCapitalize ?? (type === 'text' ? 'sentences' : 'off')) !== 'off'
   return (
     <IonItem>
@@ -32,6 +35,9 @@ export function Field({ label, value, onChange, type = 'text', autoComplete, req
         spellcheck={typingHelp}
         required={required}
         max={max}
+        inputmode={inputMode}
+        errorText={error}
+        className={error ? 'ion-invalid ion-touched' : undefined}
         onIonInput={(e) => onChange(e.detail.value ?? '')}
       />
     </IonItem>

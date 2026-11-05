@@ -1,17 +1,20 @@
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle } from '@ionic/react'
+import { IonText } from '@ionic/react'
+import { loadTransportSettings } from '../api/transport'
 import Page from '../components/Page'
+import TransportDocumentForm from '../transportDocument/TransportDocumentForm'
+import { useResource } from '../useResource'
 
 export default function TransportDocumentPage() {
+  const resource = useResource(loadTransportSettings)
   return (
     <Page title="Beförderungspapier">
-      <IonCard>
-        <IonCardHeader>
-          <IonCardTitle>Generator folgt</IonCardTitle>
-        </IonCardHeader>
-        <IonCardContent>
-          Generator wird aus ffneumarkt-web übernommen (Flaschenanzahl, Füllstelle, Checkliste, PDF-Download).
-        </IonCardContent>
-      </IonCard>
+      {resource.error ? (
+        <IonText color="danger">
+          <p>Einstellungen konnten nicht geladen werden. Beim ersten Öffnen braucht die Seite eine Internetverbindung.</p>
+        </IonText>
+      ) : (
+        resource.data && <TransportDocumentForm settings={resource.data} />
+      )}
     </Page>
   )
 }

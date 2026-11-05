@@ -287,7 +287,7 @@ func TestTransportDocumentSettingsArePublicToRead(t *testing.T) {
 
 func TestMigrationsRevert(t *testing.T) {
 	app := testenv.New(t)
-	if _, err := core.NewMigrationsRunner(app, core.AppMigrations).Down(7); err != nil {
+	if _, err := core.NewMigrationsRunner(app, core.AppMigrations).Down(8); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := app.FindCollectionByNameOrId("items"); err == nil {

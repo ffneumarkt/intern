@@ -1,6 +1,6 @@
 # Project status and handover
 
-Last updated: 2026-10-31. Read this first, then the spec
+Last updated: 2026-11-05. Read this first, then the spec
 (`specs/2026-10-29-intern-platform-design.md`), which is the binding design.
 
 ## Where things stand
@@ -51,6 +51,20 @@ Last updated: 2026-10-31. Read this first, then the spec
   `forms.spec.ts` (Enter submits the login, a use, a check and a new item are saved and show in the
   history; throwaway items are removed with their history through the e2e superuser); screenshots of
   every form in iOS and Material mode were checked.
+- **Phase 6 done** (branch `feature/transport-document`, PR pending, no separate plan: the spec's §8 was
+  the design): the Beförderungspapier page on `web/src/transportDocument/` (`calc.ts`, `fillForm.ts`,
+  `formLayout.ts` and their tests copied from ffneumarkt-web; the fillForm test wraps the PDF bytes in a
+  `Uint8Array` because jsdom rejects a Node `Buffer`). Built for minimal taps: the count field is
+  prefilled with the last count that produced a PDF (`localStorage`), the route is the standard trip
+  (Station → Füllstelle and back) and "PDF öffnen" opens the PDF in a new tab (download if blocked).
+  Everything else (sender, recipient, other addresses, return count) sits under the collapsed
+  „Abweichende Route“ and is not remembered. Settings come from `api/transport.ts`
+  (`transport_document_settings`, public); migration `1793380007` seeds the default record (FF Neumarkt,
+  FF Grünbach, 6,8 l, 1000 points, the five checklist items) when none exists. Offline: the service worker
+  precaches the PDF template (pdf-lib is a JS chunk) and caches the settings request network first. Tests:
+  `pages/TransportDocumentPage.test.tsx`, `api/transport.test.ts`, `transportDocument/lastCount.test.ts`,
+  `web/e2e/transport.spec.ts` (PDF made, offline reload; run in Chromium and Firefox locally, WebKit only
+  in CI). Not observed: an installed iOS PWA opening the blob PDF in a new tab (check after deploy).
 - Nothing is deployed to the VPS yet. No `deploy/` files exist yet.
 
 ## How the process works here
@@ -63,20 +77,19 @@ line; work happens on branches with PRs against `main` (the user merges).
 
 1. **Phase 5: camera scanning and QR labels** (spec §9, `barcode-detector`): camera picker and torch
    removed in phase 2, the label page's QR placeholder, assigning an unknown code to an item.
-2. **Phase 6: Beförderungspapier port** from `ffneumarkt-web/src/components/features/transportDocument/`
-   (`calc.ts`, `fillForm.ts` + tests unchanged), config from `transport_document_settings`, offline.
-3. **Deploy:** `deploy/` (systemd update timer, backup wrapper, `authorized_keys` example),
+2. **Deploy:** `deploy/` (systemd update timer, backup wrapper, `authorized_keys` example),
    `intern snapshot` (spec §10), VPS setup with its own `cloudflared` and hostname
    `intern.ffneumarkt.at`, restore test. After the first deploy, check what can't be tested locally:
    passkeys on a real iPhone, Android phone and Windows device, including Safari with the two-tap
    confirmation, push on the same devices (iOS only from the home screen), and that rate limits count
-   per client with real `CF-Connecting-IP` traffic. Everyone at the station shares one IP and so one
+   per client with real `CF-Connecting-IP` traffic, and that the Beförderungspapier PDF opens from the
+   installed PWA on iOS and Android and works in airplane mode. Everyone at the station shares one IP and so one
    budget. The container must keep publishing no port, or that header can be spoofed. Generate the VAPID
    keys with `docker run --rm ghcr.io/ffneumarkt/intern vapid`; `VAPID_SUBJECT` (a `mailto:` address or
    https URL) is set by hand.
-4. **ffneumarkt-web follow-ups** (spec §12): revert #10 there now (production has no iOS icon), redirect
+3. **ffneumarkt-web follow-ups** (spec §12): revert #10 there now (production has no iOS icon), redirect
    and cleanup at go-live.
-5. **E2E follow-ups:** `image.yml` may gate on `e2e.yml` once it has run stably.
+4. **E2E follow-ups:** `image.yml` may gate on `e2e.yml` once it has run stably.
 
 ## Deferred minor findings (from the phase 1 review)
 

@@ -6,6 +6,7 @@ import { resetMaterial } from './fakeMaterial'
 import { resetNotifications } from './fakeNotifications'
 import { resetPasskeys } from './fakePasskeys'
 import { resetPush } from './fakePush'
+import { resetTransport } from './fakeTransport'
 
 setupIonicReact({ mode: 'md' })
 
@@ -28,6 +29,7 @@ beforeEach(() => {
   resetPasskeys()
   resetNotifications()
   resetPush()
+  resetTransport()
 })
 
 afterEach(() => {

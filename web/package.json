@@ -16,6 +16,7 @@
     "@ionic/react-router": "^9.0.10",
     "@simplewebauthn/browser": "14.0.0",
     "ionicons": "^8.1.0",
+    "pdf-lib": "1.17.1",
     "pocketbase": "0.28.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
