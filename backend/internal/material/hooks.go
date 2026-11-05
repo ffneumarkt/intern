@@ -132,9 +132,9 @@ func endSessionsOnDeactivation(e *core.RecordEvent) error {
 }
 
 // maxTimingDays is how far ahead of a due date a notification can be asked for.
-const maxTimingDays = 14
+const maxTimingDays = 90
 
-// validateTimings accepts a list of distinct whole days from 0 to 14, or nothing.
+// validateTimings accepts a list of distinct whole days from 0 to maxTimingDays, or nothing.
 func validateTimings(e *core.RecordEvent) error {
 	raw, err := json.Marshal(e.Record.Get("timings"))
 	if err != nil {
@@ -147,7 +147,7 @@ func validateTimings(e *core.RecordEvent) error {
 	seen := map[float64]bool{}
 	for _, day := range days {
 		if day != float64(int(day)) || day < 0 || day > maxTimingDays || seen[day] {
-			return validation.Errors{"timings": validation.NewError("validation_timings", "must be distinct whole days from 0 to 14")}
+			return validation.Errors{"timings": validation.NewError("validation_timings", "must be distinct whole days from 0 to 90")}
 		}
 		seen[day] = true
 	}

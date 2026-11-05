@@ -1,9 +1,20 @@
 import { describe, expect, it } from 'vitest'
-import { dayChips, quietSummary, summarize, toggleDay } from './notificationText'
+import { dayChips, maxLeadDays, quietSummary, summarize, toggleDay } from './notificationText'
+
+describe('lead times', () => {
+  it('reach 90 days ahead, like the backend hook', () => {
+    expect(maxLeadDays).toBe(90)
+  })
+
+  it('are summarized with the longest first', () => {
+    expect(summarize([30, 14, 3, 0], true)).toBe('30, 14, 3 Tage vorher · Am Tag · wöchentlich')
+  })
+})
 
 describe('dayChips', () => {
-  it('offers 14, 7, 3 and 1 days before and the day itself', () => {
+  it('offers 30, 14, 7, 3 and 1 days before and the day itself', () => {
     expect(dayChips).toEqual([
+      { days: 30, label: '30' },
       { days: 14, label: '14' },
       { days: 7, label: '7' },
       { days: 3, label: '3' },

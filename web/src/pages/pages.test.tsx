@@ -22,6 +22,15 @@ function renderAt(path: string, level: Level) {
 
 const button = ionButton
 
+// Only Date is faked, so waitFor and the app's own timers keep running.
+function pinToday(date: string) {
+  vi.useFakeTimers({ toFake: ['Date'], now: new Date(`${date}T12:00:00Z`) })
+}
+
+afterEach(() => {
+  vi.useRealTimers()
+})
+
 const historyNotice = 'Gerät hat einen Verlauf und kann nicht gelöscht, nur ausgeschieden werden.'
 const offlineNotice = 'Keine Verbindung. Die Materialverwaltung braucht eine Internetverbindung.'
 
@@ -64,10 +73,45 @@ describe('due list', () => {
   })
 
   it('says when the items of a notification are done', async () => {
+    pinToday('2026-10-29')
     renderAt(paths.dueListOf(['m04']), 'use')
     expect(await screen.findByText('Alles aus dieser Benachrichtigung ist erledigt.')).toBeInTheDocument()
     expect(ionChip('Alle anzeigen')).toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'Überfällig' })).not.toBeInTheDocument()
+  })
+
+  it('shows notified items that are still weeks away under Demnächst', async () => {
+    pinToday('2026-10-29')
+    data.items.find((i) => i.id === 'm04')!.dues[0].date = '2026-12-20'
+    renderAt(paths.dueListOf(['m04', 'm01']), 'use')
+    const upcoming = await screen.findByRole('region', { name: 'Demnächst' })
+    expect(within(upcoming).getByText('Maske 04')).toBeInTheDocument()
+    expect(within(screen.getByRole('region', { name: 'Überfällig' })).getByText('Maske 01')).toBeInTheDocument()
+    expect(screen.queryByText('Alles aus dieser Benachrichtigung ist erledigt.')).not.toBeInTheDocument()
+  })
+
+  it('reaches 90 days ahead and no further', async () => {
+    pinToday('2026-10-29')
+    data.items.find((i) => i.id === 'm04')!.dues[0].date = '2027-01-27'
+    renderAt(paths.dueListOf(['m04']), 'use')
+    expect(await screen.findByRole('region', { name: 'Demnächst' })).toBeInTheDocument()
+  })
+
+  it('calls an item due after more than 90 days done', async () => {
+    pinToday('2026-10-29')
+    data.items.find((i) => i.id === 'm04')!.dues[0].date = '2027-01-28'
+    renderAt(paths.dueListOf(['m04']), 'use')
+    expect(await screen.findByText('Alles aus dieser Benachrichtigung ist erledigt.')).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Demnächst' })).not.toBeInTheDocument()
+  })
+
+  it('does not list upcoming items without a notification filter', async () => {
+    pinToday('2026-10-29')
+    data.items.find((i) => i.id === 'm04')!.dues[0].date = '2026-12-20'
+    renderAt(paths.dueList, 'use')
+    await screen.findByRole('region', { name: 'Überfällig' })
+    expect(screen.queryByRole('region', { name: 'Demnächst' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Maske 04')).not.toBeInTheDocument()
   })
 
   it('ignores unknown ids', async () => {
@@ -756,17 +800,17 @@ describe('notification settings', () => {
     expect(secondLine('Atemschutzmasken')).toBe('14, 3 Tage vorher · Am Tag · wöchentlich')
     expect(secondLine('Lungenautomaten')).toBe('Aus')
     expect(ionItem('Erinnerung vor Fälligkeit')).not.toBeNull()
-    expect(['14', '7', '3', '1', 'Am Tag'].map(chipActive)).toEqual([true, false, true, false, true])
+    expect(['30', '14', '7', '3', '1', 'Am Tag'].map(chipActive)).toEqual([false, true, false, true, false, true])
     expect(checked('Atemschutzmasken')).toBe(true)
     expect(checked('Wöchentlich bei Überfälligem')).toBe(true)
-    expect(document.querySelectorAll('ion-chip')).toHaveLength(5)
+    expect(document.querySelectorAll('ion-chip')).toHaveLength(6)
   })
 
   it('turning a category on creates its setting with chips', async () => {
     await open()
     await flip('Atemschutzmasken')
     await findIon(() => ionChip('14'))
-    expect(['14', '7', '3', '1', 'Am Tag'].map(chipActive)).toEqual([true, false, true, false, true])
+    expect(['30', '14', '7', '3', '1', 'Am Tag'].map(chipActive)).toEqual([false, true, false, true, false, true])
     expect(notificationState.settings).toEqual([{ id: 'n1', categoryId: 'masken', timings: [14, 3, 0], weeklyOverdue: true }])
     expect(checked('Atemschutzmasken')).toBe(true)
     expect(secondLine('Atemschutzmasken')).toBe('14, 3 Tage vorher · Am Tag · wöchentlich')
@@ -813,6 +857,14 @@ describe('notification settings', () => {
     await waitFor(() => expect(notificationState.settings[0].timings).toEqual([7, 3, 0]))
   })
 
+  it('offers a 30 day reminder', async () => {
+    notificationState.settings = [enabled]
+    await open()
+    fireEvent.click(await findIon(() => ionChip('30')))
+    await waitFor(() => expect(notificationState.settings[0].timings).toEqual([30, 14, 3, 0]))
+    await waitFor(() => expect(secondLine('Atemschutzmasken')).toBe('30, 14, 3 Tage vorher · Am Tag · wöchentlich'))
+  })
+
   it('offers the chips as toggle buttons that work with the keyboard', async () => {
     notificationState.settings = [enabled]
     await open()
@@ -825,10 +877,10 @@ describe('notification settings', () => {
   })
 
   it('keeps timings outside the chips when a chip is toggled', async () => {
-    notificationState.settings = [{ ...enabled, timings: [30, 3] }]
+    notificationState.settings = [{ ...enabled, timings: [45, 3] }]
     await open()
     fireEvent.click(await findIon(() => ionChip('1')))
-    await waitFor(() => expect(notificationState.settings[0].timings).toEqual([30, 3, 1]))
+    await waitFor(() => expect(notificationState.settings[0].timings).toEqual([45, 3, 1]))
   })
 
   it('shows a failed save and goes back to what the server has', async () => {

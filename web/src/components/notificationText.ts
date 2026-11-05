@@ -1,7 +1,11 @@
 // Pure helpers for the notification settings: the reminder chips and the summary lines.
 
+// The longest lead time a reminder can have; the same limit as `maxTimingDays` in the backend hook.
+export const maxLeadDays = 90
+
 // Days before the due date; 0 is the day itself.
 export const dayChips: { days: number; label: string }[] = [
+  { days: 30, label: '30' },
   { days: 14, label: '14' },
   { days: 7, label: '7' },
   { days: 3, label: '3' },

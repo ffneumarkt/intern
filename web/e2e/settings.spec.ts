@@ -61,14 +61,17 @@ test.describe('signed in with the use level', () => {
     await chip(page, '7').click()
     await expect(chip(page, '7')).toHaveAttribute('aria-pressed', 'true')
     await expect(secondLine(page, 'Atemschutzmasken')).toHaveText('14, 7, 3 Tage vorher · Am Tag · wöchentlich')
+    // 30 days ahead is beyond the old 14 day limit; the server saves it.
+    await chip(page, '30').click()
+    await expect(secondLine(page, 'Atemschutzmasken')).toHaveText('30, 14, 7, 3 Tage vorher · Am Tag · wöchentlich')
     // The keyboard works too.
     await chip(page, 'Am Tag').focus()
     await page.keyboard.press('Enter')
-    await expect(secondLine(page, 'Atemschutzmasken')).toHaveText('14, 7, 3 Tage vorher · wöchentlich')
+    await expect(secondLine(page, 'Atemschutzmasken')).toHaveText('30, 14, 7, 3 Tage vorher · wöchentlich')
 
     await page.reload()
-    await expect(secondLine(page, 'Atemschutzmasken')).toHaveText('14, 7, 3 Tage vorher · wöchentlich')
-    for (const [name, pressed] of [['14', true], ['7', true], ['3', true], ['1', false], ['Am Tag', false]] as const) {
+    await expect(secondLine(page, 'Atemschutzmasken')).toHaveText('30, 14, 7, 3 Tage vorher · wöchentlich')
+    for (const [name, pressed] of [['30', true], ['14', true], ['7', true], ['3', true], ['1', false], ['Am Tag', false]] as const) {
       await expect(chip(page, name), name).toHaveAttribute('aria-pressed', String(pressed))
     }
   })
@@ -78,24 +81,29 @@ test.describe('signed in with the use level', () => {
     await toggle(page, 'Atemschutzmasken').click()
     await expect(secondLine(page, 'Atemschutzmasken')).toHaveText('14, 3 Tage vorher · Am Tag · wöchentlich')
 
-    // 10 days is no chip, but the server accepts any whole day from 0 to 14 (30 only by a hand
-    // edit in /_/, which this API call cannot do).
+    // 45 days is no chip, but the server accepts any whole day from 0 to 90.
     const token = await page.evaluate(() => JSON.parse(localStorage.getItem('pocketbase_auth')!).token as string)
     const headers = { Authorization: token }
     const list = await page.request.get('/api/collections/notification_settings/records', { headers })
     const [setting] = (await list.json()).items as { id: string }[]
     const patched = await page.request.patch(`/api/collections/notification_settings/records/${setting.id}`, {
       headers,
-      data: { timings: [10, 3] },
+      data: { timings: [45, 3] },
     })
     expect(patched.ok(), await patched.text()).toBe(true)
+    // ...and nothing further than 90.
+    const tooFar = await page.request.patch(`/api/collections/notification_settings/records/${setting.id}`, {
+      headers,
+      data: { timings: [91] },
+    })
+    expect(tooFar.status()).toBe(400)
 
     await page.reload()
-    await expect(secondLine(page, 'Atemschutzmasken')).toHaveText('10, 3 Tage vorher · wöchentlich')
+    await expect(secondLine(page, 'Atemschutzmasken')).toHaveText('45, 3 Tage vorher · wöchentlich')
     await chip(page, '1').click()
-    await expect(secondLine(page, 'Atemschutzmasken')).toHaveText('10, 3, 1 Tage vorher · wöchentlich')
+    await expect(secondLine(page, 'Atemschutzmasken')).toHaveText('45, 3, 1 Tage vorher · wöchentlich')
     await page.reload()
-    await expect(secondLine(page, 'Atemschutzmasken')).toHaveText('10, 3, 1 Tage vorher · wöchentlich')
+    await expect(secondLine(page, 'Atemschutzmasken')).toHaveText('45, 3, 1 Tage vorher · wöchentlich')
   })
 
   test('the weekly switch changes the summary', async ({ page }) => {
