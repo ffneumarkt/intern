@@ -18,9 +18,17 @@ permissions:
   contents: read
 
 jobs:
+  # One job per browser: the three suites are independent (each job starts its own server with its own
+  # data dir), so they run side by side instead of one after another, and each installs only its browser.
   e2e:
+    name: e2e (${{ matrix.browser }})
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    strategy:
+      # A failure in one browser should not hide the result of the others.
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
     defaults:
       run:
         working-directory: web
@@ -36,15 +44,15 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
       - run: npm ci
-      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
       # Step-level, so a hang fails the step and the upload below still runs; a job timeout counts as
       # cancelled and would skip it.
-      - run: npm run e2e
+      - run: npm run e2e -- --project=${{ matrix.browser }}
         timeout-minutes: 15
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: playwright-results
+          name: playwright-results-${{ matrix.browser }}
           path: |
             web/playwright-report
             web/test-results

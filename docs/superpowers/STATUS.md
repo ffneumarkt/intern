@@ -29,7 +29,8 @@ Last updated: 2026-11-05. Read this first, then the spec
   Not observed: tapping the notification (the `?geraete=` link was only opened by hand), Firefox and
   Safari, iOS and Android devices. Headless Chromium cannot test push; headed Chromium did.
 - **End-to-end suite** (Playwright in `web/e2e/`, `make e2e`, CI `e2e.yml` on PRs touching `web/` or
-  `backend/`): drives the built binary with a seeded temp data dir in Chromium, Firefox and WebKit.
+  `backend/`): drives the built binary with a seeded temp data dir in Chromium, Firefox and WebKit
+  (CI runs one job per browser in parallel: about 3 min instead of 7).
   WebKit on Linux is not a real iPhone, it only catches engine differences. Passkey tests run in
   Chromium only (virtual authenticator); push delivery is not testable. Locally on Arch, WebKit does not
   run natively (it needs the Playwright Docker image), so use
