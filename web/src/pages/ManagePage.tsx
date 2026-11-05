@@ -243,15 +243,17 @@ function CheckTypeForm({ categoryId, checkType, others, onDone }: CheckTypeFormP
           ))}
       </IonList>
       {error && <IonText color="danger">{error}</IonText>}
-      <IonButton expand="block" disabled={busy || !name.trim()} onClick={() => once(save)}>
-        {!checkType && <IonIcon slot="start" icon={addOutline} aria-hidden />}
-        {checkType ? 'Speichern' : 'Prüfart anlegen'}
-      </IonButton>
-      {checkType && (
-        <IonButton expand="block" color="danger" fill="clear" onClick={() => remove(checkType)}>
-          Prüfart löschen
+      <div className="ui-actions">
+        <IonButton expand="block" disabled={busy || !name.trim()} onClick={() => once(save)}>
+          {!checkType && <IonIcon slot="start" icon={addOutline} aria-hidden />}
+          {checkType ? 'Speichern' : 'Prüfart anlegen'}
         </IonButton>
-      )}
+        {checkType && (
+          <IonButton expand="block" color="danger" fill="clear" onClick={() => remove(checkType)}>
+            Prüfart löschen
+          </IonButton>
+        )}
+      </div>
     </>
   )
 }

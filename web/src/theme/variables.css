@@ -30,11 +30,6 @@
   clip-path: inset(50%);
 }
 
-.badge-outline {
-  --background: transparent;
-  --color: var(--ion-color-warning-shade);
-  border: 1px solid var(--ion-color-warning);
-}
 
 .label-preview {
   display: flex;
@@ -68,10 +63,9 @@
   min-height: 0;
   margin-top: 16px;
   padding-inline-start: 32px;
-  font-size: 0.8125rem;
-  font-weight: 400;
-  text-transform: uppercase;
-  color: var(--ion-color-medium);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ion-text-color);
 }
 
 .settings-header + ion-list.list-inset {
@@ -134,12 +128,4 @@ ion-chip:focus-visible {
   background: var(--ion-color-light);
   border: none;
   border-radius: 8px;
-}
-
-/* Error and warning messages under forms and pages stand on their own line, apart from the field
-   lines above and the button below. */
-ion-content ion-text.ion-color-danger,
-ion-content ion-text.ion-color-warning {
-  display: block;
-  margin: 12px 0;
 }

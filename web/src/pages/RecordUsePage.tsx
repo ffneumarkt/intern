@@ -154,14 +154,16 @@ export default function RecordUsePage() {
                   </IonItem>
                 ))}
               </IonList>
-              {scanned.length > 0 && <p>Weiteres Gerät scannen?</p>}
-              <IonButton expand="block" disabled={scanned.length === 0} onClick={() => setStep('form')}>
-                Fertig
-              </IonButton>
+              {scanned.length > 0 && <p className="ui-hint">Weiteres Gerät scannen?</p>}
+              <div className="ui-actions">
+                <IonButton expand="block" disabled={scanned.length === 0} onClick={() => setStep('form')}>
+                  Fertig
+                </IonButton>
+              </div>
             </>
           ) : (
             <>
-              <p>{scanned.map((i) => i.name).join(', ')}</p>
+              <p className="ui-hint"><strong>{scanned.map((i) => i.name).join(', ')}</strong></p>
               <IonList>
                 <Field label="Datum" type="date" max={today()} value={date} onChange={setDate} />
                 <SelectField label="Art" value={kind} onChange={(value) => setKind(value as UseInput['kind'])}>
@@ -173,9 +175,11 @@ export default function RecordUsePage() {
                 <TextAreaField label="Notiz" value={note} onChange={setNote} />
               </IonList>
               {error && <IonText color="danger">{error}</IonText>}
-              <IonButton expand="block" disabled={busy} onClick={() => once(save)}>
-                Speichern
-              </IonButton>
+              <div className="ui-actions">
+                <IonButton expand="block" disabled={busy} onClick={() => once(save)}>
+                  Speichern
+                </IonButton>
+              </div>
             </>
           )
         }

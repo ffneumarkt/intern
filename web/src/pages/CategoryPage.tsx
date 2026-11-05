@@ -25,14 +25,16 @@ export default function CategoryPage() {
       <Loaded resource={resource}>
         {({ items }) => (
           <>
-            <IonButton fill="clear" size="small" onClick={() => setShowRetired((v) => !v)}>
-              {showRetired ? 'Ausgeschiedene ausblenden' : 'Ausgeschiedene anzeigen'}
-            </IonButton>
-            {can(categoryId, 'manage') && (
-              <IonButton fill="clear" size="small" routerLink={paths.manageCategory(categoryId)}>
-                Verwalten
+            <div className="ui-actionrow">
+              <IonButton fill="outline" size="small" onClick={() => setShowRetired((v) => !v)}>
+                {showRetired ? 'Ausgeschiedene ausblenden' : 'Ausgeschiedene anzeigen'}
               </IonButton>
-            )}
+              {can(categoryId, 'manage') && (
+                <IonButton fill="outline" size="small" routerLink={paths.manageCategory(categoryId)}>
+                  Verwalten
+                </IonButton>
+              )}
+            </div>
             <IonList>
               {items
                 .filter((i) => i.categoryId === categoryId && (showRetired || i.status !== 'retired'))

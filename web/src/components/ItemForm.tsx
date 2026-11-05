@@ -61,10 +61,12 @@ export default function ItemForm({ item, checkTypes = [], submitLabel, onSave }:
         ))}
       </IonList>
       {error && <IonText color="danger">{error}</IonText>}
-      <IonButton expand="block" disabled={busy || !name.trim()} onClick={() => once(save)}>
-        {!item && <IonIcon slot="start" icon={addOutline} aria-hidden />}
-        {submitLabel}
-      </IonButton>
+      <div className="ui-actions">
+        <IonButton expand="block" disabled={busy || !name.trim()} onClick={() => once(save)}>
+          {!item && <IonIcon slot="start" icon={addOutline} aria-hidden />}
+          {submitLabel}
+        </IonButton>
+      </div>
     </>
   )
 }

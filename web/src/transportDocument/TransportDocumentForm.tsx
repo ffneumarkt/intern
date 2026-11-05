@@ -169,10 +169,10 @@ export default function TransportDocumentForm({ settings }: { settings: Transpor
       }}
       noValidate
     >
-      <section className="td-card" aria-label="Fahrt">
+      <section className="ui-card" aria-label="Fahrt">
         <div className="td-route-head">
           <h2>Fahrt</h2>
-          <span className="td-pill">
+          <span className="ui-pill">
             <IonIcon icon={repeatOutline} aria-hidden="true" />
             Hin und zurück
           </span>
@@ -229,7 +229,7 @@ export default function TransportDocumentForm({ settings }: { settings: Transpor
       </IonAccordionGroup>
 
       {errors.length > 0 && (
-        <div className="td-problems" aria-live="polite">
+        <div className="ui-problems" aria-live="polite">
           <IonIcon icon={alertCircleOutline} aria-hidden="true" />
           <ul>
             {errors.map((message) => (
@@ -239,13 +239,13 @@ export default function TransportDocumentForm({ settings }: { settings: Transpor
         </div>
       )}
       {downloadError && (
-        <div className="td-problems" role="alert">
+        <div className="ui-problems" role="alert">
           <IonIcon icon={alertCircleOutline} aria-hidden="true" />
           <p style={{ margin: 0 }}>{downloadError}</p>
         </div>
       )}
 
-      <section className="td-card" aria-label="Vor der Fahrt">
+      <section className="ui-card" aria-label="Vor der Fahrt">
         <h2 className="td-checklist-title">Vor der Fahrt</h2>
         <ul className="td-checklist">
           {checklist.map((item) => (
@@ -257,12 +257,12 @@ export default function TransportDocumentForm({ settings }: { settings: Transpor
         </ul>
       </section>
 
-      <p className="td-disclaimer">
+      <p className="ui-hint">
         Dieses Werkzeug ist ein Hilfsmittel. Die Verantwortung für die ordnungsgemäße Beförderung bleibt beim Feuerwehrkommandanten. Grundlage: OÖ LFV Formular 1.5.016 und ÖBFV-Richtlinie KS-19. Nicht für Einsatz- und
         Übungsfahrten (ADR 1.1.3.1 d) und nicht für Flaschen in fixen Halterungen der Normbeladung.
       </p>
 
-      <div className="td-actions">
+      <div className="ui-actions">
         <IonButton expand="block" type="submit" disabled={!result.valid || busy}>
           <IonIcon slot="start" icon={documentTextOutline} aria-hidden="true" />
           {busy ? 'PDF wird erstellt …' : 'PDF öffnen'}

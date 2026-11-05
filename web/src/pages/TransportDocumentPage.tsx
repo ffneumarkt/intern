@@ -7,10 +7,10 @@ import { useResource } from '../useResource'
 export default function TransportDocumentPage() {
   const resource = useResource(loadTransportSettings)
   return (
-    <Page title="Beförderungspapier" grouped>
+    <Page title="Beförderungspapier">
       {resource.error ? (
         <div className="td">
-          <div className="td-problems" role="alert">
+          <div className="ui-problems" role="alert">
             <p style={{ margin: 0 }}>Einstellungen konnten nicht geladen werden. Beim ersten Öffnen braucht die Seite eine Internetverbindung.</p>
           </div>
         </div>

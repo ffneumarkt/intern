@@ -55,7 +55,7 @@ export default function RecordCheckPage() {
 
           return (
             <>
-              <p>{item?.name}</p>
+              <p className="ui-hint"><strong>{item?.name}</strong></p>
               <IonList>
                 <SelectField label="Prüfart" value={checkTypeId} onChange={setSelectedType}>
                   {types.map((t) => (
@@ -73,9 +73,11 @@ export default function RecordCheckPage() {
                 <TextAreaField label="Notiz" value={note} onChange={setNote} />
               </IonList>
               {error && <IonText color="danger">{error}</IonText>}
-              <IonButton expand="block" disabled={busy} onClick={() => once(save)}>
-                Speichern
-              </IonButton>
+              <div className="ui-actions">
+                <IonButton expand="block" disabled={busy} onClick={() => once(save)}>
+                  Speichern
+                </IonButton>
+              </div>
             </>
           )
         }}

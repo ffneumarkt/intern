@@ -70,7 +70,13 @@ Last updated: 2026-11-05. Read this first, then the spec
   text and `#f1f5f9` page, and Roboto (`@fontsource/roboto`, latin 400/500/700, precached). The page has a
   route drawn as two stops, a stepper with a points gauge (green, amber above 80 %, red above the limit),
   a sticky „PDF öffnen“ bar and a check-marked checklist; `transportDocument/transportDocument.css`
-  holds it. The Start page and the Material screens only got the new colours and font, not this polish.
+  holds it. The other pages follow the same look through `web/src/theme/ui.css`: `Page` puts every page on
+  the grey `#f1f5f9` background in a centred 560 px column, lists and cards are white rounded surfaces,
+  due states are tinted pills (`DueStateBadge`) with a coloured row edge, fields are bordered boxes under
+  a stacked label (drawn in CSS: Ionic's `fill="outline"` is not drawn in list items and would hide the
+  textarea label from tests), primary actions sit in a sticky `.ui-actions` bar, and error text is a
+  tinted box. The start page has tiles, login has the logo. A floating button must be passed to `Page`
+  as `fab`, since `slot="fixed"` only works as a direct child of the content.
 - Nothing is deployed to the VPS yet. No `deploy/` files exist yet.
 
 ## How the process works here

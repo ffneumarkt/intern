@@ -1,4 +1,4 @@
-import { IonButton, IonCard, IonCardContent, IonItem, IonLabel, IonList, IonListHeader, IonNote, IonText } from '@ionic/react'
+import { IonButton, IonItem, IonLabel, IonList, IonListHeader, IonNote, IonText } from '@ionic/react'
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { listHistory, listItems, retireItem, type Item } from '../api/material'
@@ -43,26 +43,41 @@ export default function ItemPage() {
           const active = item.status !== 'retired'
           return (
             <>
-              <IonCard>
-                <IonCardContent>
+              <section className="ui-card" aria-label="Angaben">
+                <div className="item-head">
+                  <p className="item-name">{item.name}</p>
+                  <DueStateBadge state={item.dueState} />
+                </div>
+                <div className="item-facts">
                   <p>Seriennummer: {item.serial ?? '–'}</p>
                   <p>Code: {item.barcode ?? '–'}</p>
                   <p>Hergestellt: {item.manufacturedOn ?? '–'}</p>
                   <p>Status: {statusLabel[item.status]}</p>
                   {item.note && <p>Notiz: {item.note}</p>}
-                </IonCardContent>
-              </IonCard>
+                </div>
+              </section>
               {failed && <IonText color="danger">Speichern fehlgeschlagen.</IonText>}
-              <div className="ion-margin-bottom">
-                {active && <IonButton routerLink={paths.recordUseFor(item.id)}>Verwendung erfassen</IonButton>}
-                {active && can(item.categoryId, 'check') && <IonButton routerLink={paths.recordCheck(item.id)}>Prüfung erfassen</IonButton>}
+              <div className="ui-actionrow">
+                {active && can(item.categoryId, 'check') && (
+                  <IonButton fill="outline" routerLink={paths.recordCheck(item.id)}>
+                    Prüfung erfassen
+                  </IonButton>
+                )}
+                {can(item.categoryId, 'manage') && (
+                  <IonButton fill="outline" routerLink={paths.itemEdit(item.id)}>
+                    Bearbeiten
+                  </IonButton>
+                )}
+                {can(item.categoryId, 'manage') && (
+                  <IonButton fill="outline" routerLink={paths.label(item.id)}>
+                    Etikett drucken
+                  </IonButton>
+                )}
                 {active && can(item.categoryId, 'check') && (
                   <IonButton color="medium" fill="outline" onClick={() => retire(item)}>
                     Ausscheiden
                   </IonButton>
                 )}
-                {can(item.categoryId, 'manage') && <IonButton fill="outline" routerLink={paths.itemEdit(item.id)}>Bearbeiten</IonButton>}
-                {can(item.categoryId, 'manage') && <IonButton fill="outline" routerLink={paths.label(item.id)}>Etikett drucken</IonButton>}
               </div>
               <IonList>
                 <IonListHeader>
@@ -92,6 +107,13 @@ export default function ItemPage() {
                   </IonItem>
                 ))}
               </IonList>
+              {active && (
+                <div className="ui-actions">
+                  <IonButton expand="block" routerLink={paths.recordUseFor(item.id)}>
+                    Verwendung erfassen
+                  </IonButton>
+                </div>
+              )}
             </>
           )
         }}
