@@ -79,6 +79,14 @@ Last updated: 2026-11-05. Read this first, then the spec
   textarea label from tests), primary actions sit in a sticky `.ui-actions` bar, and error text is a
   tinted box. The start page has tiles, login has the logo. A floating button must be passed to `Page`
   as `fab`, since `slot="fixed"` only works as a direct child of the content.
+- **Legal pages** (branch `feature/legal-pages`): `/info` (hub), `/info/impressum` and `/info/datenschutz`, public
+  and part of the offline shell. Anonymous users get an „Info“ tab (logged-in users do not); logged-in users
+  find the same two rows under „Rechtliches“ in Einstellungen (`components/LegalItems.tsx`). Structure and
+  wording follow the Impressum and Datenschutz pages of ffneumarkt-web; the contact data is static in
+  `web/src/legal/contact.ts`. The Datenschutzerklärung is rewritten for what this app stores (accounts,
+  uses and checks with names, passkeys, push subscriptions, `localStorage`, PocketBase request logs for 5
+  days incl. IP, Cloudflare). **Not legal advice: the owner must read it** and in particular confirm the
+  hosting wording („gemieteter Server (VPS)“), the legal bases and the retention statements.
 - Nothing is deployed to the VPS yet. No `deploy/` files exist yet.
 
 ## How the process works here

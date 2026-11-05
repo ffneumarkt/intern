@@ -505,3 +505,38 @@ ion-card.tile {
   margin-inline-end: 10px;
   background: transparent;
 }
+
+/* Legal pages: running text on cards. */
+.legal p {
+  margin: 10px 0 0;
+  line-height: 1.55;
+}
+
+.legal h2 + p {
+  margin-top: 8px;
+}
+
+.legal a,
+.legal-intro a,
+.legal-note a {
+  color: var(--ion-color-primary);
+}
+
+.legal-note {
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  line-height: 1.5;
+  color: #14532d;
+  background: rgba(31, 122, 74, 0.12);
+  border-radius: 14px;
+}
+
+.legal-note p {
+  margin: 4px 0 0;
+  font-size: 0.9375rem;
+}
+
+.legal-intro {
+  margin: 0 4px 16px;
+  line-height: 1.55;
+}
