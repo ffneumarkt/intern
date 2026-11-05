@@ -1,11 +1,24 @@
-/* Fire brigade red as primary colour. */
+/* The identity of ffneumarkt.at: RAL 3000 as the primary colour, slate neutrals, Roboto. */
 :root {
-  --ion-color-primary: #b71c1c;
-  --ion-color-primary-rgb: 183, 28, 28;
+  --ion-font-family: 'Roboto', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --ion-color-primary: #af2b1e;
+  --ion-color-primary-rgb: 175, 43, 30;
   --ion-color-primary-contrast: #ffffff;
   --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #a11919;
-  --ion-color-primary-tint: #be3333;
+  --ion-color-primary-shade: #9a261a;
+  --ion-color-primary-tint: #b74034;
+
+  /* The page behind grouped lists and cards. */
+  --ion-color-light: #f1f5f9;
+  --ion-color-light-rgb: 241, 245, 249;
+  --ion-color-light-contrast: #0f172a;
+  --ion-color-light-contrast-rgb: 15, 23, 42;
+  --ion-color-light-shade: #d4d8db;
+  --ion-color-light-tint: #f2f6fa;
+
+  --ion-text-color: #0f172a;
+  --ion-text-color-rgb: 15, 23, 42;
 }
 
 /* The toolbar already shows the title; the heading is kept for screen readers and tests. */

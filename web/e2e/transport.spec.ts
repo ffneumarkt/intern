@@ -32,7 +32,7 @@ test('makes the PDF from the count alone and remembers the count', async ({ page
   await expect(countField(page)).toBeVisible()
   await expect(openButton(page)).toBeDisabled()
   await countField(page).fill('4')
-  await expect(page.getByText('4 Flaschen à 6,8 l = 27,2 l = 27,2 Punkte (max. 1000)').first()).toBeVisible()
+  await expect(page.getByText('27,2 von 1000 Punkten').first()).toBeVisible()
 
   const popup = context.waitForEvent('page')
   await openButton(page).click()
@@ -48,7 +48,10 @@ test('shows the checklist and the route', async ({ page }) => {
   await page.goto('/befoerderungspapier')
   await expect(page.getByText('Vor der Fahrt')).toBeVisible()
   await expect(page.getByText('Restdruck in allen Flaschen vorhanden')).toBeVisible()
-  await expect(page.getByText(/FF Neumarkt, Edlwies 3.*→ FF Grünbach/)).toBeVisible()
+  const route = page.getByRole('list', { name: 'Route' }).filter({ visible: true })
+  await expect(route.getByText('FF Neumarkt', { exact: true })).toBeVisible()
+  await expect(route.getByText('FF Grünbach', { exact: true })).toBeVisible()
+  await expect(page.getByText('Hin und zurück').first()).toBeVisible()
 })
 
 test('works offline after the first visit', async ({ page, context }) => {

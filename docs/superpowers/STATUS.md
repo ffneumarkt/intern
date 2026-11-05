@@ -65,6 +65,12 @@ Last updated: 2026-11-05. Read this first, then the spec
   `pages/TransportDocumentPage.test.tsx`, `api/transport.test.ts`, `transportDocument/lastCount.test.ts`,
   `web/e2e/transport.spec.ts` (PDF made, offline reload; run in Chromium and Firefox locally, WebKit only
   in CI). Not observed: an installed iOS PWA opening the blob PDF in a new tab (check after deploy).
+  The page is styled in the identity of ffneumarkt.at (`ffneumarkt-web/src/styles/theme.css`): the whole
+  app now uses RAL 3000 `#AF2B1E` as primary colour (also the manifest `theme_color`), the site's slate
+  text and `#f1f5f9` page, and Roboto (`@fontsource/roboto`, latin 400/500/700, precached). The page has a
+  route drawn as two stops, a stepper with a points gauge (green, amber above 80 %, red above the limit),
+  a sticky „PDF öffnen“ bar and a check-marked checklist; `transportDocument/transportDocument.css`
+  holds it. The Start page and the Material screens only got the new colours and font, not this polish.
 - Nothing is deployed to the VPS yet. No `deploy/` files exist yet.
 
 ## How the process works here

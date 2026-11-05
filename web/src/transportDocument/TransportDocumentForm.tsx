@@ -1,11 +1,11 @@
-import { IonAccordion, IonAccordionGroup, IonButton, IonItem, IonLabel, IonList, IonListHeader, IonNote, IonSelectOption, IonText } from '@ionic/react'
+import { IonAccordion, IonAccordionGroup, IonButton, IonIcon, IonInput, IonItem, IonLabel, IonList, IonSelectOption } from '@ionic/react'
+import { addOutline, alertCircleOutline, checkmarkCircle, documentTextOutline, removeOutline, repeatOutline } from 'ionicons/icons'
 import { useState } from 'react'
 import { Field, SelectField } from '../components/Field'
 import type { TransportSettings } from '../api/transport'
 import { useBusy } from '../useBusy'
 import {
   buildTrips,
-  formatAddressLine,
   formatTenths,
   MAX_FIELD_LENGTH,
   parseCount,
@@ -21,6 +21,7 @@ import {
 } from './calc'
 import { FORM_URL } from './formLayout'
 import { readLastCount, saveLastCount } from './lastCount'
+import './transportDocument.css'
 
 const emptyAddress: Address = { name: '', street: '', postalCode: '', town: '' }
 
@@ -39,13 +40,23 @@ const fileName = (date: Date) =>
 const documentTitle = (date: Date) =>
   `Beförderungspapier ${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`
 
-function TripTotal({ count, config }: { count: number | null; config: TransportConfig }) {
-  if (count === null || count === 0) return null
-  const tenths = totalTenths(count, config.cylinder)
+// How much of the points limit a trip uses. The bar turns amber near the limit and red above it.
+function Gauge({ count, config }: { count: number | null; config: TransportConfig }) {
+  const tenths = count === null ? 0 : totalTenths(count, config.cylinder)
+  const share = tenths / (config.pointsLimit * 10)
+  const level = share > 1 ? 'over' : share > 0.8 ? 'high' : 'ok'
   return (
-    <p aria-live="polite">
-      {count} Flaschen à {config.cylinder.label} l = {formatTenths(tenths)} l = <strong>{formatTenths(tenths)} Punkte</strong> (max. {config.pointsLimit})
-    </p>
+    <div className="td-gauge" aria-live="polite">
+      <p className="td-gauge-text">
+        <span>{count ? `${count} Flaschen à ${config.cylinder.label} l = ${formatTenths(tenths)} l` : 'Keine Flaschen'}</span>
+        <span>
+          <strong>{formatTenths(tenths)}</strong> von {config.pointsLimit} Punkten
+        </span>
+      </p>
+      <div className="td-gauge-track" role="meter" aria-label="Punkte" aria-valuemin={0} aria-valuemax={config.pointsLimit} aria-valuenow={tenths / 10}>
+        <div className="td-gauge-fill" data-level={level} style={{ width: `${Math.min(share, 1) * 100}%` }} />
+      </div>
+    </div>
   )
 }
 
@@ -103,10 +114,14 @@ export default function TransportDocumentForm({ settings }: { settings: Transpor
     { value: 'other', label: 'Andere Adresse' },
   ]
 
-  const describe = (party: Party) => {
+  const stop = (party: Party) => {
     const address = resolveParty(party, config)
-    return address ? formatAddressLine(address) || '–' : '–'
+    const name = address?.name.trim()
+    return { name: name || '–', details: address ? [address.street.trim(), `${address.postalCode} ${address.town}`.trim()].filter(Boolean).join(', ') : '' }
   }
+  const from = stop(sender)
+  const to = stop(recipient)
+  const step = (by: number) => setOutboundCount(String(Math.max(0, (parseCount(outboundCount) ?? 0) + by)))
 
   const open = () =>
     once(async () => {
@@ -147,72 +162,118 @@ export default function TransportDocumentForm({ settings }: { settings: Transpor
 
   return (
     <form
+      className="td"
       onSubmit={(event) => {
         event.preventDefault()
         if (result.valid) void open()
       }}
       noValidate
     >
-      <p>
-        {describe(sender)} → {describe(recipient)} und zurück
-      </p>
-      <IonList>
-        <Field label={`Anzahl Flaschen à ${config.cylinder.label} l`} type="number" inputMode="numeric" autoComplete="off" value={outboundCount} onChange={setOutboundCount} />
-      </IonList>
-      <TripTotal count={parseCount(outboundCount)} config={config} />
+      <section className="td-card" aria-label="Fahrt">
+        <div className="td-route-head">
+          <h2>Fahrt</h2>
+          <span className="td-pill">
+            <IonIcon icon={repeatOutline} aria-hidden="true" />
+            Hin und zurück
+          </span>
+        </div>
+        <ol className="td-route" aria-label="Route">
+          {[from, to].map((place, index) => (
+            <li className="td-stop" key={index}>
+              <div>
+                <strong>{place.name}</strong>
+                {place.details && <span>{place.details}</span>}
+              </div>
+            </li>
+          ))}
+        </ol>
 
-      <IonAccordionGroup>
+        <div className="td-count">
+          <div className="td-stepper">
+            <IonButton className="td-step" fill="solid" shape="round" aria-label="Eine Flasche weniger" disabled={(parseCount(outboundCount) ?? 0) === 0} onClick={() => step(-1)}>
+              <IonIcon slot="icon-only" icon={removeOutline} aria-hidden="true" />
+            </IonButton>
+            <IonInput
+              label={`Anzahl Flaschen à ${config.cylinder.label} l`}
+              labelPlacement="stacked"
+              type="number"
+              inputmode="numeric"
+              autocomplete="off"
+              placeholder="0"
+              value={outboundCount}
+              onIonInput={(e) => setOutboundCount(e.detail.value ?? '')}
+            />
+            <IonButton className="td-step" fill="solid" shape="round" aria-label="Eine Flasche mehr" onClick={() => step(1)}>
+              <IonIcon slot="icon-only" icon={addOutline} aria-hidden="true" />
+            </IonButton>
+          </div>
+          <Gauge count={parseCount(outboundCount)} config={config} />
+        </div>
+      </section>
+
+      <IonAccordionGroup expand="inset">
         <IonAccordion value="route">
           <IonItem slot="header">
             <IonLabel>Abweichende Route</IonLabel>
           </IonItem>
-          <IonList slot="content">
-            <PartyFields role="sender" label="Absender" suffix="Absender" party={sender} onChange={setSender} options={options} fieldErrors={result.fieldErrors} />
-            <PartyFields role="recipient" label="Empfänger" suffix="Empfänger" party={recipient} onChange={setRecipient} options={options} fieldErrors={result.fieldErrors} />
-            <Field
-              label="Anzahl Flaschen zurück"
-              type="number"
-              inputMode="numeric"
-              autoComplete="off"
-              value={state.returnCount}
-              onChange={setReturnCountOverride}
-            />
-            <IonNote className="ion-padding">Übernimmt die Anzahl der Hinfahrt, bis sie geändert wird. 0, wenn keine Flaschen zurückkommen.</IonNote>
-          </IonList>
+          <div slot="content">
+            <IonList lines="full">
+              <PartyFields role="sender" label="Absender" suffix="Absender" party={sender} onChange={setSender} options={options} fieldErrors={result.fieldErrors} />
+              <PartyFields role="recipient" label="Empfänger" suffix="Empfänger" party={recipient} onChange={setRecipient} options={options} fieldErrors={result.fieldErrors} />
+              <Field label="Anzahl Flaschen zurück" type="number" inputMode="numeric" autoComplete="off" value={state.returnCount} onChange={setReturnCountOverride} />
+            </IonList>
+            <p className="td-return-total">{returnSummary(parseCount(state.returnCount), config)}</p>
+            <p className="td-hint ion-color-medium">Die Rückfahrt übernimmt die Anzahl der Hinfahrt, bis sie geändert wird. 0, wenn keine Flaschen zurückkommen.</p>
+          </div>
         </IonAccordion>
       </IonAccordionGroup>
-      <TripTotal count={parseCount(state.returnCount)} config={config} />
 
       {errors.length > 0 && (
-        <IonText color="danger" aria-live="polite">
+        <div className="td-problems" aria-live="polite">
+          <IonIcon icon={alertCircleOutline} aria-hidden="true" />
           <ul>
             {errors.map((message) => (
               <li key={message}>{message}</li>
             ))}
           </ul>
-        </IonText>
+        </div>
       )}
       {downloadError && (
-        <IonText color="danger" role="alert">
-          <p>{downloadError}</p>
-        </IonText>
+        <div className="td-problems" role="alert">
+          <IonIcon icon={alertCircleOutline} aria-hidden="true" />
+          <p style={{ margin: 0 }}>{downloadError}</p>
+        </div>
       )}
-      <IonButton expand="block" type="submit" disabled={!result.valid || busy}>
-        {busy ? 'PDF wird erstellt …' : 'PDF öffnen'}
-      </IonButton>
 
-      <IonList lines="none">
-        <IonListHeader>Vor der Fahrt</IonListHeader>
-        {checklist.map((item) => (
-          <IonItem key={item}>
-            <IonLabel className="ion-text-wrap">{item}</IonLabel>
-          </IonItem>
-        ))}
-      </IonList>
-      <IonNote className="ion-padding">
+      <section className="td-card" aria-label="Vor der Fahrt">
+        <h2 className="td-checklist-title">Vor der Fahrt</h2>
+        <ul className="td-checklist">
+          {checklist.map((item) => (
+            <li key={item}>
+              <IonIcon icon={checkmarkCircle} aria-hidden="true" />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <p className="td-disclaimer">
         Dieses Werkzeug ist ein Hilfsmittel. Die Verantwortung für die ordnungsgemäße Beförderung bleibt beim Feuerwehrkommandanten. Grundlage: OÖ LFV Formular 1.5.016 und ÖBFV-Richtlinie KS-19. Nicht für Einsatz- und
         Übungsfahrten (ADR 1.1.3.1 d) und nicht für Flaschen in fixen Halterungen der Normbeladung.
-      </IonNote>
+      </p>
+
+      <div className="td-actions">
+        <IonButton expand="block" type="submit" disabled={!result.valid || busy}>
+          <IonIcon slot="start" icon={documentTextOutline} aria-hidden="true" />
+          {busy ? 'PDF wird erstellt …' : 'PDF öffnen'}
+        </IonButton>
+      </div>
     </form>
   )
+}
+
+function returnSummary(count: number | null, config: TransportConfig): string {
+  if (count === null) return 'Anzahl der Rückfahrt eingeben.'
+  if (count === 0) return 'Keine Flaschen auf der Rückfahrt.'
+  return `Rückfahrt: ${count} Flaschen à ${config.cylinder.label} l = ${formatTenths(totalTenths(count, config.cylinder))} Punkte (max. ${config.pointsLimit})`
 }

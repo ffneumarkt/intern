@@ -12,6 +12,7 @@
     "e2e": "playwright test"
   },
   "dependencies": {
+    "@fontsource/roboto": "5.2.9",
     "@ionic/react": "^9.0.10",
     "@ionic/react-router": "^9.0.10",
     "@simplewebauthn/browser": "14.0.0",

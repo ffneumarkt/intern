@@ -79,11 +79,27 @@ describe('Beförderungspapier', () => {
     expect(localStorage.getItem('transportDocument.lastCount')).toBeNull()
   })
 
-  it('shows the total and the points limit', async () => {
+  it('shows the total and how much of the points limit it uses', async () => {
     typeInto(await renderPage(), '4')
-    await waitFor(() =>
-      expect(screen.getAllByText((_, el) => el?.tagName === 'P' && el.textContent === '4 Flaschen à 6,8 l = 27,2 l = 27,2 Punkte (max. 1000)')).not.toHaveLength(0),
-    )
+    const text = (value: string) => screen.findAllByText((_, el) => el?.tagName === 'SPAN' && el.textContent === value)
+    expect(await text('4 Flaschen à 6,8 l = 27,2 l')).not.toHaveLength(0)
+    expect(await text('27,2 von 1000 Punkten')).not.toHaveLength(0)
+    expect(screen.getByRole('meter', { name: 'Punkte' })).toHaveAttribute('aria-valuenow', '27.2')
+  })
+
+  it('counts with the buttons', async () => {
+    const count = (await renderPage()) as HTMLInputElement
+    const minus = () => document.querySelectorAll<HTMLElement>('.td-step')[0]
+    const plus = () => document.querySelectorAll<HTMLElement>('.td-step')[1]
+    fireEvent.click(plus())
+    await waitFor(() => expect(count.value).toBe('1'))
+    fireEvent.click(plus())
+    await waitFor(() => expect(count.value).toBe('2'))
+    fireEvent.click(minus())
+    await waitFor(() => expect(count.value).toBe('1'))
+    fireEvent.click(minus())
+    await waitFor(() => expect(count.value).toBe('0'))
+    await waitFor(() => expect(minus().hasAttribute('disabled') || (minus() as HTMLButtonElement).disabled).toBe(true))
   })
 
   it('blocks a count above the points limit', async () => {
