@@ -13,6 +13,7 @@ import {
   type Passkey,
 } from '../api/passkeys'
 import { Field } from '../components/Field'
+import LegalItems from '../components/LegalItems'
 import NotificationSettings from '../components/NotificationSettings'
 import Loaded from '../components/Loaded'
 import Page from '../components/Page'
@@ -157,6 +158,12 @@ export default function SettingsPage() {
             </IonNote>
           </>
         )}
+      </div>
+      <SettingsHeader>Rechtliches</SettingsHeader>
+      <IonList inset>
+        <LegalItems />
+      </IonList>
+      <div className="ion-padding-horizontal">
         <IonButton expand="block" fill="clear" color="danger" onClick={logout}>
           Abmelden
         </IonButton>

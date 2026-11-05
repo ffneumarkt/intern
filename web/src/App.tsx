@@ -1,15 +1,18 @@
 import { IonApp, IonIcon, IonLabel, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs, useIonRouter } from '@ionic/react'
 import { IonReactMemoryRouter, IonReactRouter } from '@ionic/react-router'
-import { constructOutline, documentTextOutline, homeOutline, settingsOutline } from 'ionicons/icons'
+import { constructOutline, documentTextOutline, homeOutline, informationCircleOutline, settingsOutline } from 'ionicons/icons'
 import { useEffect, type ReactElement, type ReactNode } from 'react'
 import { Route, useLocation } from 'react-router-dom'
 import CategoryPage from './pages/CategoryPage'
 import DueListPage from './pages/DueListPage'
+import ImprintPage from './pages/ImprintPage'
+import InfoPage from './pages/InfoPage'
 import ItemEditPage from './pages/ItemEditPage'
 import ItemPage from './pages/ItemPage'
 import LabelPage from './pages/LabelPage'
 import LoginPage from './pages/LoginPage'
 import ManagePage from './pages/ManagePage'
+import PrivacyPage from './pages/PrivacyPage'
 import RecordCheckPage from './pages/RecordCheckPage'
 import RecordUsePage from './pages/RecordUsePage'
 import SettingsPage from './pages/SettingsPage'
@@ -48,6 +51,9 @@ function Tabs() {
         <Route path={paths.start} element={<StartPage />} />
         <Route path={paths.login} element={<LoginPage />} />
         <Route path={paths.transportDocument} element={<TransportDocumentPage />} />
+        <Route path={paths.info} element={<InfoPage />} />
+        <Route path={paths.imprint} element={<ImprintPage />} />
+        <Route path={paths.privacy} element={<PrivacyPage />} />
         {material(paths.dueList, <DueListPage />)}
         {material(paths.category(), <CategoryPage />)}
         {material(paths.item(), <ItemPage />)}
@@ -67,6 +73,12 @@ function Tabs() {
           <IonIcon icon={documentTextOutline} aria-hidden />
           <IonLabel>Beförderungspapier</IonLabel>
         </IonTabButton>
+        {!loggedIn && (
+          <IonTabButton tab="info" href={paths.info} aria-label="Info">
+            <IonIcon icon={informationCircleOutline} aria-hidden />
+            <IonLabel>Info</IonLabel>
+          </IonTabButton>
+        )}
         {loggedIn && (
           <IonTabButton tab="material" href={paths.dueList} aria-label="Material">
             <IonIcon icon={constructOutline} aria-hidden />

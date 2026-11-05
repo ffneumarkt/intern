@@ -14,6 +14,9 @@ export const paths = {
   manageCategory: (categoryId: string) => `/material/verwalten?kategorie=${categoryId}`,
   itemEdit: (id = ':itemId') => `/material/geraete/${id}/bearbeiten`,
   settings: '/einstellungen',
+  info: '/info',
+  imprint: '/info/impressum',
+  privacy: '/info/datenschutz',
 }
 
 // Everything under the material tool and the settings need a login.
