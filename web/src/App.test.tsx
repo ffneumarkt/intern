@@ -5,7 +5,7 @@ import { paths } from './routes'
 import { currentUser, signInAs, signOutWithLogin, type Level } from './test/fakeAuth'
 import { passkeyState } from './test/fakePasskeys'
 import { pushDisableMode, pushState } from './test/fakePush'
-import { findIon, ionButton, ionTab } from './test/ionic'
+import { alertButton, findIon, ionButton, ionTab, typeInto } from './test/ionic'
 
 vi.mock('./api/auth', () => import('./test/fakeAuth'))
 vi.mock('./api/notifications', () => import('./test/fakeNotifications'))
@@ -23,8 +23,8 @@ const tooManyAttempts = 'Zu viele Versuche. Bitte eine Minute warten.'
 const findTab = (name: string) => findIon(() => ionTab(name))
 
 async function submitLogin(password: string) {
-  fireEvent.change(await screen.findByLabelText('E-Mail'), { target: { value: 'test@example.com' } })
-  fireEvent.change(screen.getByLabelText('Passwort'), { target: { value: password } })
+  typeInto(await screen.findByLabelText('E-Mail'), 'test@example.com')
+  typeInto(screen.getByLabelText('Passwort'), password)
   fireEvent.submit(document.querySelector('form')!)
 }
 
@@ -84,8 +84,8 @@ describe('App shell', () => {
     signOutWithLogin('use')
     render(<App initialPath={paths.login} />)
     expect(pushState.calls).not.toContain('syncPush')
-    fireEvent.change(await screen.findByLabelText('E-Mail'), { target: { value: 'a@b.at' } })
-    fireEvent.change(screen.getByLabelText('Passwort'), { target: { value: 'richtig' } })
+    typeInto(await screen.findByLabelText('E-Mail'), 'a@b.at')
+    typeInto(screen.getByLabelText('Passwort'), 'richtig')
     fireEvent.click(await findIon(() => ionButton('Anmelden')))
     await waitFor(() => expect(pushState.calls).toContain('syncPush'))
   })
@@ -184,13 +184,13 @@ describe('passkeys in settings', () => {
 
   const iPhone = { id: 'k1', name: 'iPhone', created: '2026-10-29' }
   const add = async (name: string, password = 'richtig') => {
-    fireEvent.change(await screen.findByLabelText('Name des Geräts'), { target: { value: name } })
-    fireEvent.change(screen.getByLabelText('Passwort'), { target: { value: password } })
+    typeInto(await screen.findByLabelText('Name des Geräts'), name)
+    typeInto(screen.getByLabelText('Passwort'), password)
     fireEvent.click(await findIon(() => ionButton('Passkey hinzufügen')))
   }
   const confirmAndAdd = async (name: string) => {
     fireEvent.click(await findIon(() => ionButton('Mit Passkey bestätigen')))
-    fireEvent.change(await screen.findByLabelText('Name des Geräts'), { target: { value: name } })
+    typeInto(await screen.findByLabelText('Name des Geräts'), name)
     fireEvent.click(await findIon(() => ionButton('Passkey hinzufügen')))
   }
 
@@ -337,41 +337,49 @@ describe('passkeys in settings', () => {
 
   it('renames through a prompt', async () => {
     passkeyState.items = [iPhone]
-    vi.spyOn(window, 'prompt').mockReturnValue('Diensthandy')
     renderAt(paths.settings, 'use')
     await screen.findByText('iPhone')
     fireEvent.click(await findIon(() => ionButton('Umbenennen')))
+    expect(await screen.findByText('Passkey umbenennen')).toBeInTheDocument()
+    const input = await findIon(() => document.querySelector<HTMLInputElement>('ion-alert input'))
+    expect(input.value).toBe('iPhone')
+    fireEvent.input(input, { target: { value: 'Diensthandy' } })
+    fireEvent.click(await findIon(() => alertButton('Speichern')))
     expect(await screen.findByText('Diensthandy')).toBeInTheDocument()
-    expect(window.prompt).toHaveBeenCalledWith('Neuer Name', 'iPhone')
   })
 
-  it.each([[null], ['  ']])('keeps the name when the prompt returns %j', async (answer) => {
+  it.each([['cancelled', null], ['empty', '  ']])('keeps the name when the prompt is %s', async (_how, answer) => {
     passkeyState.items = [iPhone]
-    vi.spyOn(window, 'prompt').mockReturnValue(answer)
     renderAt(paths.settings, 'use')
     await screen.findByText('iPhone')
     fireEvent.click(await findIon(() => ionButton('Umbenennen')))
-    await waitFor(() => expect(window.prompt).toHaveBeenCalled())
+    if (answer === null) fireEvent.click(await findIon(() => alertButton('Abbrechen')))
+    else {
+      const input = await findIon(() => document.querySelector<HTMLInputElement>('ion-alert input'))
+      fireEvent.input(input, { target: { value: answer } })
+      fireEvent.click(await findIon(() => alertButton('Speichern')))
+    }
+    await waitFor(() => expect(document.querySelector('ion-alert')).not.toBeInTheDocument())
     expect(passkeyState.items[0].name).toBe('iPhone')
   })
 
   it('removes after confirmation', async () => {
     passkeyState.items = [iPhone]
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
     renderAt(paths.settings, 'use')
     await screen.findByText('iPhone')
     fireEvent.click(await findIon(() => ionButton('Entfernen')))
+    expect(await screen.findByText('Passkey „iPhone“ entfernen?')).toBeInTheDocument()
+    fireEvent.click(await findIon(() => alertButton('Entfernen')))
     expect(await screen.findByText('Noch kein Passkey angelegt.')).toBeInTheDocument()
-    expect(window.confirm).toHaveBeenCalledWith('Passkey „iPhone“ entfernen?')
   })
 
   it('keeps it when dismissed', async () => {
     passkeyState.items = [iPhone]
-    vi.spyOn(window, 'confirm').mockReturnValue(false)
     renderAt(paths.settings, 'use')
     await screen.findByText('iPhone')
     fireEvent.click(await findIon(() => ionButton('Entfernen')))
-    await waitFor(() => expect(window.confirm).toHaveBeenCalled())
+    fireEvent.click(await findIon(() => alertButton('Abbrechen')))
+    await waitFor(() => expect(document.querySelector('ion-alert')).not.toBeInTheDocument())
     expect(passkeyState.items).toHaveLength(1)
   })
 

@@ -1,6 +1,6 @@
 # Project status and handover
 
-Last updated: 2026-10-31. Read this first, then the spec
+Last updated: 2026-11-05. Read this first, then the spec
 (`specs/2026-10-29-intern-platform-design.md`), which is the binding design.
 
 ## Where things stand
@@ -41,8 +41,44 @@ Last updated: 2026-10-31. Read this first, then the spec
   `aria-pressed`, Enter and Space). A user without a permitted category sees a hint under
   „Erinnerungen“. A browser without a working push service (Playwright's Firefox) now shows push as off
   instead of „Keine Verbindung“ for the whole section. jsdom tests in `pages.test.tsx`, real-browser
-  tests in `web/e2e/settings.spec.ts`. The other forms still use `Field`; they move to `IonInput` one
-  by one, each with end-to-end coverage (next steps).
+  tests in `web/e2e/settings.spec.ts`.
+- **Ionic migration done** (plan `plans/2026-10-31-ionic-dialogs-and-forms.md`): confirm and prompt
+  dialogs are `IonAlert`s (`components/useDialogs.ts`), and `components/Field.tsx` renders `IonInput`,
+  `IonTextarea`, `IonSelect` (popover interface: one tap) and `IonToggle` for every form (login,
+  record use incl. the manual code field, record check, item form, check type form, passkey add).
+  Native on purpose: the Ruhezeit `Von`/`Bis` time inputs, and the date fields, which are `IonInput
+  type="date"` and so open the OS date picker (`IonDatetime` is not used). E2E: `dialogs.spec.ts`,
+  `forms.spec.ts` (Enter submits the login, a use, a check and a new item are saved and show in the
+  history; throwaway items are removed with their history through the e2e superuser); screenshots of
+  every form in iOS and Material mode were checked.
+- **Phase 6 done** (branch `feature/transport-document`, PR pending, no separate plan: the spec's §8 was
+  the design): the Beförderungspapier page on `web/src/transportDocument/` (`calc.ts`, `fillForm.ts`,
+  `formLayout.ts` and their tests copied from ffneumarkt-web; the fillForm test wraps the PDF bytes in a
+  `Uint8Array` because jsdom rejects a Node `Buffer`). Built for minimal taps: the count field is
+  prefilled with the last count that produced a PDF (`localStorage`), the route is the standard trip
+  (Station → Füllstelle and back) and "PDF öffnen" opens the PDF in a new tab (download if blocked).
+  Everything else (sender, recipient, other addresses, return count) sits under the collapsed
+  „Abweichende Route“ and is not remembered. Settings come from `api/transport.ts`
+  (`transport_document_settings`, public); migration `1793380007` seeds the default record (FF Neumarkt,
+  FF Grünbach, 6,8 l, 1000 points, the five checklist items) when none exists. Offline: the service worker
+  precaches the PDF template (pdf-lib is a JS chunk) and caches the settings request network first; the
+  last loaded settings are also kept in `localStorage` (WebKit takes control of a page later, so the
+  worker's cache alone was empty on a first visit followed by going offline). Tests:
+  `pages/TransportDocumentPage.test.tsx`, `api/transport.test.ts`, `transportDocument/lastCount.test.ts`,
+  `web/e2e/transport.spec.ts` (PDF made, offline reload; run in Chromium and Firefox locally, WebKit only
+  in CI). Not observed: an installed iOS PWA opening the blob PDF in a new tab (check after deploy).
+  The page is styled in the identity of ffneumarkt.at (`ffneumarkt-web/src/styles/theme.css`): the whole
+  app now uses RAL 3000 `#AF2B1E` as primary colour (also the manifest `theme_color`), the site's slate
+  text and `#f1f5f9` page, and Roboto (`@fontsource/roboto`, latin 400/500/700, precached). The page has a
+  route drawn as two stops, a stepper with a points gauge (green, amber above 80 %, red above the limit),
+  a sticky „PDF öffnen“ bar and a check-marked checklist; `transportDocument/transportDocument.css`
+  holds it. The other pages follow the same look through `web/src/theme/ui.css`: `Page` puts every page on
+  the grey `#f1f5f9` background in a centred 560 px column, lists and cards are white rounded surfaces,
+  due states are tinted pills (`DueStateBadge`) with a coloured row edge, fields are bordered boxes under
+  a stacked label (drawn in CSS: Ionic's `fill="outline"` is not drawn in list items and would hide the
+  textarea label from tests), primary actions sit in a sticky `.ui-actions` bar, and error text is a
+  tinted box. The start page has tiles, login has the logo. A floating button must be passed to `Page`
+  as `fab`, since `slot="fixed"` only works as a direct child of the content.
 - Nothing is deployed to the VPS yet. No `deploy/` files exist yet.
 
 ## How the process works here
@@ -55,21 +91,19 @@ line; work happens on branches with PRs against `main` (the user merges).
 
 1. **Phase 5: camera scanning and QR labels** (spec §9, `barcode-detector`): camera picker and torch
    removed in phase 2, the label page's QR placeholder, assigning an unknown code to an item.
-2. **Phase 6: Beförderungspapier port** from `ffneumarkt-web/src/components/features/transportDocument/`
-   (`calc.ts`, `fillForm.ts` + tests unchanged), config from `transport_document_settings`, offline.
-3. **Deploy:** `deploy/` (systemd update timer, backup wrapper, `authorized_keys` example),
+2. **Deploy:** `deploy/` (systemd update timer, backup wrapper, `authorized_keys` example),
    `intern snapshot` (spec §10), VPS setup with its own `cloudflared` and hostname
    `intern.ffneumarkt.at`, restore test. After the first deploy, check what can't be tested locally:
    passkeys on a real iPhone, Android phone and Windows device, including Safari with the two-tap
    confirmation, push on the same devices (iOS only from the home screen), and that rate limits count
-   per client with real `CF-Connecting-IP` traffic. Everyone at the station shares one IP and so one
+   per client with real `CF-Connecting-IP` traffic, and that the Beförderungspapier PDF opens from the
+   installed PWA on iOS and Android and works in airplane mode. Everyone at the station shares one IP and so one
    budget. The container must keep publishing no port, or that header can be spoofed. Generate the VAPID
    keys with `docker run --rm ghcr.io/ffneumarkt/intern vapid`; `VAPID_SUBJECT` (a `mailto:` address or
    https URL) is set by hand.
-4. **ffneumarkt-web follow-ups** (spec §12): revert #10 there now (production has no iOS icon), redirect
+3. **ffneumarkt-web follow-ups** (spec §12): revert #10 there now (production has no iOS icon), redirect
    and cleanup at go-live.
-5. **E2E follow-ups:** `image.yml` may gate on `e2e.yml` once it has run stably. The other forms move
-   from `Field` to `IonInput` one by one, each with end-to-end coverage.
+4. **E2E follow-ups:** `image.yml` may gate on `e2e.yml` once it has run stably.
 
 ## Deferred minor findings (from the phase 1 review)
 
@@ -98,6 +132,17 @@ From the phase 3 review:
   registrations; the limit of 30 per minute is per IP. The password still works.
 - Concurrent logins can lose a sign count update.
 - "angelegt am" shows the UTC date.
+
+From the Ionic forms check (screenshots at 390 px, iOS and Material):
+
+- In an alert the destructive button has the same red as the primary colour, so on iOS only its bold
+  weight sets „Löschen“ apart from „Abbrechen“.
+- The manual code field in Verwendung erfassen sits in an `IonItem` inside a card, so it is indented
+  twice and the suggestion box under it starts a little left of the field. Readable, not aligned.
+- Form fields (inside `IonItem`s) start 16 px further in than the text and buttons of the page.
+- The date fields show `mm/dd/yyyy` in Playwright's browsers despite `de-AT`: the native control
+  follows the browser's own locale (as with the Ruhezeit times).
+- On the manage page the item list starts right under the segment, with no gap.
 - Adding a passkey on a device that already has one once showed no message in a browser test (1 of 9
   full runs). 210 focused attempts did not reproduce it and the cause is unknown. Nothing is saved in
   that case; the click just has no visible effect.
@@ -149,9 +194,12 @@ Known dependency findings, checked 2026-10-31 (`govulncheck`, `npm audit`):
 - Push in a browser test: headless Chromium (old or new) has no push service ("push service not
   available") and reports `Notification.permission` as denied; headed Playwright Chromium with a
   persistent context (not incognito) subscribes at FCM and shows real pushes.
-- Screenshots of Einstellungen: `E2E_SCREENSHOTS=1 npm --prefix web run e2e -- e2e/screens.spec.ts`
-  writes `web/test-results/screens/<project>-<state>.png` (WebKit = iOS look, Chromium and Firefox =
-  Material). They are not committed, and the next Playwright run clears `test-results/`. The native
+- Screenshots of Einstellungen and the forms: `E2E_SCREENSHOTS=1 npm --prefix web run e2e --
+  e2e/screens.spec.ts` writes `web/test-results/screens/<project>-<state>.png` (WebKit = iOS look,
+  Chromium and Firefox = Material; `E2E_SCREENS_DIR` picks another folder). They are not committed, and
+  the next Playwright run clears `test-results/`. Without WebKit, iOS mode also shows in Chromium with
+  the `devices['iPhone 14']` profile (its iOS user agent makes Ionic pick iOS mode), e.g. from a local
+  config that adds such a project. The native
   time inputs show AM/PM in Playwright's Chromium and Firefox despite `locale: 'de-AT'` (the browser's
   own locale decides); a German browser shows 24 h.
 - `page.route` in WebKit does not see requests of a page that the PWA service worker controls; block

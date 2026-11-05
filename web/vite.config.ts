@@ -26,7 +26,7 @@ export default defineConfig({
         lang: 'de',
         start_url: '/',
         display: 'standalone',
-        theme_color: '#b71c1c',
+        theme_color: '#AF2B1E',
         background_color: '#ffffff',
         icons: [
           { src: '/icons/intern-192.png', sizes: '192x192', type: 'image/png' },
@@ -39,6 +39,17 @@ export default defineConfig({
         importScripts: ['push-sw.js'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//, /^\/_\//],
+        // The PDF template of the Beförderungspapier; pdf-lib is a JS chunk and is precached already.
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest,pdf,woff2}'],
+        runtimeCaching: [
+          {
+            // The settings of the Beförderungspapier: fresh when online, the last copy otherwise. The
+            // short timeout keeps a bad connection from delaying the page.
+            urlPattern: ({ url }) => url.pathname === '/api/collections/transport_document_settings/records',
+            handler: 'NetworkFirst',
+            options: { cacheName: 'transport-settings', networkTimeoutSeconds: 3 },
+          },
+        ],
       },
     }),
     keepDist,

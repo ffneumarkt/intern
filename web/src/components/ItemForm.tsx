@@ -45,8 +45,8 @@ export default function ItemForm({ item, checkTypes = [], submitLabel, onSave }:
     <>
       <IonList>
         <Field label="Bezeichnung" value={name} onChange={setName} />
-        <Field label="Seriennummer" value={serial} onChange={setSerial} />
-        <Field label="Code" value={barcode} onChange={setBarcode} />
+        <Field label="Seriennummer" value={serial} onChange={setSerial} autoCapitalize="off" />
+        <Field label="Code" value={barcode} onChange={setBarcode} autoCapitalize="off" />
         <Field label="Hergestellt am" type="date" value={manufacturedOn} onChange={setManufacturedOn} />
         <TextAreaField label="Notiz" value={note} onChange={setNote} />
         {checkTypes.map((t) => (
@@ -61,10 +61,12 @@ export default function ItemForm({ item, checkTypes = [], submitLabel, onSave }:
         ))}
       </IonList>
       {error && <IonText color="danger">{error}</IonText>}
-      <IonButton expand="block" disabled={busy || !name.trim()} onClick={() => once(save)}>
-        {!item && <IonIcon slot="start" icon={addOutline} aria-hidden />}
-        {submitLabel}
-      </IonButton>
+      <div className="ui-actions">
+        <IonButton expand="block" disabled={busy || !name.trim()} onClick={() => once(save)}>
+          {!item && <IonIcon slot="start" icon={addOutline} aria-hidden />}
+          {submitLabel}
+        </IonButton>
+      </div>
     </>
   )
 }

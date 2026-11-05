@@ -19,10 +19,37 @@ export const test = base.extend({})
 
 export { expect }
 
-function tokenOf(user: SeedUser): string {
+// The seed user's token from the storage state of global-setup.ts.
+export function tokenOf(user: SeedUser): string {
   const state = JSON.parse(readFileSync(authState(user), 'utf8'))
   const entry = state.origins[0].localStorage.find((item: { name: string }) => item.name === 'pocketbase_auth')
   return JSON.parse(entry.value).token
+}
+
+// Today's calendar date in Europe/Vienna (the configured timezone) as yyyy-mm-dd.
+export const viennaToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Vienna' }).format(new Date())
+
+// Removes a throwaway item together with its uses and checks. Nobody but the superuser may delete
+// history rows, and an item with history cannot be deleted, so this logs in as the e2e superuser.
+export async function removeItemWithHistory(request: APIRequestContext, itemId: string): Promise<void> {
+  const login = await request.post('/api/collections/_superusers/auth-with-password', {
+    data: { identity: process.env.E2E_SUPERUSER_EMAIL, password: process.env.E2E_SUPERUSER_PASSWORD },
+  })
+  expect(login.ok(), 'superuser login').toBe(true)
+  const headers = { Authorization: (await login.json()).token }
+  for (const collection of ['uses', 'checks']) {
+    const list = await request.get(`/api/collections/${collection}/records`, {
+      headers,
+      params: { perPage: 500, fields: 'id', filter: `item="${itemId}"` },
+    })
+    expect(list.ok(), `list ${collection}`).toBe(true)
+    for (const { id } of (await list.json()).items as { id: string }[]) {
+      const removed = await request.delete(`/api/collections/${collection}/records/${id}`, { headers })
+      expect(removed.ok(), `delete ${collection}/${id}`).toBe(true)
+    }
+  }
+  const removed = await request.delete(`/api/collections/items/records/${itemId}`, { headers })
+  expect([204, 404], 'delete item').toContain(removed.status())
 }
 
 // Deletes all of the user's rows in the collections, with the user's own token (the list rules of

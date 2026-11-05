@@ -27,10 +27,19 @@ export default function DueListPage() {
   const param = new URLSearchParams(useLocation().search).get('geraete')
   const only = param ? new Set(param.split(',').filter(Boolean)) : null
   return (
-    <Page title="Fällig">
+    <Page
+      title="Fällig"
+      fab={
+        <IonFab slot="fixed" vertical="bottom" horizontal="end">
+          <IonFabButton routerLink={paths.recordUse} title="Verwendung erfassen">
+            <IonIcon icon={barcodeOutline} aria-hidden />
+          </IonFabButton>
+        </IonFab>
+      }
+    >
       <Loaded resource={resource}>
         {({ categories, items }) => {
-          if (categories.length === 0) return <p>Noch keine Kategorie freigegeben.</p>
+          if (categories.length === 0) return <p className="ui-empty">Noch keine Kategorie freigegeben.</p>
           const visible = items.filter((i) => i.status !== 'retired' && (!category || i.categoryId === category) && (!only || only.has(i.id)))
           const categoryName = (id: string) => categories.find((c) => c.id === id)?.name
           // A reminder can come weeks before an item is "bald fällig". Such items show up only when the list
@@ -39,7 +48,7 @@ export default function DueListPage() {
           const upcoming = only ? visible.filter((i) => i.dueState === 'ok' && (i.dues[0]?.date ?? '9999') <= horizon) : []
           return (
             <>
-              <div>
+              <div className="ui-chips">
                 <IonChip outline={category !== null} onClick={() => setCategory(null)}>
                   Alle
                 </IonChip>
@@ -50,18 +59,18 @@ export default function DueListPage() {
                 ))}
               </div>
               {only && (
-                <div>
+                <div className="ui-chips">
                   <IonChip onClick={() => navigate(paths.dueList, { replace: true })}>Alle anzeigen</IonChip>
                 </div>
               )}
               {only && upcoming.length === 0 && !visible.some((i) => groups.includes(i.dueState)) && (
-                <p>Alles aus dieser Benachrichtigung ist erledigt.</p>
+                <p className="ui-empty">Alles aus dieser Benachrichtigung ist erledigt.</p>
               )}
               {groups.map((state) => {
                 const inGroup = visible.filter((i) => i.dueState === state)
                 if (inGroup.length === 0) return null
                 return (
-                  <section key={state} aria-label={dueStateLabel(state)}>
+                  <section key={state} aria-label={dueStateLabel(state)} data-state={state}>
                     <IonList>
                       <IonListHeader>
                         <IonLabel>{dueStateLabel(state)}</IonLabel>
@@ -74,7 +83,7 @@ export default function DueListPage() {
                 )
               })}
               {upcoming.length > 0 && (
-                <section aria-label="Demnächst">
+                <section aria-label="Demnächst" data-state="upcoming">
                   <IonList>
                     <IonListHeader>
                       <IonLabel>Demnächst</IonLabel>
@@ -99,11 +108,6 @@ export default function DueListPage() {
           )
         }}
       </Loaded>
-      <IonFab slot="fixed" vertical="bottom" horizontal="end">
-        <IonFabButton routerLink={paths.recordUse} title="Verwendung erfassen">
-          <IonIcon icon={barcodeOutline} aria-hidden />
-        </IonFabButton>
-      </IonFab>
     </Page>
   )
 }

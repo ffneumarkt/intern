@@ -1,4 +1,4 @@
-import { IonButton, IonIcon, IonList, IonNote, IonText } from '@ionic/react'
+import { IonButton, IonIcon, IonList, IonText } from '@ionic/react'
 import { keyOutline } from 'ionicons/icons'
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -49,20 +49,21 @@ export default function LoginPage() {
 
   return (
     <Page title="Anmelden">
+      <img className="login-logo" src="/icons/intern-192.png" alt="" width="72" height="72" />
       {passkeysSupported() && (
         <>
-          <IonButton expand="block" size="large" disabled={busy} onClick={() => once(signInWithPasskey)}>
+          <IonButton className="ui-button" expand="block" disabled={busy} onClick={() => once(signInWithPasskey)}>
             <IonIcon slot="start" icon={keyOutline} aria-hidden />
             Mit Passkey anmelden
           </IonButton>
           {passkeyFailed && <IonText color="danger">Anmeldung mit Passkey fehlgeschlagen.</IonText>}
-          <IonNote className="ion-text-center ion-margin-vertical" style={{ display: 'block' }}>
+          <p className="ui-hint ui-hint--center">
             oder mit E-Mail und Passwort
-          </IonNote>
+          </p>
         </>
       )}
       <form onSubmit={submit}>
-        <IonList inset>
+        <IonList>
           <Field label="E-Mail" type="email" autoComplete="username" value={email} onChange={setEmail} required />
           <Field
             label="Passwort"
@@ -75,7 +76,7 @@ export default function LoginPage() {
         </IonList>
         {failed && <IonText color="danger">Anmeldung fehlgeschlagen. E-Mail und Passwort prüfen.</IonText>}
         {tooMany && <IonText color="danger">{tooManyAttemptsMessage}</IonText>}
-        <IonButton expand="block" fill="outline" type="submit">
+        <IonButton className="ui-button" expand="block" fill={passkeysSupported() ? 'outline' : 'solid'} type="submit">
           Anmelden
         </IonButton>
       </form>

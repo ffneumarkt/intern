@@ -1,0 +1,507 @@
+/* Shared look of all pages, modelled on the Beförderungspapier: a grey page with white rounded surfaces,
+   slate text, Roboto, one red accent. Colours come from variables.css and Ionic's tokens. */
+:root {
+  --ui-surface: var(--ion-item-background, #fff);
+  /* The site's slate, a little darker than its muted grey so small text keeps AA contrast on the grey page. */
+  --ui-muted: #5f6b7a;
+  --ui-line: #dfe5ec;
+  --ui-ok: #1f7a4a;
+  --ui-warn: #b36b00;
+  --ui-radius: 18px;
+  --ui-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 6px 20px -12px rgba(0, 0, 0, 0.18);
+}
+
+/* The column every page sits in. `flat` pages (Einstellungen) bring their own inset lists and margins. */
+.ui-page {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 16px 16px 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-page--flat {
+  padding-inline: 0;
+}
+
+/* A white surface. */
+.ui-card {
+  margin: 0 0 16px;
+  padding: 18px 18px 20px;
+  background: var(--ui-surface);
+  border-radius: var(--ui-radius);
+  box-shadow: var(--ui-shadow);
+}
+
+.ui-card h2 {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+/* Lists are surfaces too: rows sit on the card, the header is its title. */
+.ui-page ion-list {
+  margin: 0 0 16px;
+  padding: 0;
+  overflow: hidden;
+  background: var(--ui-surface);
+  border-radius: var(--ui-radius);
+  box-shadow: var(--ui-shadow);
+}
+
+.ui-page ion-list ion-item {
+  --background: transparent;
+  --min-height: 56px;
+  --inner-padding-end: 14px;
+}
+
+.ui-page ion-list ion-list-header {
+  min-height: 0;
+  padding: 16px 18px 6px;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--ion-text-color);
+}
+
+.ui-page ion-list ion-list-header ion-label {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+}
+
+/* A group of lists the page lays out itself (Einstellungen) keeps Ionic's inset look. */
+.ui-page--flat ion-list {
+  margin-inline: 16px;
+}
+
+ion-item h2,
+ion-item h3 {
+  font-weight: 600;
+}
+
+ion-item ion-label p {
+  color: var(--ui-muted);
+}
+
+/* A pill: a short status or fact. */
+.ui-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--ion-color-primary);
+  background: rgba(var(--ion-color-primary-rgb), 0.1);
+  border-radius: 999px;
+}
+
+.ui-pill ion-icon {
+  font-size: 15px;
+}
+
+.ui-pill[data-tone='danger'] {
+  color: var(--ion-color-danger-shade);
+  background: rgba(var(--ion-color-danger-rgb), 0.12);
+}
+
+.ui-pill[data-tone='warn'] {
+  color: #8a5200;
+  background: rgba(179, 107, 0, 0.14);
+}
+
+.ui-pill[data-tone='ok'] {
+  color: var(--ui-ok);
+  background: rgba(31, 122, 74, 0.12);
+}
+
+.ui-pill[data-tone='muted'] {
+  color: var(--ui-muted);
+  background: rgba(95, 107, 122, 0.12);
+}
+
+/* Filters and the like: one scrolling row. */
+.ui-chips {
+  display: flex;
+  gap: 8px;
+  margin: 0 -16px 16px;
+  padding: 0 16px 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.ui-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.ui-chips ion-chip {
+  flex: none;
+  min-height: 36px;
+  margin: 0;
+  padding: 0 14px;
+  font-weight: 500;
+}
+
+/* What went wrong, in place of bare red text. */
+ion-content ion-text.ion-color-danger,
+ion-content ion-text.ion-color-warning {
+  display: block;
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  font-size: 0.9375rem;
+  line-height: 1.35;
+  border-radius: 14px;
+}
+
+ion-content ion-text.ion-color-danger {
+  color: var(--ion-color-danger-shade);
+  background: rgba(var(--ion-color-danger-rgb), 0.1);
+}
+
+ion-content ion-text.ion-color-warning {
+  color: #8a5200;
+  background: rgba(179, 107, 0, 0.12);
+}
+
+.ui-problems {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  font-size: 0.9375rem;
+  line-height: 1.35;
+  color: var(--ion-color-danger-shade);
+  background: rgba(var(--ion-color-danger-rgb), 0.1);
+  border-radius: 14px;
+}
+
+.ui-problems ion-icon {
+  flex: none;
+  margin-top: 1px;
+  font-size: 20px;
+}
+
+.ui-problems ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ui-problems li + li {
+  margin-top: 4px;
+}
+
+/* The primary action stays at the bottom while the page scrolls: it is always one tap away. */
+.ui-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin: 0 -16px;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(to bottom, rgba(var(--ion-color-light-rgb), 0), var(--ion-color-light) 30%);
+}
+
+.ui-actions ion-button,
+.ui-button {
+  --border-radius: 14px;
+  margin: 0;
+  min-height: 52px;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.ui-actions ion-button + ion-button {
+  margin-top: 8px;
+}
+
+.ui-page ion-button {
+  --border-radius: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 600;
+}
+
+.ui-page ion-button[size='small'] {
+  --border-radius: 10px;
+}
+
+/* A line of text under or between surfaces. */
+.ui-hint {
+  margin: 0 4px 16px;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--ui-muted);
+}
+
+.ui-empty {
+  margin: 32px 16px;
+  text-align: center;
+  color: var(--ui-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+  }
+}
+
+/* An item in a list: a coloured edge shows its state before the pill is read. */
+.item-row {
+  --inner-padding-end: 12px;
+  box-shadow: inset 4px 0 0 transparent;
+}
+
+.item-row[data-state='overdue'] {
+  box-shadow: inset 4px 0 0 var(--ion-color-danger);
+}
+
+.item-row[data-state='dueToday'],
+.item-row[data-state='dueSoon'] {
+  box-shadow: inset 4px 0 0 var(--ui-warn);
+}
+
+.item-row[data-state='ok'] {
+  box-shadow: inset 4px 0 0 var(--ui-ok);
+}
+
+.item-row[data-state='retired'] {
+  box-shadow: inset 4px 0 0 var(--ui-line);
+}
+
+.item-row ion-label h2 {
+  font-size: 1.0625rem;
+}
+
+.item-row ion-label p {
+  margin-top: 2px;
+  font-size: 0.875rem;
+}
+
+/* A row of actions under a title. */
+.ui-actionrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+
+.ui-actionrow ion-button {
+  margin: 0;
+}
+
+/* The group headers of the due list carry the colour of their state. */
+section[data-state] ion-list-header ion-label::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-inline-end: 10px;
+  border-radius: 50%;
+  background: var(--ui-line);
+}
+
+section[data-state='overdue'] ion-list-header ion-label::before {
+  background: var(--ion-color-danger);
+}
+
+section[data-state='dueToday'] ion-list-header ion-label::before,
+section[data-state='dueSoon'] ion-list-header ion-label::before {
+  background: var(--ui-warn);
+}
+
+ion-fab-button {
+  --background: var(--ion-color-primary);
+  --box-shadow: 0 6px 18px -4px rgba(var(--ion-color-primary-rgb), 0.55);
+}
+
+/* A tile on the start page. */
+ion-card.tile {
+  margin: 0 0 16px;
+  background: var(--ui-surface);
+  border-radius: var(--ui-radius);
+  box-shadow: var(--ui-shadow);
+}
+
+.tile-body {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px;
+  text-align: start;
+}
+
+.tile-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  color: var(--ion-color-primary);
+  background: rgba(var(--ion-color-primary-rgb), 0.1);
+  border-radius: 16px;
+}
+
+.tile-icon ion-icon {
+  font-size: 28px;
+}
+
+.tile-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tile-text strong {
+  font-size: 1.1875rem;
+  font-weight: 700;
+  color: var(--ion-text-color);
+}
+
+.tile-text span {
+  font-size: 0.875rem;
+  line-height: 1.35;
+  color: var(--ui-muted);
+}
+
+.tile-chevron {
+  flex: none;
+  font-size: 20px;
+  color: var(--ui-muted);
+}
+
+.login-logo {
+  display: block;
+  margin: 8px auto 24px;
+  border-radius: 18px;
+  box-shadow: var(--ui-shadow);
+}
+
+.item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.item-head .item-name {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.item-facts p {
+  margin: 0;
+  padding: 9px 0;
+  line-height: 1.35;
+  border-top: 1px solid var(--ui-line);
+}
+
+.item-facts p:first-child {
+  border-top: 0;
+}
+
+/* Other cards (the manual code field, notices) follow the same surface. */
+.ui-page ion-card:not(.tile) {
+  margin: 0 0 16px;
+  background: var(--ui-surface);
+  border-radius: var(--ui-radius);
+  box-shadow: var(--ui-shadow);
+}
+
+.ui-page ion-card[color='warning'] {
+  background: rgba(179, 107, 0, 0.12);
+  --color: #8a5200;
+  box-shadow: none;
+}
+
+/* An empty list would be an empty white box. */
+.ui-page ion-list:empty {
+  display: none;
+}
+
+/* The suggestions sit inside a card already. */
+.ui-page ion-list.suggestions {
+  margin: 8px 0 0;
+  border: 1px solid var(--ui-line);
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.ui-hint--center {
+  margin: 16px 0;
+  text-align: center;
+}
+
+/* No line under the last row of a card. */
+.ui-page ion-list > ion-item:last-child,
+.ui-page ion-list > ion-item:last-of-type {
+  --border-width: 0;
+}
+
+/* Form fields: a bordered box under a stacked label, with room between them. Ionic's own
+   fill="outline" is not drawn inside list items, and for textareas it would move the label out of
+   reach of assistive tech and tests, so the boxes are drawn here. */
+.ui-page ion-list ion-item:has(ion-input, ion-textarea, ion-select) {
+  --padding-top: 6px;
+  --padding-bottom: 6px;
+  --padding-start: 14px;
+  --padding-end: 14px;
+  --inner-padding-end: 0;
+  --border-width: 0;
+  --inner-border-width: 0;
+}
+
+.ui-page ion-input .native-wrapper,
+.ui-page ion-textarea .native-wrapper {
+  margin-top: 6px;
+  padding: 0 12px;
+  border: 1px solid var(--ui-line);
+  border-radius: 12px;
+}
+
+.ui-page ion-textarea .native-wrapper {
+  padding-block: 10px;
+}
+
+.ui-page ion-input.has-focus .native-wrapper,
+.ui-page ion-textarea.has-focus .native-wrapper {
+  border-color: var(--ion-color-primary);
+  box-shadow: 0 0 0 1px var(--ion-color-primary);
+}
+
+.ui-page ion-select::part(container) {
+  margin: 6px 0 0;
+  padding: 0 12px;
+  border: 1px solid var(--ui-line);
+  border-radius: 12px;
+}
+
+.ui-page ion-select.has-focus::part(container),
+.ui-page ion-select.select-expanded::part(container) {
+  border-color: var(--ion-color-primary);
+}
+
+.ui-page ion-segment {
+  margin-bottom: 16px;
+}
+
+/* An item inside a card (the manual code field) needs neither its own indent nor a line. */
+.ui-page ion-card ion-item {
+  --padding-start: 0;
+  --inner-padding-end: 0;
+  --inner-border-width: 0;
+  --border-width: 0;
+  --background: transparent;
+}
+
+.ui-page ion-select::part(icon) {
+  margin-inline-end: 10px;
+  background: transparent;
+}

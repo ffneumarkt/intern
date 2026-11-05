@@ -1,4 +1,4 @@
-import { IonButton, IonCard, IonCardContent, IonIcon, IonItem, IonLabel, IonList, IonText, useIonViewWillEnter } from '@ionic/react'
+import { IonButton, IonCard, IonCardContent, IonIcon, IonItem, IonLabel, IonList, IonSelectOption, IonText, useIonViewWillEnter } from '@ionic/react'
 import { closeCircleOutline } from 'ionicons/icons'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -122,15 +122,7 @@ export default function RecordUsePage() {
               <IonCard>
                 <IonCardContent>
                   <form onSubmit={submitCode}>
-                    <label>
-                      Code manuell eingeben
-                      <input
-                        className="code-input"
-                        value={code}
-                        autoComplete="off"
-                        onChange={(e) => setCode(e.target.value)}
-                      />
-                    </label>
+                    <Field label="Code manuell eingeben" value={code} autoComplete="off" autoCapitalize="off" onChange={setCode} />
                   </form>
                   <Suggestions suggestions={searchItems(items, code, scanned.map((i) => i.id))} onPick={pick} />
                 </IonCardContent>
@@ -162,28 +154,32 @@ export default function RecordUsePage() {
                   </IonItem>
                 ))}
               </IonList>
-              {scanned.length > 0 && <p>Weiteres Gerät scannen?</p>}
-              <IonButton expand="block" disabled={scanned.length === 0} onClick={() => setStep('form')}>
-                Fertig
-              </IonButton>
+              {scanned.length > 0 && <p className="ui-hint">Weiteres Gerät scannen?</p>}
+              <div className="ui-actions">
+                <IonButton expand="block" disabled={scanned.length === 0} onClick={() => setStep('form')}>
+                  Fertig
+                </IonButton>
+              </div>
             </>
           ) : (
             <>
-              <p>{scanned.map((i) => i.name).join(', ')}</p>
+              <p className="ui-hint"><strong>{scanned.map((i) => i.name).join(', ')}</strong></p>
               <IonList>
                 <Field label="Datum" type="date" max={today()} value={date} onChange={setDate} />
                 <SelectField label="Art" value={kind} onChange={(value) => setKind(value as UseInput['kind'])}>
-                  <option value="operation">Einsatz</option>
-                  <option value="exercise">Übung</option>
-                  <option value="other">Sonstiges</option>
+                  <IonSelectOption value="operation">Einsatz</IonSelectOption>
+                  <IonSelectOption value="exercise">Übung</IonSelectOption>
+                  <IonSelectOption value="other">Sonstiges</IonSelectOption>
                 </SelectField>
                 <Field label="Erfasst von" value={recordedBy} onChange={setRecordedBy} />
                 <TextAreaField label="Notiz" value={note} onChange={setNote} />
               </IonList>
               {error && <IonText color="danger">{error}</IonText>}
-              <IonButton expand="block" disabled={busy} onClick={() => once(save)}>
-                Speichern
-              </IonButton>
+              <div className="ui-actions">
+                <IonButton expand="block" disabled={busy} onClick={() => once(save)}>
+                  Speichern
+                </IonButton>
+              </div>
             </>
           )
         }

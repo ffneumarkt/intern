@@ -16,8 +16,15 @@ Internal tools for FF Neumarkt at `intern.ffneumarkt.at`. Start with `docs/super
   jsdom does not model Ionic's shadow DOM roles or focus. Ionic controls can be tested in jsdom (props such
   as `checked` reach the element, a click on an `ion-toggle` fires `onIonChange`) thanks to the `@lit/react`
   alias in `web/vite.config.ts`; real-browser behaviour is covered by `make e2e`. `web/src/api/` is replaced by `test/fakeAuth.ts`,
-  `test/fakeMaterial.ts`, `test/fakePasskeys.ts`, `test/fakeNotifications.ts` and `test/fakePush.ts`.
-- Form fields are native inputs through `web/src/components/Field.tsx`, not `IonInput`/`IonSelect`.
+  `test/fakeMaterial.ts`, `test/fakePasskeys.ts`, `test/fakeNotifications.ts`, `test/fakePush.ts` and `test/fakeTransport.ts`.
+- Form fields go through `web/src/components/Field.tsx`, which wraps `IonInput`, `IonTextarea`, `IonSelect`
+  and `IonToggle`; tests drive them with `typeInto` (`fireEvent.change` does not reach Ionic inputs),
+  `choose` (find selects with `ionSelect`, their text with `selectedText`) and `setToggle` from
+  `web/src/test/ionic.ts`. Plain text fields get capitalisation, autocorrect and spellcheck (Ionic turns
+  them off by default); code-like ones (codes, serial numbers) pass `autoCapitalize="off"`. Dates are
+  `IonInput type="date"` (the OS picker); only the Ruhezeit times stay native `<input type="time">`.
+- Confirm and prompt dialogs are IonAlerts through `useDialogs` (`web/src/components/useDialogs.ts`), never
+  `window.confirm`/`prompt`; tests press the alert buttons with `alertButton` from `web/src/test/ionic.ts`.
 - Data pages load with `useResource`, not an effect: Ionic keeps pages mounted.
 - Never redirect from a page or route element (`<Navigate>`): Ionic keeps visited pages mounted, so each
   one would redirect and the stack breaks (the next login stays on the login page in Firefox). Redirect in

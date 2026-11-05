@@ -23,9 +23,11 @@ export default function LabelPage() {
                 <strong>{item?.name}</strong>
                 <span>{item?.barcode ?? itemId}</span>
               </div>
-              <IonButton expand="block" onClick={() => window.print()}>
-                Drucken
-              </IonButton>
+              <div className="ui-actions">
+                <IonButton expand="block" onClick={() => window.print()}>
+                  Drucken
+                </IonButton>
+              </div>
             </>
           )
         }}

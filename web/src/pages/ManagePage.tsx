@@ -1,4 +1,4 @@
-import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonSegment, IonSegmentButton, IonText } from '@ionic/react'
+import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonSegment, IonSegmentButton, IonSelectOption, IonText } from '@ionic/react'
 import { addOutline } from 'ionicons/icons'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -19,6 +19,7 @@ import { CheckboxField, Field, SelectField } from '../components/Field'
 import ItemForm from '../components/ItemForm'
 import Loaded from '../components/Loaded'
 import Page from '../components/Page'
+import { useDialogs } from '../components/useDialogs'
 import { paths } from '../routes'
 import { useSession } from '../session'
 import { useBusy } from '../useBusy'
@@ -48,9 +49,9 @@ export default function ManagePage() {
               <IonList>
                 <SelectField label="Kategorie" value={categoryId} onChange={setChosen}>
                   {manageable.map((c) => (
-                    <option key={c.id} value={c.id}>
+                    <IonSelectOption key={c.id} value={c.id}>
                       {c.name}
-                    </option>
+                    </IonSelectOption>
                   ))}
                 </SelectField>
               </IonList>
@@ -184,6 +185,7 @@ function CheckTypeForm({ categoryId, checkType, others, onDone }: CheckTypeFormP
   const [alsoSatisfies, setAlsoSatisfies] = useState(checkType?.alsoSatisfies ?? [])
   const [error, setError] = useState<string | null>(null)
   const { busy, once } = useBusy()
+  const { confirm } = useDialogs()
 
   const save = async () => {
     const intervalMonths = Number(months) || 0
@@ -203,7 +205,7 @@ function CheckTypeForm({ categoryId, checkType, others, onDone }: CheckTypeFormP
   }
 
   const remove = async (target: CheckType) => {
-    if (!window.confirm(`${target.name} löschen?`)) return
+    if (!(await confirm({ message: `${target.name} löschen?`, confirmText: 'Löschen', destructive: true }))) return
     setError(null)
     try {
       await deleteCheckType(target.id)
@@ -241,15 +243,17 @@ function CheckTypeForm({ categoryId, checkType, others, onDone }: CheckTypeFormP
           ))}
       </IonList>
       {error && <IonText color="danger">{error}</IonText>}
-      <IonButton expand="block" disabled={busy || !name.trim()} onClick={() => once(save)}>
-        {!checkType && <IonIcon slot="start" icon={addOutline} aria-hidden />}
-        {checkType ? 'Speichern' : 'Prüfart anlegen'}
-      </IonButton>
-      {checkType && (
-        <IonButton expand="block" color="danger" fill="clear" onClick={() => remove(checkType)}>
-          Prüfart löschen
+      <div className="ui-actions">
+        <IonButton expand="block" disabled={busy || !name.trim()} onClick={() => once(save)}>
+          {!checkType && <IonIcon slot="start" icon={addOutline} aria-hidden />}
+          {checkType ? 'Speichern' : 'Prüfart anlegen'}
         </IonButton>
-      )}
+        {checkType && (
+          <IonButton expand="block" color="danger" fill="clear" onClick={() => remove(checkType)}>
+            Prüfart löschen
+          </IonButton>
+        )}
+      </div>
     </>
   )
 }

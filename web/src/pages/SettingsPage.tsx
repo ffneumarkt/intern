@@ -17,6 +17,7 @@ import NotificationSettings from '../components/NotificationSettings'
 import Loaded from '../components/Loaded'
 import Page from '../components/Page'
 import { SettingsFooter, SettingsHeader } from '../components/SettingsGroup'
+import { useDialogs } from '../components/useDialogs'
 import { useSession } from '../session'
 import { useBusy } from '../useBusy'
 import { useResource } from '../useResource'
@@ -30,6 +31,7 @@ export default function SettingsPage() {
   // a second passkey dialog without a new tap.
   const [grant, setGrant] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const dialogs = useDialogs()
   const { busy, once } = useBusy()
 
   const confirm = async () => {
@@ -77,13 +79,14 @@ export default function SettingsPage() {
     }
   }
 
-  const rename = (key: Passkey) => {
-    const answer = window.prompt('Neuer Name', key.name)?.trim()
+  const rename = async (key: Passkey) => {
+    const answer = await dialogs.prompt({ header: 'Passkey umbenennen', label: 'Neuer Name', value: key.name, confirmText: 'Speichern' })
     if (answer) void change(() => renamePasskey(key.id, answer))
   }
 
-  const remove = (key: Passkey) => {
-    if (window.confirm(`Passkey „${key.name}“ entfernen?`)) void change(() => removePasskey(key.id))
+  const remove = async (key: Passkey) => {
+    const confirmed = await dialogs.confirm({ message: `Passkey „${key.name}“ entfernen?`, confirmText: 'Entfernen', destructive: true })
+    if (confirmed) void change(() => removePasskey(key.id))
   }
 
   const hasPasskeys = (resource.data?.length ?? 0) > 0
