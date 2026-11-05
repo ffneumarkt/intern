@@ -23,7 +23,10 @@ function serve(items: object[]) {
   return fetchMock
 }
 
-afterEach(() => vi.unstubAllGlobals())
+afterEach(() => {
+  vi.unstubAllGlobals()
+  localStorage.clear()
+})
 
 describe('loadTransportSettings', () => {
   it('turns the record into the generator config', async () => {
@@ -58,5 +61,43 @@ describe('loadTransportSettings', () => {
     const fetchMock = serve([record])
     await loadTransportSettings()
     expect(String((fetchMock.mock.calls[0] as unknown[])[0])).toContain('/api/collections/transport_document_settings/records')
+  })
+
+  describe('without a connection', () => {
+    const offline = () => vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new TypeError('Failed to fetch'))))
+
+    it('uses the settings of the last successful load', async () => {
+      serve([record])
+      const online = await loadTransportSettings()
+      offline()
+      expect(await loadTransportSettings()).toEqual(online)
+    })
+
+    it('fails when it never loaded', async () => {
+      offline()
+      await expect(loadTransportSettings()).rejects.toThrow()
+    })
+
+    it('ignores a stored copy that is not settings', async () => {
+      localStorage.setItem('transportDocument.settings', '{"config":1}')
+      offline()
+      await expect(loadTransportSettings()).rejects.toThrow()
+    })
+
+    it('prefers the server over the stored copy', async () => {
+      serve([record])
+      await loadTransportSettings()
+      serve([{ ...record, points_limit: 800 }])
+      expect((await loadTransportSettings()).config.pointsLimit).toBe(800)
+    })
+
+    it('still loads when storage is blocked', async () => {
+      vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new Error('blocked')
+      })
+      serve([record])
+      await expect(loadTransportSettings()).resolves.toBeTruthy()
+      vi.restoreAllMocks()
+    })
   })
 })

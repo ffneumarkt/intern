@@ -61,7 +61,9 @@ Last updated: 2026-11-05. Read this first, then the spec
   „Abweichende Route“ and is not remembered. Settings come from `api/transport.ts`
   (`transport_document_settings`, public); migration `1793380007` seeds the default record (FF Neumarkt,
   FF Grünbach, 6,8 l, 1000 points, the five checklist items) when none exists. Offline: the service worker
-  precaches the PDF template (pdf-lib is a JS chunk) and caches the settings request network first. Tests:
+  precaches the PDF template (pdf-lib is a JS chunk) and caches the settings request network first; the
+  last loaded settings are also kept in `localStorage` (WebKit takes control of a page later, so the
+  worker's cache alone was empty on a first visit followed by going offline). Tests:
   `pages/TransportDocumentPage.test.tsx`, `api/transport.test.ts`, `transportDocument/lastCount.test.ts`,
   `web/e2e/transport.spec.ts` (PDF made, offline reload; run in Chromium and Firefox locally, WebKit only
   in CI). Not observed: an installed iOS PWA opening the blob PDF in a new tab (check after deploy).
