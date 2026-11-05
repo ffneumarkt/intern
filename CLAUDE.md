@@ -47,7 +47,7 @@ make test      # go vet + go test, tsc, vitest
 make e2e       # Playwright in Chromium, Firefox, WebKit against the built binary on :8099 with a
                # seeded temp data dir; once: cd web && npx playwright install chromium firefox webkit;
                # on Arch WebKit needs the Playwright Docker image: npm --prefix web run e2e --
-               # --project=chromium --project=firefox; CI (e2e.yml) runs all three
+               # --project=chromium --project=firefox; CI (e2e.yml) runs all three, one job per browser in parallel
                # E2E_SKIP_BUILD=1 reuses the last frontend and binaries in backend/.e2e
 make build     # frontend into backend/ui/dist + binary backend/intern
 make image     # docker build -t intern:local .
