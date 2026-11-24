@@ -6,6 +6,7 @@ import { listItems, recordUse, type Item, type UseInput } from '../api/material'
 import { Field, SelectField, TextAreaField } from '../components/Field'
 import Loaded from '../components/Loaded'
 import Page from '../components/Page'
+import { findByBarcode, searchItems } from '../material/items'
 import { paths } from '../routes'
 import { useSession } from '../session'
 import { futureDateMessage, isFuture, today } from '../today'
@@ -28,20 +29,6 @@ function rememberRecordedBy(name: string) {
   } catch {
     // storage unavailable: the name is typed again next time
   }
-}
-
-const findByBarcode = (items: Item[], code: string) => items.find((i) => i.status !== 'retired' && i.barcode === code)
-
-// Live suggestions while typing a code: active items whose code or name contains the text.
-function searchItems(items: Item[], text: string, excludeIds: string[]) {
-  const q = text.trim().toLowerCase()
-  if (!q) return []
-  return items.filter(
-    (i) =>
-      i.status !== 'retired' &&
-      !excludeIds.includes(i.id) &&
-      (i.barcode?.toLowerCase().includes(q) || i.name.toLowerCase().includes(q)),
-  )
 }
 
 export default function RecordUsePage() {

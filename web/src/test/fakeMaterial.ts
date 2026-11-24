@@ -15,7 +15,7 @@ export const failing = {
   deleteCheckType: false,
   deleteItem: false,
 }
-export const calls = { uses: [] as { itemId: string; input: UseInput }[], checks: [] as { itemId: string; input: CheckInput }[], retired: [] as string[], createdItems: [] as { input: ItemInput; lastChecked: Record<string, string> }[], updatedItems: [] as { itemId: string; input: Omit<ItemInput, 'categoryId'> }[], deletedItems: [] as string[], createdCheckTypes: [] as CheckTypeInput[], updatedCheckTypes: [] as { id: string; input: Omit<CheckTypeInput, 'categoryId'> }[] }
+export const calls = { uses: [] as { itemId: string; input: UseInput }[], checks: [] as { itemId: string; input: CheckInput }[], retired: [] as string[], createdItems: [] as { input: ItemInput; lastChecked: Record<string, string> }[], updatedItems: [] as { itemId: string; input: Omit<ItemInput, 'categoryId'> }[], deletedItems: [] as string[], assigned: [] as { itemId: string; barcode: string }[], createdCheckTypes: [] as CheckTypeInput[], updatedCheckTypes: [] as { id: string; input: Omit<CheckTypeInput, 'categoryId'> }[] }
 
 export function resetMaterial() {
   data = freshData()
@@ -28,6 +28,7 @@ export function resetMaterial() {
   calls.createdItems = []
   calls.updatedItems = []
   calls.deletedItems = []
+  calls.assigned = []
   calls.createdCheckTypes = []
   calls.updatedCheckTypes = []
   failing.useFor.clear()
@@ -81,6 +82,13 @@ export async function createItem(input: ItemInput, lastChecked: Record<string, s
 export async function updateItem(itemId: string, input: Omit<ItemInput, 'categoryId'>) {
   if (failing.barcode) throw new BarcodeTakenError()
   calls.updatedItems.push({ itemId, input })
+}
+
+export async function assignBarcode(itemId: string, barcode: string) {
+  if (failing.barcode) throw new BarcodeTakenError()
+  calls.assigned.push({ itemId, barcode })
+  const item = data.items.find((i) => i.id === itemId)
+  if (item) item.barcode = barcode
 }
 
 export async function deleteItem(itemId: string) {

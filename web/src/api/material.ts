@@ -230,6 +230,15 @@ export async function updateItem(itemId: string, input: Omit<ItemInput, 'categor
   }
 }
 
+// Saves a scanned manufacturer code on an item; a code another item has throws BarcodeTakenError.
+export async function assignBarcode(itemId: string, barcode: string): Promise<void> {
+  try {
+    await pb.collection('items').update(itemId, { barcode })
+  } catch (err) {
+    throw explainItemError(err)
+  }
+}
+
 // The server refuses this once an item has uses or checks.
 export async function deleteItem(itemId: string): Promise<void> {
   try {
