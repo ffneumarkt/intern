@@ -98,6 +98,18 @@ Last updated: 2026-11-05. Read this first, then the spec
   (`e2e/fixtures/qr.y4m`); Firefox and WebKit check manual entry. Not observed: real iPhone and Android
   cameras, the torch on hardware, the Surface webcam, scan speed on worn manufacturer codes, an installed
   PWA scanning offline.
+- **Mask measurements done** (branch `feature/mask-measurements`; spec `specs/2026-11-24-mask-measurements-design.md`,
+  plan `plans/2026-11-24-mask-measurements.md`): the paper „AS-Masken Betriebsnachweis“ columns as values. A check
+  type has a switch „Messwerte erfassen“ (`check_types.measurements`, on for the seeded Maskenprüfung); recording
+  such a check shows the Dichtprüfung (start pressure −10 prefilled, a 60 s countdown from a start timestamp with
+  wake lock and vibration where supported, the pressure after 60 s, the loss with its 1 mbar limit) and the
+  Öffnungsdruck (4,2–6,0 mbar). The readings suggest Bestanden or Mangel until the user picks one, and all three
+  are required (client side). Stored on `checks` as `leak_start_mbar`, `leak_end_mbar`, `opening_pressure_mbar`
+  (PocketBase stores an empty number as 0, so a check with all three at 0 has no readings); the history shows
+  them. Logic in `material/measurements.ts`, `material/useCountdown.ts`, `components/Measurements.tsx`; e2e in
+  `web/e2e/measurements.spec.ts`. Run in Chromium locally; Firefox and WebKit run in CI. Not observed: the
+  countdown to zero in a real browser (the e2e only starts it), wake lock and vibration on a real phone, the
+  negative sign on iOS keyboards (the fields use the normal keyboard because the number pad has no minus).
 - Dependabot (`.github/dependabot.yml`) opens a weekly PR (Mondays) per ecosystem: Go modules, npm, GitHub
   Actions and the Docker base images; minor and patch updates are grouped, a major update comes alone.
   The normal CI runs on those PRs; the user merges. Major updates of `react-router` and `react-router-dom` are
