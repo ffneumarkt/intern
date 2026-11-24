@@ -544,14 +544,32 @@ ion-card.tile {
 .scanner {
   display: grid;
   gap: 8px;
+  /* Space between the manual code field above and the camera feed. */
+  margin-top: 16px;
 }
 
 .scanner-video {
   width: 100%;
-  max-height: 40vh;
+  aspect-ratio: 16 / 9;
   object-fit: cover;
   border-radius: 12px;
   background: #0f172a;
+}
+
+/* The camera picker: a small pill under the preview instead of a full-width field. The border is the
+   select's own container (see the ion-select rules above), so only that is restyled. */
+.scanner-camera {
+  width: fit-content;
+  max-width: 100%;
+}
+
+.ui-page .scanner-camera::part(container) {
+  margin: 0;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 0.875rem;
 }
 
 /* The 60 second countdown of the Dichtprüfung and the verdict lines under the readings. */

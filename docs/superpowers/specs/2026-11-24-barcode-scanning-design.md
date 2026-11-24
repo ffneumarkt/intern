@@ -47,11 +47,11 @@ a code first, then the rest. Picking one saves `barcode` on that item (`updateIt
 
 ## Flows
 
-- **Verwendung erfassen:** Scanner above the manual field. Known code → item added (duplicates ignored).
+- **Verwendung erfassen:** the manual field first, the scanner below it (with a gap). Known code → item added (duplicates ignored).
   Unknown code → „Nicht gefunden“ card with the assign option; after assigning, the item is added to the
   list. Manual entry and suggestions stay as they are.
-- **Quick search (due list):** a „Scannen“ button opens the scanner in a modal. Known code → navigate to
-  the item page. Unknown code → „Nicht gefunden“ with the assign option; after assigning, open the item.
+- **Quick search (due list):** dropped after the first version: the „Scannen“ button above the filter chips was
+  removed, scanning lives in „Verwendung erfassen“ (the floating button on the due list opens it).
 - Retired items are never matched by a scan (as in manual entry).
 
 ## Removal

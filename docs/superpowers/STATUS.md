@@ -92,7 +92,7 @@ Last updated: 2026-11-05. Read this first, then the spec
   plan `plans/2026-11-24-barcode-scanning.md`): codes are manufacturer codes only, so the QR label page is
   gone and nothing is printed. `components/Scanner.tsx` (over `scan/useCamera.ts` and `scan/detector.ts`,
   `barcode-detector` with a self-hosted, precached wasm in its own lazy chunk) is used in „Verwendung
-  erfassen“ and, as `ScanSearch`, on the due list (a known code opens the item). A `manage` user assigns an
+  erfassen“ (there is no scan button on the due list any more; its floating button opens that page). A `manage` user assigns an
   unknown code to an item with `AssignCode` (`assignBarcode`). Tests use `test/fakeScanner.tsx` and
   `test/fakeCamera.ts`; `web/e2e/scan.spec.ts` decodes a real QR from a fake camera feed in Chromium only
   (`e2e/fixtures/qr.y4m`); Firefox and WebKit check manual entry. Not observed: real iPhone and Android
