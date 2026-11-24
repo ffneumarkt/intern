@@ -9,6 +9,15 @@
   --ion-color-primary-shade: #9a261a;
   --ion-color-primary-tint: #b74034;
 
+  /* The check action (Prüfung erfassen), next to the red use action: the green of the OK badges. A custom Ionic
+     colour, used as color="check"; the .ion-color-check class below makes Ionic components use it. */
+  --ion-color-check: #1f7a4a;
+  --ion-color-check-rgb: 31, 122, 74;
+  --ion-color-check-contrast: #ffffff;
+  --ion-color-check-contrast-rgb: 255, 255, 255;
+  --ion-color-check-shade: #1b6c41;
+  --ion-color-check-tint: #358759;
+
   /* The page behind grouped lists and cards. */
   --ion-color-light: #f1f5f9;
   --ion-color-light-rgb: 241, 245, 249;
@@ -107,4 +116,13 @@ ion-chip:focus-visible {
   background: var(--ion-color-light);
   border: none;
   border-radius: 8px;
+}
+
+.ion-color-check {
+  --ion-color-base: var(--ion-color-check) !important;
+  --ion-color-base-rgb: var(--ion-color-check-rgb) !important;
+  --ion-color-contrast: var(--ion-color-check-contrast) !important;
+  --ion-color-contrast-rgb: var(--ion-color-check-contrast-rgb) !important;
+  --ion-color-shade: var(--ion-color-check-shade) !important;
+  --ion-color-tint: var(--ion-color-check-tint) !important;
 }
