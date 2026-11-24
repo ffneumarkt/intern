@@ -110,6 +110,11 @@ Last updated: 2026-11-05. Read this first, then the spec
   `web/e2e/measurements.spec.ts`. Run in Chromium locally; Firefox and WebKit run in CI. Not observed: the
   countdown to zero in a real browser (the e2e only starts it), wake lock and vibration on a real phone, the
   negative sign on iOS keyboards (the fields use the normal keyboard because the number pad has no minus).
+- **Check from the due list:** a „Prüfen“ button on every due row (for users who may check that category) opens the
+  check form of the item directly (`/material/geraete/<id>/pruefung?von=liste`); back and saving return to the list,
+  with its filter. The rest of the row still opens the item page. The measurement fields only show for check types
+  with „Messwerte erfassen“ switched on in Verwalten; a database that was not created by `make seed` has it off
+  everywhere.
 - Dependabot (`.github/dependabot.yml`) opens a weekly PR (Mondays) per ecosystem: Go modules, npm, GitHub
   Actions and the Docker base images; minor and patch updates are grouped, a major update comes alone.
   The normal CI runs on those PRs; the user merges. Major updates of `react-router` and `react-router-dom` are

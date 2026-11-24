@@ -43,6 +43,61 @@ async function scan(code: string) {
 }
 
 describe('due list', () => {
+  describe('Prüfen on a row', () => {
+    const checkButton = (itemName: string) =>
+      ionItem(itemName)?.querySelector<HTMLElement>('ion-button.item-row-check') ?? null
+
+    it('is offered on every due row to someone who may check', async () => {
+      renderAt(paths.dueList, 'check')
+      await screen.findByRole('region', { name: 'Überfällig' })
+      expect(checkButton('Maske 01')).not.toBeNull()
+      expect(checkButton('Maske 02')).not.toBeNull()
+      expect(checkButton('LA 01')).not.toBeNull()
+    })
+
+    it('is not offered to someone who may only record uses', async () => {
+      renderAt(paths.dueList, 'use')
+      await screen.findByRole('region', { name: 'Überfällig' })
+      expect(checkButton('Maske 01')).toBeNull()
+    })
+
+    it('is only offered for the categories where the user may check', async () => {
+      signInAs('use', { masken: 'check', lungenautomaten: 'use' })
+      render(<App initialPath={paths.dueList} />)
+      await screen.findByRole('region', { name: 'Überfällig' })
+      expect(checkButton('Maske 01')).not.toBeNull()
+      expect(checkButton('LA 01')).toBeNull()
+    })
+
+    it('opens the check form of that item without visiting the item page', async () => {
+      renderAt(paths.dueList, 'check')
+      await screen.findByRole('region', { name: 'Überfällig' })
+      fireEvent.click(checkButton('Maske 02')!)
+      expect(await screen.findByRole('heading', { name: 'Prüfung erfassen' })).toBeInTheDocument()
+      expect(await findIon(() => ionSelect('Prüfart'))).toBeInTheDocument()
+      expect(screen.getByText('Maske 02', { selector: 'p.ui-hint strong' })).toBeInTheDocument()
+      expect(screen.queryByText('Status: Aktiv')).not.toBeInTheDocument()
+    })
+
+    it('goes back to the due list after saving', async () => {
+      renderAt(paths.dueList, 'check')
+      await screen.findByRole('region', { name: 'Überfällig' })
+      fireEvent.click(checkButton('Maske 02')!)
+      await findIon(() => ionSelect('Prüfart'))
+      fireEvent.click(ionButton('Speichern')!)
+      expect(await screen.findByRole('heading', { name: 'Fällig' })).toBeInTheDocument()
+      expect(calls.checks).toHaveLength(1)
+      expect(calls.checks[0].itemId).toBe('m02')
+    })
+
+    it('still opens the item page from the rest of the row', async () => {
+      renderAt(paths.dueList, 'check')
+      await screen.findByRole('region', { name: 'Überfällig' })
+      fireEvent.click(ionItem('Maske 02')!)
+      expect(await screen.findByText('Status: Aktiv')).toBeInTheDocument()
+    })
+  })
+
   it('has no scan button above the filter; scanning is part of recording a use', async () => {
     renderAt(paths.dueList, 'manage')
     await screen.findByRole('region', { name: 'Überfällig' })

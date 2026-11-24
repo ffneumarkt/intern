@@ -602,3 +602,11 @@ ion-card.tile {
 .ui-measure[data-ok='true'] {
   color: var(--ui-ok);
 }
+
+/* „Prüfen“ on a row of the due list: its own line under the text, a full-size tap target. */
+.item-row ion-button.item-row-check {
+  --border-radius: 10px;
+  margin: 8px 0 4px;
+  min-height: 40px;
+  font-weight: 600;
+}
