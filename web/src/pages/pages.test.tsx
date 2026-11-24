@@ -348,10 +348,10 @@ describe('the two main actions of an item', () => {
     expect(check!.compareDocumentPosition(use!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
-  it('differ in color, so they are easy to tell apart: Prüfung in blue, Verwendung in the red of the app', async () => {
+  it('differ in color, so they are easy to tell apart: Prüfung in the check green, Verwendung in the red of the app', async () => {
     renderAt(paths.item('m01'), 'check')
     await findIon(() => ionButton('Verwendung erfassen'))
-    expect(inBar('Prüfung erfassen')).toHaveProperty('color', 'secondary')
+    expect(inBar('Prüfung erfassen')).toHaveProperty('color', 'check')
     expect(inBar('Verwendung erfassen')?.getAttribute('color') ?? '').toBe('')
   })
 

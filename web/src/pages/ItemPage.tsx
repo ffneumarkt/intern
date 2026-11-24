@@ -101,10 +101,10 @@ export default function ItemPage() {
                 ))}
               </IonList>
               {active && (
-                // The two main actions, one above the other and equally prominent; the check in Ionic's blue, the use in the red of the app.
+                // The two main actions, one above the other and equally prominent; the check in its own green, the use in the red of the app.
                 <ActionBar>
                   {can(item.categoryId, 'check') && (
-                    <BlockButton color="secondary" routerLink={paths.recordCheck(item.id)}>
+                    <BlockButton color="check" routerLink={paths.recordCheck(item.id)}>
                       Prüfung erfassen
                     </BlockButton>
                   )}
