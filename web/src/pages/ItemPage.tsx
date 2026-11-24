@@ -61,11 +61,6 @@ export default function ItemPage() {
               </section>
               {failed && <ErrorText>Speichern fehlgeschlagen.</ErrorText>}
               <div className="ui-actionrow">
-                {active && can(item.categoryId, 'check') && (
-                  <IonButton fill="outline" routerLink={paths.recordCheck(item.id)}>
-                    Prüfung erfassen
-                  </IonButton>
-                )}
                 {can(item.categoryId, 'manage') && (
                   <IonButton fill="outline" routerLink={paths.itemEdit(item.id)}>
                     Bearbeiten
@@ -106,10 +101,10 @@ export default function ItemPage() {
                 ))}
               </IonList>
               {active && (
+                // The two main actions, one above the other and equally prominent.
                 <ActionBar>
-                  <BlockButton routerLink={paths.recordUseFor(item.id)}>
-                    Verwendung erfassen
-                  </BlockButton>
+                  {can(item.categoryId, 'check') && <BlockButton routerLink={paths.recordCheck(item.id)}>Prüfung erfassen</BlockButton>}
+                  <BlockButton routerLink={paths.recordUseFor(item.id)}>Verwendung erfassen</BlockButton>
                 </ActionBar>
               )}
             </>

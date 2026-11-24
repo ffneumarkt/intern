@@ -333,6 +333,70 @@ describe('item actions follow level', () => {
   })
 })
 
+describe('the two main actions of an item', () => {
+  const bar = () => document.querySelector('.ui-actions')
+  const inBar = (text: string) => ([...(bar()?.querySelectorAll('ion-button') ?? [])] as HTMLElement[]).find((b) => b.textContent?.trim() === text)
+
+  it('sit together in the bottom bar, Prüfung above Verwendung, for someone who may check', async () => {
+    renderAt(paths.item('m01'), 'check')
+    await findIon(() => ionButton('Verwendung erfassen'))
+    const check = inBar('Prüfung erfassen')
+    const use = inBar('Verwendung erfassen')
+    expect(check).toBeDefined()
+    expect(use).toBeDefined()
+    // Prüfung comes first in the bar, so it is drawn above the Verwendung button.
+    expect(check!.compareDocumentPosition(use!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('have the same weight: both are solid buttons', async () => {
+    renderAt(paths.item('m01'), 'check')
+    await findIon(() => ionButton('Verwendung erfassen'))
+    for (const text of ['Prüfung erfassen', 'Verwendung erfassen']) {
+      const el = inBar(text)!
+      expect(el.getAttribute('fill')).not.toBe('outline')
+      expect(el.getAttribute('fill')).not.toBe('clear')
+      expect(el).toHaveAttribute('expand', 'block')
+    }
+  })
+
+  it('leave the row of smaller actions to Bearbeiten and Ausscheiden', async () => {
+    renderAt(paths.item('m01'), 'check')
+    await findIon(() => ionButton('Verwendung erfassen'))
+    const row = document.querySelector('.ui-actionrow')!
+    expect(row.textContent).not.toContain('Prüfung erfassen')
+    expect(row.textContent).toContain('Ausscheiden')
+  })
+
+  it('open the check form', async () => {
+    renderAt(paths.item('m01'), 'check')
+    await findIon(() => ionButton('Verwendung erfassen'))
+    fireEvent.click(inBar('Prüfung erfassen')!)
+    expect(await screen.findByRole('heading', { name: 'Prüfung erfassen' })).toBeInTheDocument()
+  })
+
+  it('open the use form with the item already in the list', async () => {
+    renderAt(paths.item('m01'), 'check')
+    await findIon(() => ionButton('Verwendung erfassen'))
+    fireEvent.click(inBar('Verwendung erfassen')!)
+    const list = await screen.findByRole('list', { name: 'Gescannte Geräte' })
+    await waitFor(() => expect(within(list).getByText('Maske 01')).toBeInTheDocument())
+  })
+
+  it('show only Verwendung to someone who may not check', async () => {
+    renderAt(paths.item('m01'), 'use')
+    await findIon(() => ionButton('Verwendung erfassen'))
+    expect(inBar('Verwendung erfassen')).toBeDefined()
+    expect(inBar('Prüfung erfassen')).toBeUndefined()
+  })
+
+  it('are gone for an item that was retired', async () => {
+    renderAt(paths.item('m06'), 'manage')
+    await screen.findByText('Status: Ausgeschieden')
+    expect(bar()).toBeNull()
+    expect(button('Prüfung erfassen')).toBeNull()
+  })
+})
+
 describe('record use', () => {
   it('scan loop ignores duplicates and ends in the form', async () => {
     renderAt(paths.recordUse, 'use')
