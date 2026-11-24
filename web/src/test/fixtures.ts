@@ -63,4 +63,5 @@ const history: HistoryEntry[] = [
   { itemId: 'm01', date: '2023-05-12', kind: 'check', title: '5-Jahres-Prüfung: bestanden', detail: 'Prüfstelle' },
 ]
 
-export const freshData = () => ({ categories, checkTypes, items: items(), history: [...history] })
+// Copies, so a test that changes a check type does not change the next test's data.
+export const freshData = () => ({ categories, checkTypes: checkTypes.map((t) => ({ ...t })), items: items(), history: [...history] })
