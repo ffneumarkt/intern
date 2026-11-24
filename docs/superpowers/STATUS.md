@@ -115,6 +115,16 @@ Last updated: 2026-11-05. Read this first, then the spec
   with its filter. The rest of the row still opens the item page. The measurement fields only show for check types
   with „Messwerte erfassen“ switched on in Verwalten; a database that was not created by `make seed` has it off
   everywhere.
+- **Locations done** (branch `feature/locations`, PR pending; spec `specs/2026-11-25-locations-design.md`, plan
+  `plans/2026-11-25-locations.md`): every item has a current location from a managed list (`locations`: AS-Werkstatt
+  is the default and created by the migration; trucks such as RLF and LAST are added in Verwalten → Standorte).
+  The server keeps it: a use moves the item to the default location, a check with a location moves it there, a
+  check without one records where the item is; the location is also stored on every use and check for the history
+  („Standort: RLF“). „Prüfung erfassen“ offers a „Standort“ select (workshop preselected) when the result is
+  Bestanden. The due list and the category page have location chips that show only the items currently there; rows
+  and the item page show the location; the item form has a location select. A location in use and the default one
+  cannot be deleted; `is_default` cannot be set through the API. Rules: any logged in user reads, the manage level
+  in any category manages. Not built: a location history page, locations per category, stock counts.
 - Dependabot (`.github/dependabot.yml`) opens a weekly PR (Mondays) per ecosystem: Go modules, npm, GitHub
   Actions and the Docker base images; minor and patch updates are grouped, a major update comes alone.
   The normal CI runs on those PRs; the user merges. Major updates of `react-router` and `react-router-dom` are

@@ -6,7 +6,7 @@ import { useSession } from '../session'
 import DueStateBadge from './DueStateBadge'
 
 // `checkAction` adds a „Prüfen“ button that opens the check form of the item directly, for those who may check it.
-export default function ItemRow({ item, categoryName, checkAction }: { item: Item; categoryName?: string; checkAction?: boolean }) {
+export default function ItemRow({ item, categoryName, locationName, checkAction }: { item: Item; categoryName?: string; locationName?: string; checkAction?: boolean }) {
   const { can } = useSession()
   const navigate = useNavigate()
   const next = item.dues.find((d) => d.state === item.dueState)
@@ -20,6 +20,7 @@ export default function ItemRow({ item, categoryName, checkAction }: { item: Ite
           {categoryName ? `${categoryName} · ` : ''}
           {retired ? 'Ausgeschieden' : next ? `${next.label}: ${next.date}` : ''}
           {item.status === 'defective' ? ' · Mangel' : ''}
+          {locationName ? ` · ${locationName}` : ''}
         </p>
         {canCheck && (
           <IonButton

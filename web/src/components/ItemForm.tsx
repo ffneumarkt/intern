@@ -1,26 +1,29 @@
-import { IonButton, IonIcon, IonList, IonText } from '@ionic/react'
+import { IonButton, IonIcon, IonList, IonSelectOption, IonText } from '@ionic/react'
 import { addOutline } from 'ionicons/icons'
 import { useState } from 'react'
 import { BarcodeTakenError } from '../api/errors'
-import type { CheckType, Item, ItemInput } from '../api/material'
+import type { CheckType, Item, ItemInput, Location } from '../api/material'
 import { futureDateMessage, isFuture, today } from '../today'
 import { useBusy } from '../useBusy'
-import { Field, TextAreaField } from './Field'
+import { Field, SelectField, TextAreaField } from './Field'
 
 interface ItemFormProps {
   item?: Item
+  // The places the item can be in; a new item starts in the default one.
+  locations: Location[]
   // Offered as "last checked on" dates; left out when editing.
   checkTypes?: CheckType[]
   submitLabel: string
   onSave(input: Omit<ItemInput, 'categoryId'>, lastChecked: Record<string, string>): Promise<void>
 }
 
-export default function ItemForm({ item, checkTypes = [], submitLabel, onSave }: ItemFormProps) {
+export default function ItemForm({ item, locations, checkTypes = [], submitLabel, onSave }: ItemFormProps) {
   const [name, setName] = useState(item?.name ?? '')
   const [serial, setSerial] = useState(item?.serial ?? '')
   const [barcode, setBarcode] = useState(item?.barcode ?? '')
   const [manufacturedOn, setManufacturedOn] = useState(item?.manufacturedOn ?? '')
   const [note, setNote] = useState(item?.note ?? '')
+  const [locationId, setLocationId] = useState(item?.locationId ?? locations.find((l) => l.isDefault)?.id ?? '')
   const [lastChecked, setLastChecked] = useState<Record<string, string>>({})
   const [error, setError] = useState<string | null>(null)
   const { busy, once } = useBusy()
@@ -35,7 +38,7 @@ export default function ItemForm({ item, checkTypes = [], submitLabel, onSave }:
     }
     setError(null)
     try {
-      await onSave({ name, serial, barcode, manufacturedOn, note }, dates)
+      await onSave({ name, serial, barcode, manufacturedOn, note, locationId }, dates)
     } catch (err) {
       setError(err instanceof BarcodeTakenError ? 'Code ist bereits vergeben.' : 'Speichern fehlgeschlagen.')
     }
@@ -48,6 +51,13 @@ export default function ItemForm({ item, checkTypes = [], submitLabel, onSave }:
         <Field label="Seriennummer" value={serial} onChange={setSerial} autoCapitalize="off" />
         <Field label="Code" value={barcode} onChange={setBarcode} autoCapitalize="off" />
         <Field label="Hergestellt am" type="date" value={manufacturedOn} onChange={setManufacturedOn} />
+        <SelectField label="Standort" value={locationId} onChange={setLocationId}>
+          {locations.map((l) => (
+            <IonSelectOption key={l.id} value={l.id}>
+              {l.name}
+            </IonSelectOption>
+          ))}
+        </SelectField>
         <TextAreaField label="Notiz" value={note} onChange={setNote} />
         {checkTypes.map((t) => (
           <Field

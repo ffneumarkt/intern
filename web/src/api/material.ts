@@ -1,8 +1,9 @@
 import { ClientResponseError } from 'pocketbase'
 import type { DueState } from '../components/DueStateBadge'
 import { pb } from './client'
+import { place } from '../material/locations'
 import { measurementDetail } from '../material/measurements'
-import { BarcodeTakenError, CheckTypeInUseError, ItemHasHistoryError, ItemPartlySavedError } from './errors'
+import { BarcodeTakenError, CheckTypeInUseError, ItemHasHistoryError, ItemPartlySavedError, LocationInUseError, LocationNameTakenError } from './errors'
 
 export interface Category {
   id: string
@@ -20,6 +21,13 @@ export interface CheckType {
   // Asks for the Dichtprüfung and Öffnungsdruck readings when a check is recorded.
   measurements: boolean
   alsoSatisfies: string[]
+}
+
+// Where an item can be: the workshop (the default) and the trucks.
+export interface Location {
+  id: string
+  name: string
+  isDefault: boolean
 }
 
 export type DueKind = 'check' | 'endOfLife' | 'defect'
@@ -41,6 +49,8 @@ export interface Item {
   manufacturedOn?: string
   status: 'active' | 'defective' | 'retired'
   note?: string
+  // Where the item is now.
+  locationId?: string
   dueState: DueState
   dues: Due[]
 }
@@ -67,6 +77,41 @@ const joined = (...parts: (string | undefined)[]) => parts.filter(Boolean).join(
 export async function listCategories(): Promise<Category[]> {
   const records = await pb.collection('categories').getFullList({ sort: 'name' })
   return records.map((r) => ({ id: r.id, name: r.name, maxServiceLifeYears: r.max_service_life_years || undefined }))
+}
+
+// The default location first, then the others by name.
+export async function listLocations(): Promise<Location[]> {
+  const records = await pb.collection('locations').getFullList({ sort: 'name' })
+  return records
+    .map((r) => ({ id: r.id, name: r.name, isDefault: !!r.is_default }))
+    .sort((a, b) => Number(b.isDefault) - Number(a.isDefault))
+}
+
+const explainLocationError = (err: unknown): unknown =>
+  err instanceof ClientResponseError && err.response?.data?.name ? new LocationNameTakenError() : err
+
+export async function createLocation(name: string): Promise<void> {
+  try {
+    await pb.collection('locations').create({ name })
+  } catch (err) {
+    throw explainLocationError(err)
+  }
+}
+
+export async function updateLocation(id: string, name: string): Promise<void> {
+  try {
+    await pb.collection('locations').update(id, { name })
+  } catch (err) {
+    throw explainLocationError(err)
+  }
+}
+
+export async function deleteLocation(id: string): Promise<void> {
+  try {
+    await pb.collection('locations').delete(id)
+  } catch (err) {
+    throw err instanceof ClientResponseError && err.status === 400 ? new LocationInUseError() : err
+  }
 }
 
 export async function listCheckTypes(): Promise<CheckType[]> {
@@ -104,8 +149,8 @@ export async function listItems(): Promise<Item[]> {
 export async function listHistory(itemId: string): Promise<HistoryEntry[]> {
   const filter = pb.filter('item = {:itemId}', { itemId })
   const [uses, checks] = await Promise.all([
-    pb.collection('uses').getFullList({ filter, expand: 'created_by' }),
-    pb.collection('checks').getFullList({ filter, expand: 'check_type,performed_by' }),
+    pb.collection('uses').getFullList({ filter, expand: 'created_by,location' }),
+    pb.collection('checks').getFullList({ filter, expand: 'check_type,performed_by,location' }),
   ])
   const entries: (HistoryEntry & { created: string })[] = [
     ...uses.map((u) => ({
@@ -114,7 +159,7 @@ export async function listHistory(itemId: string): Promise<HistoryEntry[]> {
       date: calendarDate(u.date),
       kind: 'use' as const,
       title: useKindLabels[u.kind],
-      detail: joined(`Erfasst von ${u.recorded_by_name || u.expand?.created_by?.name}`, u.note),
+      detail: joined(`Erfasst von ${u.recorded_by_name || u.expand?.created_by?.name}`, place(u.expand?.location?.name), u.note),
     })),
     ...checks.map((c) => ({
       itemId,
@@ -124,6 +169,7 @@ export async function listHistory(itemId: string): Promise<HistoryEntry[]> {
       title: `${c.expand?.check_type?.name}: ${resultLabels[c.result]}`,
       detail: joined(
         c.expand?.performed_by?.name,
+        place(c.expand?.location?.name),
         measurementDetail(c.leak_start_mbar, c.leak_end_mbar, c.opening_pressure_mbar) ?? undefined,
         c.note,
       ),
@@ -148,6 +194,8 @@ export interface CheckInput {
   leakStartMbar?: number
   leakEndMbar?: number
   openingPressureMbar?: number
+  // Where the item is after the check; the server keeps the current one when it is missing.
+  locationId?: string
 }
 
 export async function recordUse(itemId: string, input: UseInput): Promise<void> {
@@ -172,6 +220,7 @@ export async function recordCheck(itemId: string, input: CheckInput): Promise<vo
     ...(input.leakStartMbar !== undefined && { leak_start_mbar: input.leakStartMbar }),
     ...(input.leakEndMbar !== undefined && { leak_end_mbar: input.leakEndMbar }),
     ...(input.openingPressureMbar !== undefined && { opening_pressure_mbar: input.openingPressureMbar }),
+    ...(input.locationId && { location: input.locationId }),
   })
 }
 
@@ -186,6 +235,7 @@ export interface ItemInput {
   barcode: string
   manufacturedOn: string
   note: string
+  locationId: string
 }
 
 export interface CheckTypeInput {
@@ -204,6 +254,7 @@ const itemFields = (input: Omit<ItemInput, 'categoryId'>) => ({
   barcode: input.barcode,
   manufactured_on: input.manufacturedOn,
   note: input.note,
+  location: input.locationId,
 })
 
 const checkTypeFields = (input: Omit<CheckTypeInput, 'categoryId'>) => ({

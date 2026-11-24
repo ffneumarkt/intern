@@ -1,11 +1,12 @@
 import { IonButton, IonItem, IonLabel, IonList, IonListHeader, IonNote, IonText } from '@ionic/react'
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { listHistory, listItems, retireItem, type Item } from '../api/material'
+import { listHistory, listItems, listLocations, retireItem, type Item } from '../api/material'
 import DueStateBadge from '../components/DueStateBadge'
 import Loaded from '../components/Loaded'
 import Page from '../components/Page'
 import { useDialogs } from '../components/useDialogs'
+import { locationName } from '../material/locations'
 import { paths } from '../routes'
 import { useSession } from '../session'
 import { useResource } from '../useResource'
@@ -16,8 +17,8 @@ export default function ItemPage() {
   const { itemId = '' } = useParams()
   const { can } = useSession()
   const resource = useResource(async () => {
-    const [items, history] = await Promise.all([listItems(), listHistory(itemId)])
-    return { item: items.find((i) => i.id === itemId), history }
+    const [items, history, locations] = await Promise.all([listItems(), listHistory(itemId), listLocations()])
+    return { item: items.find((i) => i.id === itemId), history, locations }
   })
   const [failed, setFailed] = useState(false)
   const { confirm } = useDialogs()
@@ -38,7 +39,7 @@ export default function ItemPage() {
   return (
     <Page title={title} back={item ? paths.category(item.categoryId) : paths.dueList}>
       <Loaded resource={resource}>
-        {({ item, history }) => {
+        {({ item, history, locations }) => {
           if (!item) return null
           const active = item.status !== 'retired'
           return (
@@ -52,6 +53,7 @@ export default function ItemPage() {
                   <p>Seriennummer: {item.serial ?? '–'}</p>
                   <p>Code: {item.barcode ?? '–'}</p>
                   <p>Hergestellt: {item.manufacturedOn ?? '–'}</p>
+                  <p>Standort: {locationName(locations, item.locationId) ?? '–'}</p>
                   <p>Status: {statusLabel[item.status]}</p>
                   {item.note && <p>Notiz: {item.note}</p>}
                 </div>

@@ -2,11 +2,13 @@ import { IonChip, IonFab, IonFabButton, IonIcon, IonItem, IonLabel, IonList, Ion
 import { barcodeOutline } from 'ionicons/icons'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { listCategories, listItems } from '../api/material'
+import { listCategories, listItems, listLocations } from '../api/material'
 import { dueStateLabel, type DueState } from '../components/DueStateBadge'
 import ItemRow from '../components/ItemRow'
+import LocationFilter from '../components/LocationFilter'
 import Loaded from '../components/Loaded'
 import { maxLeadDays } from '../components/notificationText'
+import { inLocation, locationName } from '../material/locations'
 import Page from '../components/Page'
 import { paths } from '../routes'
 import { addDays, today } from '../today'
@@ -15,12 +17,13 @@ import { useResource } from '../useResource'
 const groups: DueState[] = ['overdue', 'dueToday', 'dueSoon']
 
 const load = async () => {
-  const [categories, items] = await Promise.all([listCategories(), listItems()])
-  return { categories, items }
+  const [categories, items, locations] = await Promise.all([listCategories(), listItems(), listLocations()])
+  return { categories, items, locations }
 }
 
 export default function DueListPage() {
   const [category, setCategory] = useState<string | null>(null)
+  const [location, setLocation] = useState<string | null>(null)
   const resource = useResource(load)
   const navigate = useNavigate()
   // The filter lives in the URL, so a notification tap on the open list changes it too.
@@ -38,9 +41,12 @@ export default function DueListPage() {
       }
     >
       <Loaded resource={resource}>
-        {({ categories, items }) => {
+        {({ categories, items, locations }) => {
           if (categories.length === 0) return <p className="ui-empty">Noch keine Kategorie freigegeben.</p>
-          const visible = items.filter((i) => i.status !== 'retired' && (!category || i.categoryId === category) && (!only || only.has(i.id)))
+          const visible = inLocation(
+            items.filter((i) => i.status !== 'retired' && (!category || i.categoryId === category) && (!only || only.has(i.id))),
+            location,
+          )
           const categoryName = (id: string) => categories.find((c) => c.id === id)?.name
           // A reminder can come weeks before an item is "bald fällig". Such items show up only when the list
           // is filtered by a notification; later due dates, such as after a check, count as done.
@@ -58,6 +64,8 @@ export default function DueListPage() {
                   </IonChip>
                 ))}
               </div>
+              <LocationFilter locations={locations} value={location} onChange={setLocation} />
+              {location !== null && visible.length === 0 && <p className="ui-empty">Nichts in diesem Standort.</p>}
               {only && (
                 <div className="ui-chips">
                   <IonChip onClick={() => navigate(paths.dueList, { replace: true })}>Alle anzeigen</IonChip>
@@ -76,7 +84,7 @@ export default function DueListPage() {
                         <IonLabel>{dueStateLabel(state)}</IonLabel>
                       </IonListHeader>
                       {inGroup.map((i) => (
-                        <ItemRow key={i.id} item={i} categoryName={categoryName(i.categoryId)} checkAction />
+                        <ItemRow key={i.id} item={i} categoryName={categoryName(i.categoryId)} locationName={locationName(locations, i.locationId)} checkAction />
                       ))}
                     </IonList>
                   </section>
@@ -89,7 +97,7 @@ export default function DueListPage() {
                       <IonLabel>Demnächst</IonLabel>
                     </IonListHeader>
                     {upcoming.map((i) => (
-                      <ItemRow key={i.id} item={i} categoryName={categoryName(i.categoryId)} checkAction />
+                      <ItemRow key={i.id} item={i} categoryName={categoryName(i.categoryId)} locationName={locationName(locations, i.locationId)} checkAction />
                     ))}
                   </IonList>
                 </section>

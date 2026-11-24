@@ -1,7 +1,7 @@
 import { IonButton, IonList, IonSelectOption, IonText, useIonRouter, useIonViewWillEnter, useIonViewWillLeave } from '@ionic/react'
 import { useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { listCheckTypes, listItems, recordCheck, type CheckInput } from '../api/material'
+import { listCheckTypes, listItems, listLocations, recordCheck, type CheckInput } from '../api/material'
 import { Field, SelectField, TextAreaField } from '../components/Field'
 import Loaded from '../components/Loaded'
 import Measurements, { type Readings } from '../components/Measurements'
@@ -13,8 +13,8 @@ import { useBusy } from '../useBusy'
 import { useResource } from '../useResource'
 
 const load = async () => {
-  const [items, checkTypes] = await Promise.all([listItems(), listCheckTypes()])
-  return { items, checkTypes }
+  const [items, checkTypes, locations] = await Promise.all([listItems(), listCheckTypes(), listLocations()])
+  return { items, checkTypes, locations }
 }
 
 export default function RecordCheckPage() {
@@ -30,6 +30,8 @@ export default function RecordCheckPage() {
   const [note, setNote] = useState('')
   // True once the user has picked a result, so the readings stop suggesting one.
   const [resultPicked, setResultPicked] = useState(false)
+  // The truck picked after a passed check; null means the default location.
+  const [locationId, setLocationId] = useState<string | null>(null)
   const [readings, setReadings] = useState<Readings>({ start: null, end: null, opening: null })
   // A new key starts the readings (fields, countdown) over.
   const [readingsKey, setReadingsKey] = useState(0)
@@ -44,7 +46,7 @@ export default function RecordCheckPage() {
   return (
     <Page title="Prüfung erfassen" back={fromList ? paths.dueList : paths.item(itemId)}>
       <Loaded resource={resource}>
-        {({ items, checkTypes }) => {
+        {({ items, checkTypes, locations }) => {
           const item = items.find((i) => i.id === itemId)
           const types = checkTypes.filter((t) => t.categoryId === item?.categoryId)
           const checkTypeId = selectedType || (types.find((t) => t.isDefault) ?? types[0])?.id || ''
@@ -52,6 +54,8 @@ export default function RecordCheckPage() {
           // With readings the result is suggested from them until the user picks one.
           const passes = measured ? measurementsPass(readings.start, readings.end, readings.opening) : null
           const shownResult: CheckInput['result'] = !resultPicked && passes !== null ? (passes ? 'passed' : 'defect') : result
+          // After a passed check the item is in the workshop, or on the truck that is picked. With a defect it stays where it is.
+          const chosenLocation = locationId ?? locations.find((l) => l.isDefault)?.id ?? ''
 
           const save = async () => {
             if (isFuture(date)) {
@@ -68,6 +72,7 @@ export default function RecordCheckPage() {
                 checkTypeId,
                 date,
                 result: shownResult,
+                ...(shownResult === 'passed' && chosenLocation && { locationId: chosenLocation }),
                 note,
                 ...(measured && {
                   leakStartMbar: readings.start ?? undefined,
@@ -78,6 +83,7 @@ export default function RecordCheckPage() {
               setNote('')
               setResult('passed')
               setResultPicked(false)
+              setLocationId(null)
               setReadingsKey((k) => k + 1)
               if (!fromList) navigate(paths.item(itemId))
               else if (ionRouter.canGoBack()) ionRouter.goBack()
@@ -114,6 +120,15 @@ export default function RecordCheckPage() {
                   <IonSelectOption value="defect">Mangel</IonSelectOption>
                   <IonSelectOption value="retired">Ausgeschieden</IonSelectOption>
                 </SelectField>
+                {shownResult === 'passed' && (
+                  <SelectField label="Standort" value={chosenLocation} onChange={setLocationId}>
+                    {locations.map((l) => (
+                      <IonSelectOption key={l.id} value={l.id}>
+                        {l.name}
+                      </IonSelectOption>
+                    ))}
+                  </SelectField>
+                )}
                 <TextAreaField label="Notiz" value={note} onChange={setNote} />
               </IonList>
               {error && <IonText color="danger">{error}</IonText>}

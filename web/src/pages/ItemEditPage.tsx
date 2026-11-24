@@ -2,7 +2,7 @@ import { IonButton, IonText } from '@ionic/react'
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ItemHasHistoryError } from '../api/errors'
-import { deleteItem, listHistory, listItems, updateItem, type Item } from '../api/material'
+import { deleteItem, listHistory, listItems, listLocations, updateItem, type Item } from '../api/material'
 import ItemForm from '../components/ItemForm'
 import Loaded from '../components/Loaded'
 import Page from '../components/Page'
@@ -18,8 +18,8 @@ export default function ItemEditPage() {
   const { can } = useSession()
   const navigate = useNavigate()
   const resource = useResource(async () => {
-    const [items, history] = await Promise.all([listItems(), listHistory(itemId)])
-    return { items, hasHistory: history.length > 0 }
+    const [items, history, locations] = await Promise.all([listItems(), listHistory(itemId), listLocations()])
+    return { items, locations, hasHistory: history.length > 0 }
   })
   const [error, setError] = useState<string | null>(null)
   const { confirm } = useDialogs()
@@ -38,7 +38,7 @@ export default function ItemEditPage() {
   return (
     <Page title="Gerät bearbeiten" back={paths.item(itemId)}>
       <Loaded resource={resource}>
-        {({ items, hasHistory }) => {
+        {({ items, locations, hasHistory }) => {
           const item = items.find((i) => i.id === itemId)
           if (!item || !can(item.categoryId, 'manage')) return <p>Keine Berechtigung.</p>
           return (
@@ -46,6 +46,7 @@ export default function ItemEditPage() {
               <ItemForm
                 key={JSON.stringify(item)}
                 item={item}
+                locations={locations}
                 submitLabel="Speichern"
                 onSave={async (input) => {
                   await updateItem(item.id, input)

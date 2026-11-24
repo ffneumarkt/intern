@@ -30,7 +30,8 @@ Replaces the „Standort“ column of the paper Betriebsnachweis. Extends §3 (d
 ## Rules (server side, so every client behaves the same)
 
 - Creating a use sets `uses.location` and the item's location to the default location.
-- Creating a check with a location sets the item's location to it; without one nothing changes.
+- Creating a check with a location sets the item's location to it; without one the item stays where it is and the
+  check records that location, so the history always says where the mask was.
 - A location cannot be deleted while referenced; the default one never.
 
 ## Out of scope
