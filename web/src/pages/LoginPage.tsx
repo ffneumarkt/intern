@@ -76,6 +76,9 @@ export default function LoginPage() {
         </IonList>
         {failed && <IonText color="danger">Anmeldung fehlgeschlagen. E-Mail und Passwort prüfen.</IonText>}
         {tooMany && <IonText color="danger">{tooManyAttemptsMessage}</IonText>}
+        {/* Enter submits through the form's default button. Ionic's button adds its own hidden one only after
+            its lazy component has rendered; until then a form with two text fields would ignore Enter. */}
+        <button type="submit" hidden data-testid="enter-submit" tabIndex={-1} aria-hidden="true" />
         <IonButton className="ui-button" expand="block" fill={passkeysSupported() ? 'outline' : 'solid'} type="submit">
           Anmelden
         </IonButton>

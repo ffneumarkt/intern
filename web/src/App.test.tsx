@@ -116,6 +116,17 @@ describe('login', () => {
     await waitFor(() => expect(screen.queryByRole('heading', { name: 'Anmelden' })).not.toBeInTheDocument())
   })
 
+  it('submits through a native button of its own, so Enter works before Ionic has rendered its button', async () => {
+    signOutWithLogin('use')
+    render(<App initialPath={paths.login} />)
+    // Ionic's ion-button adds its hidden submit button only once its lazy component has rendered; a form
+    // with two text fields and no submit button does not submit on Enter. The page must not wait for it.
+    typeInto(await screen.findByLabelText('E-Mail'), 'test@example.com')
+    typeInto(screen.getByLabelText('Passwort'), 'richtig')
+    fireEvent.click(screen.getByTestId('enter-submit'))
+    expect(await screen.findByRole('heading', { name: 'Fällig' })).toBeInTheDocument()
+  })
+
   it('shows an error for wrong credentials', async () => {
     renderAt(paths.login, null)
     await submitLogin('falsch')
