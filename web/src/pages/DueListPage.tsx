@@ -2,11 +2,12 @@ import { IonChip, IonFab, IonFabButton, IonIcon, IonItem, IonLabel, IonList, Ion
 import { barcodeOutline } from 'ionicons/icons'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { listCategories, listItems } from '../api/material'
+import { listCategories, listItems, listLocations } from '../api/material'
 import { dueStateLabel, type DueState } from '../components/DueStateBadge'
 import ItemRow from '../components/ItemRow'
 import Loaded from '../components/Loaded'
 import { maxLeadDays } from '../components/notificationText'
+import { locationName } from '../material/locations'
 import Page from '../components/Page'
 import { paths } from '../routes'
 import { addDays, today } from '../today'
@@ -15,8 +16,8 @@ import { useResource } from '../useResource'
 const groups: DueState[] = ['overdue', 'dueToday', 'dueSoon']
 
 const load = async () => {
-  const [categories, items] = await Promise.all([listCategories(), listItems()])
-  return { categories, items }
+  const [categories, items, locations] = await Promise.all([listCategories(), listItems(), listLocations()])
+  return { categories, items, locations }
 }
 
 export default function DueListPage() {
@@ -38,7 +39,7 @@ export default function DueListPage() {
       }
     >
       <Loaded resource={resource}>
-        {({ categories, items }) => {
+        {({ categories, items, locations }) => {
           if (categories.length === 0) return <p className="ui-empty">Noch keine Kategorie freigegeben.</p>
           const visible = items.filter((i) => i.status !== 'retired' && (!category || i.categoryId === category) && (!only || only.has(i.id)))
           const categoryName = (id: string) => categories.find((c) => c.id === id)?.name
@@ -76,7 +77,7 @@ export default function DueListPage() {
                         <IonLabel>{dueStateLabel(state)}</IonLabel>
                       </IonListHeader>
                       {inGroup.map((i) => (
-                        <ItemRow key={i.id} item={i} categoryName={categoryName(i.categoryId)} checkAction />
+                        <ItemRow key={i.id} item={i} categoryName={categoryName(i.categoryId)} locationName={locationName(locations, i.locationId)} checkAction />
                       ))}
                     </IonList>
                   </section>
@@ -89,7 +90,7 @@ export default function DueListPage() {
                       <IonLabel>Demnächst</IonLabel>
                     </IonListHeader>
                     {upcoming.map((i) => (
-                      <ItemRow key={i.id} item={i} categoryName={categoryName(i.categoryId)} checkAction />
+                      <ItemRow key={i.id} item={i} categoryName={categoryName(i.categoryId)} locationName={locationName(locations, i.locationId)} checkAction />
                     ))}
                   </IonList>
                 </section>

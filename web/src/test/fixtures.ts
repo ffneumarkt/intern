@@ -1,10 +1,16 @@
 // Test data, the former UI sketch: Maske 01–06 and LA 01–02 in two categories.
-import type { Category, CheckType, Due, HistoryEntry, Item } from '../api/material'
+import type { Category, CheckType, Due, HistoryEntry, Item, Location } from '../api/material'
 import type { DueState } from '../components/DueStateBadge'
 
 const categories: Category[] = [
   { id: 'masken', name: 'Atemschutzmasken', maxServiceLifeYears: 15 },
   { id: 'lungenautomaten', name: 'Lungenautomaten' },
+]
+
+const locations: Location[] = [
+  { id: 'werkstatt', name: 'AS-Werkstatt', isDefault: true },
+  { id: 'last', name: 'LAST', isDefault: false },
+  { id: 'rlf', name: 'RLF', isDefault: false },
 ]
 
 const checkTypes: CheckType[] = [
@@ -39,22 +45,23 @@ const mask = (n: string, dueState: DueState, dueDate: string, extra: Partial<Ite
 })
 
 const items = (): Item[] => [
-  mask('01', 'overdue', '2026-10-21'),
-  mask('02', 'dueToday', '2026-10-29'),
-  mask('03', 'dueSoon', '2026-11-08'),
-  mask('04', 'ok', '2027-06-14'),
-  mask('05', 'overdue', '2026-10-27', { status: 'defective', note: 'Ausatemventil undicht' }),
-  mask('06', 'ok', '-', { status: 'retired', dues: [] }),
+  mask('01', 'overdue', '2026-10-21', { locationId: 'werkstatt' }),
+  mask('02', 'dueToday', '2026-10-29', { locationId: 'last' }),
+  mask('03', 'dueSoon', '2026-11-08', { locationId: 'rlf' }),
+  mask('04', 'ok', '2027-06-14', { locationId: 'rlf' }),
+  mask('05', 'overdue', '2026-10-27', { status: 'defective', note: 'Ausatemventil undicht', locationId: 'werkstatt' }),
+  mask('06', 'ok', '-', { status: 'retired', dues: [], locationId: 'werkstatt' }),
   {
     id: 'l01',
     categoryId: 'lungenautomaten',
     name: 'LA 01',
     barcode: 'L-001',
+    locationId: 'rlf',
     status: 'active',
     dueState: 'dueSoon',
     dues: [checkDue('Jahresprüfung', '2026-11-05', 'dueSoon', 'la-jahr')],
   },
-  { id: 'l02', categoryId: 'lungenautomaten', name: 'LA 02', status: 'active', dueState: 'ok', dues: [] },
+  { id: 'l02', categoryId: 'lungenautomaten', name: 'LA 02', locationId: 'werkstatt', status: 'active', dueState: 'ok', dues: [] },
 ]
 
 const history: HistoryEntry[] = [
@@ -64,4 +71,4 @@ const history: HistoryEntry[] = [
 ]
 
 // Copies, so a test that changes a check type does not change the next test's data.
-export const freshData = () => ({ categories, checkTypes: checkTypes.map((t) => ({ ...t })), items: items(), history: [...history] })
+export const freshData = () => ({ categories, locations: locations.map((l) => ({ ...l })), checkTypes: checkTypes.map((t) => ({ ...t })), items: items(), history: [...history] })

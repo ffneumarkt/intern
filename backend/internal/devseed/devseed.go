@@ -58,28 +58,37 @@ func (s *seeder) run() {
 	regulatorCheck := s.create("check_types", map[string]any{"category": s.id(regulators), "name": "Jahresprüfung",
 		"interval_months": 12, "after_use": true})
 
-	// Each mask is due dueIn days from today; the older five year check does not affect that.
-	mask := func(number string, dueIn int) *core.Record {
+	// The migration created the workshop; the trucks are added here.
+	workshop, err := s.app.FindFirstRecordByData("locations", "is_default", true)
+	if err != nil {
+		s.err = err
+		return
+	}
+	rlf := s.create("locations", map[string]any{"name": "RLF"})
+	last := s.create("locations", map[string]any{"name": "LAST"})
+
+	// Each mask is due dueIn days from today and is at place; the older five year check does not affect that.
+	mask := func(number string, dueIn int, place *core.Record) *core.Record {
 		item := s.create("items", map[string]any{
 			"category": s.id(masks), "name": "Maske " + number, "serial": "DR-4711-" + number, "barcode": "M-0" + number,
-			"manufactured_on": s.day(-5, 0), "status": "active",
+			"manufactured_on": s.day(-5, 0), "status": "active", "location": s.id(place),
 		})
 		s.check(item, fiveYear, s.day(-2, 0), "passed", "")
 		s.check(item, maskCheck, s.day(-1, dueIn), "passed", "")
 		return item
 	}
-	overdue := mask("01", -9)
-	mask("02", 0)
-	mask("03", 10)
-	mask("04", 228)
-	defective := mask("05", -3)
+	overdue := mask("01", -9, workshop)
+	mask("02", 0, last)
+	mask("03", 10, rlf)
+	mask("04", 228, rlf)
+	defective := mask("05", -3, workshop)
 	s.check(defective, maskCheck, s.day(0, -3), "defect", "Ausatemventil undicht")
-	s.check(mask("06", 30), maskCheck, s.day(0, -30), "retired", "Lebensdauer erreicht")
+	s.check(mask("06", 30, workshop), maskCheck, s.day(0, -30), "retired", "Lebensdauer erreicht")
 
 	s.create("uses", map[string]any{"item": s.id(overdue), "date": s.day(0, -9), "kind": "operation",
 		"recorded_by_name": "Stationsrechner", "note": "Brand Wohnhaus", "created_by": s.id(s.checker)})
 
-	regulator := s.create("items", map[string]any{"category": s.id(regulators), "name": "LA 01", "barcode": "L-001", "status": "active"})
+	regulator := s.create("items", map[string]any{"category": s.id(regulators), "name": "LA 01", "barcode": "L-001", "status": "active", "location": s.id(rlf)})
 	s.check(regulator, regulatorCheck, s.day(-1, 6), "passed", "")
 }
 

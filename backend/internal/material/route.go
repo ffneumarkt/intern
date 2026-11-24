@@ -30,6 +30,7 @@ type itemJSON struct {
 	ManufacturedOn string    `json:"manufacturedOn,omitempty"`
 	Status         string    `json:"status"`
 	Note           string    `json:"note,omitempty"`
+	LocationID     string    `json:"locationId,omitempty"`
 	State          due.State `json:"state"`
 	Dues           []dueJSON `json:"dues"`
 }
@@ -83,6 +84,7 @@ func toItemJSON(r *core.Record, computed due.Result) itemJSON {
 		Barcode:    r.GetString("barcode"),
 		Status:     r.GetString("status"),
 		Note:       r.GetString("note"),
+		LocationID: r.GetString("location"),
 		State:      computed.State,
 		Dues:       dues,
 	}

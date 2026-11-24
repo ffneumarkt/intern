@@ -2,18 +2,23 @@ import { IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonSegment, IonSegm
 import { addOutline } from 'ionicons/icons'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { CheckTypeInUseError, ItemPartlySavedError } from '../api/errors'
+import { CheckTypeInUseError, ItemPartlySavedError, LocationInUseError, LocationNameTakenError } from '../api/errors'
 import {
   createCheckType,
   createItem,
+  createLocation,
   deleteCheckType,
+  deleteLocation,
   listCategories,
   listCheckTypes,
   listItems,
+  listLocations,
   updateCheckType,
+  updateLocation,
   type CheckType,
   type Item,
   type ItemInput,
+  type Location,
 } from '../api/material'
 import { CheckboxField, Field, SelectField } from '../components/Field'
 import ItemForm from '../components/ItemForm'
@@ -27,41 +32,47 @@ import { useResource } from '../useResource'
 import { ActionBar, BlockButton, ErrorText } from '../components/ui'
 
 const load = async () => {
-  const [categories, items, checkTypes] = await Promise.all([listCategories(), listItems(), listCheckTypes()])
-  return { categories, items, checkTypes }
+  const [categories, items, checkTypes, locations] = await Promise.all([listCategories(), listItems(), listCheckTypes(), listLocations()])
+  return { categories, items, checkTypes, locations }
 }
 
 export default function ManagePage() {
   const { can } = useSession()
   const preset = new URLSearchParams(useLocation().search).get('kategorie')
   const [chosen, setChosen] = useState<string | null>(null)
-  const [tab, setTab] = useState<'items' | 'checkTypes'>('items')
+  const [tab, setTab] = useState<'items' | 'checkTypes' | 'locations'>('items')
   const resource = useResource(load)
   return (
     <Page title="Verwalten" back={paths.dueList}>
       <Loaded resource={resource}>
-        {({ categories, items, checkTypes }) => {
+        {({ categories, items, checkTypes, locations }) => {
           const manageable = categories.filter((c) => can(c.id, 'manage'))
           if (manageable.length === 0) return <p>Keine Berechtigung.</p>
           const categoryId = [chosen, preset].find((id) => manageable.some((c) => c.id === id)) ?? manageable[0].id
           const types = checkTypes.filter((t) => t.categoryId === categoryId)
           return (
             <>
-              <IonList>
-                <SelectField label="Kategorie" value={categoryId} onChange={setChosen}>
-                  {manageable.map((c) => (
-                    <IonSelectOption key={c.id} value={c.id}>
-                      {c.name}
-                    </IonSelectOption>
-                  ))}
-                </SelectField>
-              </IonList>
+              {/* The locations belong to no category. */}
+              {tab !== 'locations' && (
+                <IonList>
+                  <SelectField label="Kategorie" value={categoryId} onChange={setChosen}>
+                    {manageable.map((c) => (
+                      <IonSelectOption key={c.id} value={c.id}>
+                        {c.name}
+                      </IonSelectOption>
+                    ))}
+                  </SelectField>
+                </IonList>
+              )}
               <IonSegment value={tab}>
                 <IonSegmentButton value="items" onClick={() => setTab('items')}>
                   <IonLabel>Geräte</IonLabel>
                 </IonSegmentButton>
                 <IonSegmentButton value="checkTypes" onClick={() => setTab('checkTypes')}>
                   <IonLabel>Prüfarten</IonLabel>
+                </IonSegmentButton>
+                <IonSegmentButton value="locations" onClick={() => setTab('locations')}>
+                  <IonLabel>Standorte</IonLabel>
                 </IonSegmentButton>
               </IonSegment>
               {tab === 'items' ? (
@@ -70,10 +81,13 @@ export default function ManagePage() {
                   categoryId={categoryId}
                   items={items.filter((i) => i.categoryId === categoryId)}
                   checkTypes={types}
+                  locations={locations}
                   onChange={resource.reload}
                 />
-              ) : (
+              ) : tab === 'checkTypes' ? (
                 <CheckTypesTab key={categoryId} categoryId={categoryId} checkTypes={types} onChange={resource.reload} />
+              ) : (
+                <LocationsTab locations={locations} onChange={resource.reload} />
               )}
             </>
           )
@@ -87,10 +101,11 @@ interface ItemsTabProps {
   categoryId: string
   items: Item[]
   checkTypes: CheckType[]
+  locations: Location[]
   onChange(): void
 }
 
-function ItemsTab({ categoryId, items, checkTypes, onChange }: ItemsTabProps) {
+function ItemsTab({ categoryId, items, checkTypes, locations, onChange }: ItemsTabProps) {
   const navigate = useNavigate()
   const [formKey, setFormKey] = useState(0)
   const [partlySaved, setPartlySaved] = useState(false)
@@ -123,7 +138,7 @@ function ItemsTab({ categoryId, items, checkTypes, onChange }: ItemsTabProps) {
         <IonLabel>Neues Gerät</IonLabel>
       </IonListHeader>
       {partlySaved && <IonText color="warning">Gerät angelegt, aber nicht alle Prüfungen gespeichert.</IonText>}
-      <ItemForm key={formKey} checkTypes={checkTypes} submitLabel="Gerät anlegen" onSave={save} />
+      <ItemForm key={formKey} locations={locations} checkTypes={checkTypes} submitLabel="Gerät anlegen" onSave={save} />
     </>
   )
 }
@@ -254,6 +269,88 @@ function CheckTypeForm({ categoryId, checkType, others, onDone }: CheckTypeFormP
         {checkType && (
           <BlockButton color="danger" fill="clear" onClick={() => remove(checkType)}>
             Prüfart löschen
+          </BlockButton>
+        )}
+      </ActionBar>
+    </>
+  )
+}
+
+function LocationsTab({ locations, onChange }: { locations: Location[]; onChange(): void }) {
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const editing = locations.find((l) => l.id === editingId)
+
+  const done = () => {
+    setEditingId(null)
+    onChange()
+  }
+
+  return (
+    <>
+      <IonList>
+        {locations.map((l) => (
+          <IonItem key={l.id} button detail={false} onClick={() => setEditingId(l.id)}>
+            <IonLabel>
+              {l.name}
+              {l.isDefault && <p>Standard</p>}
+            </IonLabel>
+          </IonItem>
+        ))}
+      </IonList>
+      <LocationForm key={editingId ?? 'new'} location={editing} onDone={done} />
+    </>
+  )
+}
+
+function LocationForm({ location, onDone }: { location?: Location; onDone(): void }) {
+  const [name, setName] = useState(location?.name ?? '')
+  const [error, setError] = useState<string | null>(null)
+  const { busy, once } = useBusy()
+  const { confirm } = useDialogs()
+
+  const save = async () => {
+    setError(null)
+    try {
+      if (location) await updateLocation(location.id, name.trim())
+      else await createLocation(name.trim())
+      onDone()
+    } catch (err) {
+      setError(err instanceof LocationNameTakenError ? 'Name ist bereits vergeben.' : 'Speichern fehlgeschlagen.')
+    }
+  }
+
+  const remove = async (target: Location) => {
+    if (!(await confirm({ message: `${target.name} löschen?`, confirmText: 'Löschen', destructive: true }))) return
+    setError(null)
+    try {
+      await deleteLocation(target.id)
+      onDone()
+    } catch (err) {
+      setError(
+        err instanceof LocationInUseError
+          ? 'Standort wird noch verwendet und kann nicht gelöscht werden.'
+          : 'Löschen fehlgeschlagen.',
+      )
+    }
+  }
+
+  return (
+    <>
+      <IonList>
+        <IonListHeader>
+          <IonLabel>{location ? 'Standort bearbeiten' : 'Neuer Standort'}</IonLabel>
+        </IonListHeader>
+        <Field label="Name" value={name} onChange={setName} />
+      </IonList>
+      <ErrorText>{error}</ErrorText>
+      <ActionBar>
+        <BlockButton disabled={busy || !name.trim()} onClick={() => once(save)}>
+          {!location && <IonIcon slot="start" icon={addOutline} aria-hidden />}
+          {location ? 'Speichern' : 'Standort anlegen'}
+        </BlockButton>
+        {location && !location.isDefault && (
+          <BlockButton color="danger" fill="clear" onClick={() => remove(location)}>
+            Standort löschen
           </BlockButton>
         )}
       </ActionBar>

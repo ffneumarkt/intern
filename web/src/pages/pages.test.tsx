@@ -42,6 +42,62 @@ async function scan(code: string) {
   fireEvent.submit(input)
 }
 
+describe('locations in the lists', () => {
+  const visibleNames = () => [...document.querySelectorAll('ion-item.item-row h2')].map((h) => h.textContent)
+
+  it('shows where an item is in its row', async () => {
+    renderAt(paths.dueList, 'use')
+    await screen.findByRole('region', { name: 'Überfällig' })
+    expect(ionItem('Maske 01')).toHaveTextContent('AS-Werkstatt')
+    expect(ionItem('Maske 03')).toHaveTextContent('RLF')
+    expect(ionItem('LA 01')).toHaveTextContent('RLF')
+  })
+
+  it('has no location filter on the due list, only on the category pages', async () => {
+    renderAt(paths.dueList, 'use')
+    await screen.findByRole('region', { name: 'Überfällig' })
+    expect(document.querySelector('[aria-label="Standort"]')).toBeNull()
+    expect(ionChip('RLF')).toBeNull()
+    // The category chips are still there.
+    expect(ionChip('Atemschutzmasken')).not.toBeNull()
+  })
+
+  describe('filter on the category page', () => {
+    it('lists the masks that are in the chosen location', async () => {
+      renderAt(paths.category('masken'), 'use')
+      await screen.findByText('Maske 01')
+      fireEvent.click(ionChip('RLF')!)
+      await waitFor(() => expect(visibleNames().sort()).toEqual(['Maske 03', 'Maske 04']))
+    })
+
+    it('does not count other categories', async () => {
+      renderAt(paths.category('masken'), 'use')
+      await screen.findByText('Maske 01')
+      fireEvent.click(ionChip('RLF')!)
+      await waitFor(() => expect(visibleNames()).not.toContain('LA 01'))
+    })
+
+    it('says so when nothing of the category is there', async () => {
+      renderAt(paths.category('lungenautomaten'), 'use')
+      await screen.findByText('LA 01')
+      fireEvent.click(ionChip('LAST')!)
+      expect(await screen.findByText('Nichts in diesem Standort.')).toBeInTheDocument()
+    })
+  })
+
+  describe('on the item page', () => {
+    it('shows the location', async () => {
+      renderAt(paths.item('m03'), 'use')
+      expect(await screen.findByText('Standort: RLF')).toBeInTheDocument()
+    })
+
+    it('shows the workshop for an item that is there', async () => {
+      renderAt(paths.item('m01'), 'use')
+      expect(await screen.findByText('Standort: AS-Werkstatt')).toBeInTheDocument()
+    })
+  })
+})
+
 describe('due list', () => {
   describe('Prüfen on a row', () => {
     const checkButton = (itemName: string) =>
@@ -729,6 +785,171 @@ describe('retiring', () => {
   })
 })
 
+describe('locations in the forms', () => {
+  const set = (label: string, value: string) => typeInto(screen.getByLabelText(label), value)
+  const optionTexts = (label: string) => [...ionSelect(label)!.querySelectorAll('ion-select-option')].map((o) => o.textContent)
+
+  describe('item form', () => {
+    it('offers the locations, the workshop preselected for a new item', async () => {
+      renderAt(paths.manage, 'manage')
+      await findIon(() => ionSelect('Standort'))
+      expect(optionTexts('Standort')).toEqual(['AS-Werkstatt', 'LAST', 'RLF'])
+      expect(ionSelect('Standort')).toHaveValue('werkstatt')
+    })
+
+    it('saves a new item in the chosen location', async () => {
+      renderAt(paths.manage, 'manage')
+      await findIon(() => ionSelect('Standort'))
+      set('Bezeichnung', 'Maske 07')
+      choose(ionSelect('Standort')!, 'rlf')
+      fireEvent.click(ionButton('Gerät anlegen')!)
+      await waitFor(() => expect(calls.createdItems).toHaveLength(1))
+      expect(calls.createdItems[0].input.locationId).toBe('rlf')
+    })
+
+    it('puts a new item in the workshop unless told otherwise', async () => {
+      renderAt(paths.manage, 'manage')
+      await findIon(() => ionSelect('Standort'))
+      set('Bezeichnung', 'Maske 07')
+      fireEvent.click(ionButton('Gerät anlegen')!)
+      await waitFor(() => expect(calls.createdItems).toHaveLength(1))
+      expect(calls.createdItems[0].input.locationId).toBe('werkstatt')
+    })
+
+    it('shows where an existing item is and moves it by hand', async () => {
+      renderAt(paths.itemEdit('m03'), 'manage')
+      await findIon(() => ionSelect('Standort'))
+      expect(ionSelect('Standort')).toHaveValue('rlf')
+      choose(ionSelect('Standort')!, 'last')
+      fireEvent.click(ionButton('Speichern')!)
+      await waitFor(() => expect(calls.updatedItems).toHaveLength(1))
+      expect(calls.updatedItems[0].input.locationId).toBe('last')
+    })
+  })
+
+  describe('recording a check', () => {
+    const open = async (itemId = 'm01') => {
+      renderAt(paths.recordCheck(itemId), 'check')
+      await findIon(() => ionSelect('Prüfart'))
+    }
+
+    it('offers a Standort for a passed check, the workshop preselected', async () => {
+      await open('m03')
+      expect(optionTexts('Standort')).toEqual(['AS-Werkstatt', 'LAST', 'RLF'])
+      // The item is in RLF, but after a check it is the workshop unless a truck is picked.
+      expect(ionSelect('Standort')).toHaveValue('werkstatt')
+    })
+
+    it('moves the item to the chosen truck and shows it afterwards', async () => {
+      await open()
+      choose(ionSelect('Standort')!, 'rlf')
+      fireEvent.click(ionButton('Speichern')!)
+      await waitFor(() => expect(calls.checks).toHaveLength(1))
+      expect(calls.checks[0].input.locationId).toBe('rlf')
+      // On the item page, as a fact and in the new history entry.
+      expect(await screen.findAllByText('Standort: RLF')).toHaveLength(2)
+    })
+
+    it('saves the workshop when nothing else is picked', async () => {
+      await open('m03')
+      fireEvent.click(ionButton('Speichern')!)
+      await waitFor(() => expect(calls.checks).toHaveLength(1))
+      expect(calls.checks[0].input.locationId).toBe('werkstatt')
+    })
+
+    it.each([['defect'], ['retired']])('has no Standort for the result %s', async (result) => {
+      await open()
+      choose(ionSelect('Ergebnis')!, result)
+      await waitFor(() => expect(ionSelect('Standort')).toBeNull())
+      fireEvent.click(ionButton('Speichern')!)
+      await waitFor(() => expect(calls.checks).toHaveLength(1))
+      expect(calls.checks[0].input.locationId).toBeUndefined()
+    })
+
+    it('comes back when the result is passed again', async () => {
+      await open()
+      choose(ionSelect('Ergebnis')!, 'defect')
+      await waitFor(() => expect(ionSelect('Standort')).toBeNull())
+      choose(ionSelect('Ergebnis')!, 'passed')
+      expect(await findIon(() => ionSelect('Standort'))).toHaveValue('werkstatt')
+    })
+
+    it('follows the suggested result of the readings', async () => {
+      data.checkTypes = data.checkTypes.map((t, i) => (i === 0 ? { ...t, measurements: true } : t))
+      await open()
+      typeInto(screen.getByLabelText('Druck nach 60 s (mbar)'), '-5')
+      typeInto(screen.getByLabelText('Öffnungsdruck (mbar)'), '5')
+      await waitFor(() => expect(ionSelect('Standort')).toBeNull())
+      typeInto(screen.getByLabelText('Druck nach 60 s (mbar)'), '-9,5')
+      expect(await findIon(() => ionSelect('Standort'))).toBeInTheDocument()
+    })
+  })
+
+  describe('Standorte in Verwalten', () => {
+    const openTab = async () => {
+      renderAt(paths.manage, 'manage')
+      fireEvent.click(await screen.findByText('Standorte'))
+      await findIon(() => ionButton('Standort anlegen'))
+    }
+
+    it('lists the locations and marks the default', async () => {
+      await openTab()
+      expect(ionItem('AS-Werkstatt')).toHaveTextContent('Standard')
+      expect(ionItem('RLF')).not.toBeNull()
+      expect(ionItem('LAST')).not.toBeNull()
+    })
+
+    it('adds a location', async () => {
+      await openTab()
+      set('Name', 'LF 16')
+      fireEvent.click(ionButton('Standort anlegen')!)
+      await waitFor(() => expect(calls.createdLocations).toEqual(['LF 16']))
+    })
+
+    it('says so when the name is taken', async () => {
+      failing.locationName = true
+      await openTab()
+      set('Name', 'RLF')
+      fireEvent.click(ionButton('Standort anlegen')!)
+      expect(await screen.findByText('Name ist bereits vergeben.')).toBeInTheDocument()
+    })
+
+    it('renames a location', async () => {
+      await openTab()
+      fireEvent.click(ionItem('RLF')!)
+      const name = await screen.findByLabelText('Name')
+      expect(name).toHaveValue('RLF')
+      typeInto(name, 'RLF 1')
+      fireEvent.click(ionButton('Speichern')!)
+      await waitFor(() => expect(calls.updatedLocations).toEqual([{ id: 'rlf', name: 'RLF 1' }]))
+    })
+
+    it('deletes a location after confirming', async () => {
+      await openTab()
+      fireEvent.click(ionItem('LAST')!)
+      fireEvent.click(await findIon(() => ionButton('Standort löschen')))
+      fireEvent.click(await findIon(() => alertButton('Löschen')))
+      await waitFor(() => expect(calls.deletedLocations).toEqual(['last']))
+    })
+
+    it('explains that a location in use cannot be deleted', async () => {
+      failing.locationInUse = true
+      await openTab()
+      fireEvent.click(ionItem('RLF')!)
+      fireEvent.click(await findIon(() => ionButton('Standort löschen')))
+      fireEvent.click(await findIon(() => alertButton('Löschen')))
+      expect(await screen.findByText('Standort wird noch verwendet und kann nicht gelöscht werden.')).toBeInTheDocument()
+    })
+
+    it('does not offer to delete the default location', async () => {
+      await openTab()
+      fireEvent.click(ionItem('AS-Werkstatt')!)
+      await screen.findByLabelText('Name')
+      expect(ionButton('Standort löschen')).toBeNull()
+    })
+  })
+})
+
 describe('manage', () => {
   afterEach(() => {
     vi.restoreAllMocks()
@@ -771,7 +992,7 @@ describe('manage', () => {
     expect(await screen.findByRole('heading', { name: 'Maske 07' })).toBeInTheDocument()
     expect(calls.createdItems).toEqual([
       {
-        input: { categoryId: 'masken', name: 'Maske 07', serial: 'DR-07', barcode: 'M-007', manufacturedOn: '2026-02-01', note: '' },
+        input: { categoryId: 'masken', name: 'Maske 07', serial: 'DR-07', barcode: 'M-007', manufacturedOn: '2026-02-01', note: '', locationId: 'werkstatt' },
         lastChecked: { maskenpruefung: '2026-01-15' },
       },
     ])
@@ -827,7 +1048,7 @@ describe('manage', () => {
     await waitFor(() => expect(calls.updatedItems).toHaveLength(1))
     expect(calls.updatedItems[0]).toEqual({
       itemId: 'm01',
-      input: { name: 'Maske 1', serial: 'DR-4711-01', barcode: 'M-001', manufacturedOn: '2016-03-01', note: '' },
+      input: { name: 'Maske 1', serial: 'DR-4711-01', barcode: 'M-001', manufacturedOn: '2016-03-01', note: '', locationId: 'werkstatt' },
     })
   })
 

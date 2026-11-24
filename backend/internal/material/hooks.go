@@ -15,6 +15,8 @@ import (
 // Register binds the record hooks.
 func Register(app core.App) {
 	app.OnRecordCreateExecute("checks").BindFunc(applyCheckResult)
+	app.OnRecordCreateExecute("uses").BindFunc(moveItemAfterUse)
+	app.OnRecordDelete("locations").BindFunc(guardLocationDelete)
 	app.OnRecordValidate("check_types").BindFunc(validateCheckType)
 	app.OnRecordCreateExecute("check_types").BindFunc(keepOneDefault)
 	app.OnRecordUpdateExecute("check_types").BindFunc(keepOneDefault)
@@ -46,11 +48,24 @@ func applyCheckResult(e *core.RecordEvent) error {
 		if err != nil {
 			return err
 		}
-		status := statusAfterCheck(item.GetString("status"), e.Record.GetString("result"))
-		if status == item.GetString("status") {
+		changed := false
+		if status := statusAfterCheck(item.GetString("status"), e.Record.GetString("result")); status != item.GetString("status") {
+			item.Set("status", status)
+			changed = true
+		}
+		// A check with a location moves the item there; without one it records where the item is.
+		if place := e.Record.GetString("location"); place == "" {
+			e.Record.Set("location", item.GetString("location"))
+			if err := tx.Save(e.Record); err != nil {
+				return err
+			}
+		} else if place != item.GetString("location") {
+			item.Set("location", place)
+			changed = true
+		}
+		if !changed {
 			return nil
 		}
-		item.Set("status", status)
 		return tx.Save(item)
 	})
 }
@@ -180,6 +195,48 @@ func validateEndpoint(e *core.RecordEvent) error {
 	u, err := url.Parse(e.Record.GetString("endpoint"))
 	if err != nil || u.Scheme != "https" || u.Host == "" {
 		return validation.Errors{"endpoint": validation.NewError("validation_endpoint", "must be an https URL")}
+	}
+	return e.Next()
+}
+
+// moveItemAfterUse puts an item in the default location after a use, and notes it on the use: a used
+// mask goes back to the workshop.
+func moveItemAfterUse(e *core.RecordEvent) error {
+	return inTransaction(e, func(tx core.App) error {
+		home, err := tx.FindFirstRecordByData("locations", "is_default", true)
+		if err != nil {
+			return err
+		}
+		e.Record.Set("location", home.Id)
+		if err := tx.Save(e.Record); err != nil {
+			return err
+		}
+		item, err := tx.FindRecordById("items", e.Record.GetString("item"))
+		if err != nil {
+			return err
+		}
+		if item.GetString("location") == home.Id {
+			return nil
+		}
+		item.Set("location", home.Id)
+		return tx.Save(item)
+	})
+}
+
+// guardLocationDelete keeps the default location, and any location that an item, a use or a check
+// still refers to, so history never points at nothing.
+func guardLocationDelete(e *core.RecordEvent) error {
+	if e.Record.GetBool("is_default") {
+		return validation.Errors{"is_default": validation.NewError("validation_default_location", "the default location cannot be deleted")}
+	}
+	for _, collection := range []string{"items", "uses", "checks"} {
+		n, err := e.App.CountRecords(collection, dbx.HashExp{"location": e.Record.Id})
+		if err != nil {
+			return err
+		}
+		if n > 0 {
+			return validation.Errors{"location": validation.NewError("validation_location_in_use", "the location is still in use")}
+		}
 	}
 	return e.Next()
 }

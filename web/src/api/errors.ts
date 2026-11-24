@@ -9,6 +9,11 @@ export class CheckTypeInUseError extends Error {}
 
 export class ItemHasHistoryError extends Error {}
 
+// A location with items, uses or checks in it, or the default one, cannot be deleted.
+export class LocationInUseError extends Error {}
+
+export class LocationNameTakenError extends Error {}
+
 // The user closed the browser's passkey dialog: nothing to report.
 export class PasskeyCancelledError extends Error {}
 

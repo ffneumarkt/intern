@@ -127,7 +127,8 @@ test.describe('as verwendung', () => {
 
       await page.goto(`/material/geraete/${id}`)
       const entry = historyEntry(page, 'Übung')
-      await expect(entry).toContainText('Erfasst von E2E Gruppenführer · Atemschutzübung Halle')
+      // A use puts the mask in the workshop (the server does it), and the history says so.
+      await expect(entry).toContainText('Erfasst von E2E Gruppenführer · Standort: AS-Werkstatt · Atemschutzübung Halle')
       await expect(entry).toContainText(viennaToday())
     } finally {
       await removeItemWithHistory(request, id)
