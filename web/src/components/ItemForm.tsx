@@ -6,7 +6,7 @@ import type { CheckType, Item, ItemInput, Location } from '../api/material'
 import { futureDateMessage, isFuture, today } from '../today'
 import { useBusy } from '../useBusy'
 import { Field, SelectField, TextAreaField } from './Field'
-import { focusFirstInvalid, requiredMessage } from './required'
+import { showFirstInvalid, requiredMessage } from './required'
 import { ActionBar, BlockButton, ErrorText } from './ui'
 
 interface ItemFormProps {
@@ -35,7 +35,7 @@ export default function ItemForm({ item, locations, checkTypes = [], submitLabel
   const save = async () => {
     if (!name.trim()) {
       setTried(true)
-      focusFirstInvalid()
+      showFirstInvalid()
       return
     }
     const dates = Object.fromEntries(

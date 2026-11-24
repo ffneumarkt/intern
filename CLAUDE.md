@@ -26,7 +26,7 @@ Internal tools for FF Neumarkt at `intern.ffneumarkt.at`. Start with `docs/super
 - Required fields: pass `required` (a red * after the label, drawn in CSS so labels stay findable) and `error` to
   `Field`, `SelectField` and `TextAreaField`. A form never disables Speichern for an empty field: the first press
   sets a `tried` flag, the empty fields show `requiredMessage` ('Bitte ausfüllen.'), nothing is saved, and
-  `focusFirstInvalid()` (`components/required.ts`) scrolls to the first one.
+  `showFirstInvalid()` (`components/required.ts`) scrolls to the first one without taking the focus (it would start Ionic's iOS input shim).
 - Shared UI pieces live once in `web/src/components/ui.tsx`: `ErrorText` (red message, renders nothing when empty,
   optional `role`), `ActionBar` (sticky bar at the page bottom), `Hint` (muted paragraph), `Card` (`tone="warning"`)
   and `BlockButton` (full-width `IonButton`); inside a list use `ListNote` (an Ionic item, so it takes the list's

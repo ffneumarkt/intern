@@ -21,7 +21,7 @@ import {
   type Location,
 } from '../api/material'
 import { CheckboxField, Field, SelectField } from '../components/Field'
-import { focusFirstInvalid, requiredMessage } from '../components/required'
+import { showFirstInvalid, requiredMessage } from '../components/required'
 import ItemForm from '../components/ItemForm'
 import Loaded from '../components/Loaded'
 import Page from '../components/Page'
@@ -209,7 +209,7 @@ function CheckTypeForm({ categoryId, checkType, others, onDone }: CheckTypeFormP
   const save = async () => {
     if (!name.trim()) {
       setTried(true)
-      focusFirstInvalid()
+      showFirstInvalid()
       return
     }
     const intervalMonths = Number(months) || 0
@@ -319,7 +319,7 @@ function LocationForm({ location, onDone }: { location?: Location; onDone(): voi
   const save = async () => {
     if (!name.trim()) {
       setTried(true)
-      focusFirstInvalid()
+      showFirstInvalid()
       return
     }
     setError(null)

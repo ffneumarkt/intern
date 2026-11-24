@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { focusFirstInvalid, requiredMessage } from './required'
+import { requiredMessage, showFirstInvalid } from './required'
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -21,47 +21,51 @@ function field(parent: HTMLElement, id: string, invalid: boolean) {
   return { el, input }
 }
 
-describe('focusFirstInvalid', () => {
+describe('showFirstInvalid', () => {
   it('has the German message', () => {
     expect(requiredMessage).toBe('Bitte ausfüllen.')
   })
 
-  it('scrolls to the first invalid field and puts the cursor there', () => {
+  it('scrolls the first invalid field into view and leaves the focus alone', () => {
     const page = document.body.appendChild(document.createElement('div'))
     field(page, 'ok', false)
     const first = field(page, 'first', true)
-    field(page, 'second', true)
-    focusFirstInvalid()
+    const second = field(page, 'second', true)
+    showFirstInvalid()
     vi.runAllTimers()
-    expect(first.el.scrollIntoView).toHaveBeenCalled()
-    expect(document.activeElement).toBe(first.input)
+    expect(first.el.scrollIntoView).toHaveBeenCalledWith({ block: 'center', behavior: 'smooth' })
+    expect(second.el.scrollIntoView).not.toHaveBeenCalled()
+    // Taking the focus would start Ionic's iOS input shim, which swaps in a copy of the field.
+    expect(document.activeElement).not.toBe(first.input)
+    expect(document.activeElement).toBe(document.body)
   })
 
   it('waits one tick, so the errors have been rendered', () => {
     const page = document.body.appendChild(document.createElement('div'))
     const late = field(page, 'late', true)
-    focusFirstInvalid()
-    expect(document.activeElement).not.toBe(late.input)
+    showFirstInvalid()
+    expect(late.el.scrollIntoView).not.toHaveBeenCalled()
     vi.runAllTimers()
-    expect(document.activeElement).toBe(late.input)
+    expect(late.el.scrollIntoView).toHaveBeenCalled()
   })
 
   it('skips fields on a page Ionic keeps mounted but hidden', () => {
     const hidden = document.body.appendChild(document.createElement('div'))
     hidden.className = 'ion-page-hidden'
-    field(hidden, 'old', true)
+    const old = field(hidden, 'old', true)
     const shown = document.body.appendChild(document.createElement('div'))
     const current = field(shown, 'current', true)
-    focusFirstInvalid()
+    showFirstInvalid()
     vi.runAllTimers()
-    expect(document.activeElement).toBe(current.input)
+    expect(old.el.scrollIntoView).not.toHaveBeenCalled()
+    expect(current.el.scrollIntoView).toHaveBeenCalled()
   })
 
   it('does nothing when no field is invalid', () => {
     const page = document.body.appendChild(document.createElement('div'))
     field(page, 'fine', false)
     expect(() => {
-      focusFirstInvalid()
+      showFirstInvalid()
       vi.runAllTimers()
     }).not.toThrow()
   })

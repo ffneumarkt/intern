@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { PasskeyCancelledError, TooManyAttemptsError, tooManyAttemptsMessage } from '../api/errors'
 import { passkeysSupported } from '../api/passkeys'
 import { Field } from '../components/Field'
-import { focusFirstInvalid, requiredMessage } from '../components/required'
+import { showFirstInvalid, requiredMessage } from '../components/required'
 import Page from '../components/Page'
 import { paths } from '../routes'
 import { useSession } from '../session'
@@ -41,7 +41,7 @@ export default function LoginPage() {
     e.preventDefault()
     if (!email.trim() || !password) {
       setTried(true)
-      focusFirstInvalid()
+      showFirstInvalid()
       return
     }
     setFailed(false)
