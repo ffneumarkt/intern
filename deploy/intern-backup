@@ -1,0 +1,6 @@
+#!/bin/sh
+# Install as /usr/local/bin/intern-backup, owned by root and not writable by anyone else. The backup
+# user may run exactly this through sudo (see intern-backup.sudoers) and nothing else: it prints a
+# gzipped consistent copy of data.db on stdout. Takes no arguments, so a caller cannot change what runs.
+set -eu
+exec /usr/bin/docker compose -f /srv/intern/compose.yaml exec -T intern /intern snapshot

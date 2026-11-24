@@ -88,7 +88,13 @@ Last updated: 2026-11-05. Read this first, then the spec
   uses and checks with names, passkeys, push subscriptions, `localStorage`, PocketBase request logs for 5
   days incl. IP, Cloudflare). **Not legal advice: the owner must read it** and in particular confirm the
   hosting wording („gemieteter Server (VPS)“), the legal bases and the retention statements.
-- Nothing is deployed to the VPS yet. No `deploy/` files exist yet.
+- **Deploy files done** (branch `feature/deploy`, PR pending, no separate plan: spec §10 was the design):
+  `intern snapshot` (`internal/snapshot`, `VACUUM INTO` in a temporary directory, gzip to stdout, tests
+  restore the copy) and `deploy/` (systemd update timer, `intern-backup` wrapper with its sudoers line and
+  `authorized_keys` example, `.env` example, `restore-test.sh`, runbook `deploy/README.md`). The restore
+  test was run against a snapshot of the seed data and the published image. Not done: the VPS itself
+  (Docker, tunnel, hostname, users), the NAS job, the post-deploy checks on real devices.
+- Nothing is deployed to the VPS yet.
 
 ## How the process works here
 
@@ -98,10 +104,7 @@ line; work happens on branches with PRs against `main` (the user merges).
 
 ## Next steps (proposed order, each needs its own plan)
 
-1. **Phase 5: camera scanning and QR labels** (spec §9, `barcode-detector`): camera picker and torch
-   removed in phase 2, the label page's QR placeholder, assigning an unknown code to an item.
-2. **Deploy:** `deploy/` (systemd update timer, backup wrapper, `authorized_keys` example),
-   `intern snapshot` (spec §10), VPS setup with its own `cloudflared` and hostname
+1. **Deploy** (files done, see above): VPS setup with its own `cloudflared` and hostname
    `intern.ffneumarkt.at`, restore test. After the first deploy, check what can't be tested locally:
    passkeys on a real iPhone, Android phone and Windows device, including Safari with the two-tap
    confirmation, push on the same devices (iOS only from the home screen), and that rate limits count
@@ -110,9 +113,9 @@ line; work happens on branches with PRs against `main` (the user merges).
    budget. The container must keep publishing no port, or that header can be spoofed. Generate the VAPID
    keys with `docker run --rm ghcr.io/ffneumarkt/intern vapid`; `VAPID_SUBJECT` (a `mailto:` address or
    https URL) is set by hand.
-3. **ffneumarkt-web follow-ups** (spec §12): revert #10 there now (production has no iOS icon), redirect
+2. **ffneumarkt-web follow-ups** (spec §12): revert #10 there now (production has no iOS icon), redirect
    and cleanup at go-live.
-4. **E2E follow-ups:** `image.yml` may gate on `e2e.yml` once it has run stably.
+3. **E2E follow-ups:** `image.yml` may gate on `e2e.yml` once it has run stably.
 
 ## Deferred minor findings (from the phase 1 review)
 
