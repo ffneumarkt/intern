@@ -5,7 +5,7 @@ import { listCheckTypes, listItems, listLocations, recordCheck, type CheckInput 
 import { Field, SelectField, TextAreaField } from '../components/Field'
 import Loaded from '../components/Loaded'
 import Measurements, { type Readings } from '../components/Measurements'
-import { focusFirstInvalid } from '../components/required'
+import { showFirstInvalid } from '../components/required'
 import Page from '../components/Page'
 import { leakReadingProblem, measurementsPass } from '../material/measurements'
 import { paths } from '../routes'
@@ -72,7 +72,7 @@ export default function RecordCheckPage() {
             if (measured && (readings.start === null || readings.end === null || readings.opening === null)) {
               setTriedSave(true)
               setError('Bitte alle Messwerte eintragen.')
-              focusFirstInvalid()
+              showFirstInvalid()
               return
             }
             // A reading no mask could give (the pressure further from 0 after 60 s than at the start).
