@@ -117,9 +117,19 @@ Last updated: 2026-11-05. Read this first, then the spec
   everywhere.
 - Dependabot (`.github/dependabot.yml`) opens a weekly PR (Mondays) per ecosystem: Go modules, npm, GitHub
   Actions and the Docker base images; minor and patch updates are grouped, a major update comes alone.
-  The normal CI runs on those PRs; the user merges. Major updates of `react-router` and `react-router-dom` are
+  The normal CI runs on those PRs and they merge themselves when green (see Automerge below). Major updates of `react-router` and `react-router-dom` are
   ignored: `@ionic/react-router` 9.0.13 allows only versions below 7 and breaks with 7 (checked: 179 of 338
   tests fail inside `IonRouter`). Lift the rule when Ionic releases support for 7 or later.
+- **Automerge** (`.github/workflows/automerge.yml`, logic in `.github/scripts/automerge.sh`): a PR of the owner
+  (`loisi105`) or Dependabot merges itself, as a merge commit, when every check on its head commit has finished
+  green. Why a workflow: the repository is private on a free plan, so there is no branch protection or required
+  check, and GitHub's own auto-merge would merge at once. It runs on `workflow_run` of Web, Go, E2E, Image and
+  Security (a write token even for Dependabot PRs, no PR code is run) and only reads the API. Left for a person:
+  drafts, PRs labelled `no-automerge`, forks, PRs that change `.github/workflows/` (the built-in token may not
+  merge those) and docs-only PRs (no check runs). A merge by the built-in token starts no push workflow, so the
+  script starts `image.yml` (it has `workflow_dispatch`) for non-docs merges; Security on main is not started.
+  A personal access token secret would remove those limits (not set up). `--match-head-commit` guards against a
+  push after the checks started. Not observed in production until the first PR after this one.
 - **Deploy files done** (PR #24, no separate plan: spec §10 was the design):
   `intern snapshot` (`internal/snapshot`, `VACUUM INTO` in a temporary directory, gzip to stdout, tests
   restore the copy) and `deploy/` (systemd update timer, `intern-backup` wrapper with its sudoers line and
@@ -132,7 +142,7 @@ Last updated: 2026-11-05. Read this first, then the spec
 
 The user works with the superpowers skills: brainstorming → spec → writing-plans → execution, with
 each phase getting its own plan in `docs/superpowers/plans/`. Commits end with a `Co-Authored-By`
-line; work happens on branches with PRs against `main` (the user merges).
+line; work happens on branches with PRs against `main` (they merge themselves when CI is green, see Automerge).
 
 ## Next steps (proposed order, each needs its own plan)
 

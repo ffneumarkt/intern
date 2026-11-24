@@ -1,0 +1,40 @@
+name: Automerge
+
+# A pull request of the owner or Dependabot merges itself once every check on its head commit is green.
+# The repository has no branch protection (not available for a private repository on this plan), so
+# GitHub's own auto-merge would merge at once; this waits for the checks instead.
+#
+# It runs when any CI workflow finishes, in the context of main with a write token (also when the pull
+# request is Dependabot's). It checks out main only, never the pull request, and runs no code of it.
+# What it leaves for a person: drafts, pull requests with the no-automerge label, pull requests that
+# change workflow files (the built-in token may not merge those), docs-only changes (no checks run).
+on:
+  workflow_run:
+    workflows: [Web, Go, E2E, Image, Security]
+    types: [completed]
+
+# Two workflows finishing together must not merge the same pull request twice.
+concurrency:
+  group: automerge-${{ github.event.workflow_run.head_sha }}
+
+permissions:
+  contents: read
+
+jobs:
+  merge:
+    # A red or cancelled run leaves its pull request red; nothing to do.
+    if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # merge
+      pull-requests: write # merge
+      actions: write # start image.yml: a merge by the built-in token starts no push workflow
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      SHA: ${{ github.event.workflow_run.head_sha }}
+      # Whose pull requests merge themselves.
+      AUTHORS: loisi105 dependabot[bot]
+    steps:
+      - uses: actions/checkout@v7
+      - run: bash .github/scripts/automerge.sh
