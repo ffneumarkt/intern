@@ -17,8 +17,17 @@ export function parseMbar(text: string): number | null {
 
 export const formatMbar = (value: number): string => String(round(value)).replace('.', ',')
 
-// How far the pressure moved in the 60 seconds; the size is used, so an overpressure test works too.
-export const leakLoss = (start: number, end: number): number => round(Math.abs(end - start))
+// How far the pressure moved toward 0 in the 60 seconds: the mask leaks, so an underpressure of -10 can
+// only become -9, never -11. It works for an overpressure too (10 becomes 9). Negative when the reading
+// went the wrong way, which no leak can do.
+export const leakLoss = (start: number, end: number): number => round(Math.abs(start) - Math.abs(end))
+
+// What is wrong with a reading that no mask could give: on the other side of 0, or further from 0 than the
+// start. null when it is possible.
+export function leakReadingProblem(start: number, end: number): string | null {
+  if (start * end < 0 || leakLoss(start, end) < 0) return `Nach ${leakSeconds} s kann der Druck nicht weiter von 0 entfernt sein als am Start.`
+  return null
+}
 
 export const leakOk = (loss: number): boolean => loss <= leakLimitMbar
 
@@ -33,6 +42,7 @@ export function openingHint(value: number): string | null {
 // null while a value is missing.
 export function measurementsPass(start: number | null, end: number | null, opening: number | null): boolean | null {
   if (start === null || end === null || opening === null) return null
+  if (leakReadingProblem(start, end)) return null
   return leakOk(leakLoss(start, end)) && openingOk(opening)
 }
 

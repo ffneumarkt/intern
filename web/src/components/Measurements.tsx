@@ -5,6 +5,7 @@ import {
   leakLimitMbar,
   leakLoss,
   leakOk,
+  leakReadingProblem,
   leakSeconds,
   leakStartMbar,
   openingHint,
@@ -46,7 +47,9 @@ export default function Measurements({ onChange, showErrors }: { onChange(readin
   const problem = (text: string, value: number | null) =>
     !showErrors || value !== null ? undefined : text.trim() === '' ? requiredMessage : 'Bitte eine Zahl eintragen.'
 
-  const loss = start !== null && end !== null ? leakLoss(start, end) : null
+  // A reading no mask could give is refused at once, not only after Speichern.
+  const impossible = start !== null && end !== null ? leakReadingProblem(start, end) : null
+  const loss = start !== null && end !== null && !impossible ? leakLoss(start, end) : null
   const openingMessage = opening !== null ? openingHint(opening) : null
 
   return (
@@ -79,7 +82,7 @@ export default function Measurements({ onChange, showErrors }: { onChange(readin
             </IonButton>
           )}
         </div>
-        <Field label={`Druck nach ${leakSeconds} s (mbar)`} value={endText} autoComplete="off" autoCapitalize="off" onChange={setEndText} required error={problem(endText, end)} />
+        <Field label={`Druck nach ${leakSeconds} s (mbar)`} value={endText} autoComplete="off" autoCapitalize="off" onChange={setEndText} required error={problem(endText, end) ?? impossible ?? undefined} />
         {loss !== null && (
           <ListNote tone={leakOk(loss) ? 'ok' : 'bad'}>
             {leakOk(loss) ? `Verlust ${formatMbar(loss)} mbar ✓` : `Verlust ${formatMbar(loss)} mbar: mehr als ${leakLimitMbar} mbar`}

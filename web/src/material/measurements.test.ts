@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatMbar, leakLoss, leakOk, measurementDetail, measurementsPass, openingHint, openingOk, parseMbar } from './measurements'
+import { formatMbar, leakLoss, leakOk, leakReadingProblem, measurementDetail, measurementsPass, openingHint, openingOk, parseMbar } from './measurements'
 
 describe('parseMbar', () => {
   it.each([
@@ -29,11 +29,16 @@ describe('formatMbar', () => {
 })
 
 describe('leak test', () => {
-  it('takes the size of the pressure change over the 60 seconds', () => {
+  it('is how far the pressure moved toward 0 in the 60 seconds', () => {
     expect(leakLoss(-10, -9)).toBe(1)
     expect(leakLoss(-10, -9.5)).toBe(0.5)
     expect(leakLoss(10, 9)).toBe(1)
-    expect(leakLoss(-10, -10.3)).toBe(0.3)
+    expect(leakLoss(-10, -10)).toBe(0)
+  })
+
+  it('is negative when the pressure went the wrong way', () => {
+    expect(leakLoss(-10, -11)).toBe(-1)
+    expect(leakLoss(-10, -10.3)).toBe(-0.3)
   })
 
   it('does not drift on decimals', () => {
@@ -46,6 +51,27 @@ describe('leak test', () => {
     expect(leakOk(1)).toBe(true)
     expect(leakOk(1.1)).toBe(false)
     expect(leakOk(5)).toBe(false)
+  })
+})
+
+describe('leakReadingProblem', () => {
+  it('accepts a pressure that moved toward 0, or did not move', () => {
+    expect(leakReadingProblem(-10, -9)).toBeNull()
+    expect(leakReadingProblem(-10, -10)).toBeNull()
+    expect(leakReadingProblem(-10, -5)).toBeNull()
+    expect(leakReadingProblem(-10, 0)).toBeNull()
+    expect(leakReadingProblem(10, 9)).toBeNull()
+  })
+
+  it.each([
+    ['more negative than the start', -10, -11],
+    ['slightly further from 0', -10, -10.3],
+    ['on the other side of 0', -10, 2],
+    ['an overpressure that rose', 10, 11],
+    ['an overpressure that went below 0', 10, -1],
+    ['a start of 0 that moved', 0, -1],
+  ])('refuses a reading %s', (_name, start, end) => {
+    expect(leakReadingProblem(start, end)).toBe('Nach 60 s kann der Druck nicht weiter von 0 entfernt sein als am Start.')
   })
 })
 
@@ -70,6 +96,10 @@ describe('measurementsPass', () => {
     expect(measurementsPass(-10, null, 5)).toBeNull()
     expect(measurementsPass(null, -9, 5)).toBeNull()
     expect(measurementsPass(-10, -9, null)).toBeNull()
+  })
+
+  it('cannot judge readings that are not possible', () => {
+    expect(measurementsPass(-10, -11, 5.1)).toBeNull()
   })
 
   it('is true only when both tests are within their limits', () => {

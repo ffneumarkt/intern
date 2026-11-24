@@ -7,7 +7,7 @@ import Loaded from '../components/Loaded'
 import Measurements, { type Readings } from '../components/Measurements'
 import { focusFirstInvalid } from '../components/required'
 import Page from '../components/Page'
-import { measurementsPass } from '../material/measurements'
+import { leakReadingProblem, measurementsPass } from '../material/measurements'
 import { paths } from '../routes'
 import { futureDateMessage, isFuture, today } from '../today'
 import { useBusy } from '../useBusy'
@@ -72,6 +72,13 @@ export default function RecordCheckPage() {
             if (measured && (readings.start === null || readings.end === null || readings.opening === null)) {
               setTriedSave(true)
               setError('Bitte alle Messwerte eintragen.')
+              focusFirstInvalid()
+              return
+            }
+            // A reading no mask could give (the pressure further from 0 after 60 s than at the start).
+            if (measured && readings.start !== null && readings.end !== null && leakReadingProblem(readings.start, readings.end)) {
+              setTriedSave(true)
+              setError('Bitte die Messwerte prüfen.')
               focusFirstInvalid()
               return
             }
