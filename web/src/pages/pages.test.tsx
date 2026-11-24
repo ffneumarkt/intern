@@ -639,6 +639,48 @@ describe('recording a check with measurements', () => {
     expect(result()).toBe('defect')
   })
 
+  it('refuses a pressure that is further from 0 than the start, instead of calling it a loss', async () => {
+    await open()
+    enter('-10', '-11', '5')
+    expect(screen.queryByText(/Verlust/)).toBeNull()
+    const end = screen.getByLabelText('Druck nach 60 s (mbar)').closest('ion-input')!
+    await waitFor(() => expect(end).toHaveProperty('errorText', 'Nach 60 s kann der Druck nicht weiter von 0 entfernt sein als am Start.'))
+    expect(end).toHaveClass('ion-invalid')
+  })
+
+  it('does not save such a reading', async () => {
+    await open()
+    enter('-10', '-11', '5')
+    fireEvent.click(ionButton('Speichern')!)
+    expect(await screen.findByText('Bitte die Messwerte prüfen.')).toBeInTheDocument()
+    expect(calls.checks).toEqual([])
+  })
+
+  it('refuses a reading on the other side of 0', async () => {
+    await open()
+    enter('-10', '2', '5')
+    const end = screen.getByLabelText('Druck nach 60 s (mbar)').closest('ion-input')!
+    await waitFor(() => expect(end).toHaveClass('ion-invalid'))
+  })
+
+  it('takes the error away when the reading is corrected', async () => {
+    await open()
+    enter('-10', '-11', '5')
+    const end = screen.getByLabelText('Druck nach 60 s (mbar)').closest('ion-input')!
+    await waitFor(() => expect(end).toHaveClass('ion-invalid'))
+    typeInto(screen.getByLabelText('Druck nach 60 s (mbar)'), '-9')
+    await waitFor(() => expect(end).not.toHaveClass('ion-invalid'))
+    expect(screen.getByText('Verlust 1 mbar ✓')).toBeInTheDocument()
+  })
+
+  it('works the same for an overpressure test', async () => {
+    await open()
+    enter('10', '9', '5')
+    expect(screen.getByText('Verlust 1 mbar ✓')).toBeInTheDocument()
+    typeInto(screen.getByLabelText('Druck nach 60 s (mbar)'), '11')
+    await waitFor(() => expect(screen.getByLabelText('Druck nach 60 s (mbar)').closest('ion-input')).toHaveClass('ion-invalid'))
+  })
+
   it('names the opening pressure limit that was missed and suggests Mangel', async () => {
     await open()
     enter('-10', '-9', '6,5')

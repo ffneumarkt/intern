@@ -11,7 +11,7 @@ Ausatemventil“ with entered values. Extends §3 (data model) and §8 (record c
 - „Prüfung erfassen“ for such a type shows two blocks (German, with the printed criterion as hint):
   - **Dichtprüfung** („−10 mbar → max. 1 mbar/60 s trocken“): „Startdruck (mbar)“ prefilled with −10 and
     editable; a button „60 s starten“ (enabled with a valid start value) that runs a countdown; „Druck nach
-    60 s (mbar)“. The app shows „Verlust: x mbar“ = |end − start| and ✓ at 1 mbar or less, otherwise a red hint.
+    60 s (mbar)“. The app shows „Verlust: x mbar“ = how far the pressure moved toward 0 (|start| − |end|), ✓ at 1 mbar or less, otherwise a red hint. A reading that is further from 0 than the start, or on the other side of 0, is impossible for a leak: it is marked invalid at once, shows no verdict and cannot be saved.
   - **Öffnungsdruck Ausatemventil** („4,2–6,0 mbar bei 10 l/min, EN 137“): one value in mbar; ✓ within
     4,2–6,0, otherwise a hint naming the missed limit.
 - Numbers accept comma or dot (`-0,5`, `5.1`) and show with a comma.
@@ -30,7 +30,7 @@ Ausatemventil“ with entered values. Extends §3 (data model) and §8 (record c
   `checks.opening_pressure_mbar` (optional numbers). The loss is derived, never stored. One migration;
   existing checks stay empty.
 - Limits are constants in the app: leak loss ≤ 1 mbar, opening pressure 4,2–6,0 mbar. The same limit applies
-  to „Überdruck“ masks because the size of the change is used.
+  to „Überdruck“ masks because the distance from 0 is used (10 → 9 is a loss of 1).
 
 ## Out of scope
 
