@@ -1,4 +1,4 @@
-import { IonButton, IonItem, IonLabel, IonList, IonListHeader, IonNote, IonText } from '@ionic/react'
+import { IonButton, IonItem, IonLabel, IonList, IonListHeader, IonNote } from '@ionic/react'
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { listHistory, listItems, retireItem, type Item } from '../api/material'
@@ -9,6 +9,7 @@ import { useDialogs } from '../components/useDialogs'
 import { paths } from '../routes'
 import { useSession } from '../session'
 import { useResource } from '../useResource'
+import { ActionBar, BlockButton, ErrorText } from '../components/ui'
 
 const statusLabel = { active: 'Aktiv', defective: 'Mangel', retired: 'Ausgeschieden' }
 
@@ -56,7 +57,7 @@ export default function ItemPage() {
                   {item.note && <p>Notiz: {item.note}</p>}
                 </div>
               </section>
-              {failed && <IonText color="danger">Speichern fehlgeschlagen.</IonText>}
+              {failed && <ErrorText>Speichern fehlgeschlagen.</ErrorText>}
               <div className="ui-actionrow">
                 {active && can(item.categoryId, 'check') && (
                   <IonButton fill="outline" routerLink={paths.recordCheck(item.id)}>
@@ -103,11 +104,11 @@ export default function ItemPage() {
                 ))}
               </IonList>
               {active && (
-                <div className="ui-actions">
-                  <IonButton expand="block" routerLink={paths.recordUseFor(item.id)}>
+                <ActionBar>
+                  <BlockButton routerLink={paths.recordUseFor(item.id)}>
                     Verwendung erfassen
-                  </IonButton>
-                </div>
+                  </BlockButton>
+                </ActionBar>
               )}
             </>
           )

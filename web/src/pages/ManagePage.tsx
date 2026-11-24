@@ -1,4 +1,4 @@
-import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonSegment, IonSegmentButton, IonSelectOption, IonText } from '@ionic/react'
+import { IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonSegment, IonSegmentButton, IonSelectOption, IonText } from '@ionic/react'
 import { addOutline } from 'ionicons/icons'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -24,6 +24,7 @@ import { paths } from '../routes'
 import { useSession } from '../session'
 import { useBusy } from '../useBusy'
 import { useResource } from '../useResource'
+import { ActionBar, BlockButton, ErrorText } from '../components/ui'
 
 const load = async () => {
   const [categories, items, checkTypes] = await Promise.all([listCategories(), listItems(), listCheckTypes()])
@@ -244,18 +245,18 @@ function CheckTypeForm({ categoryId, checkType, others, onDone }: CheckTypeFormP
             />
           ))}
       </IonList>
-      {error && <IonText color="danger">{error}</IonText>}
-      <div className="ui-actions">
-        <IonButton expand="block" disabled={busy || !name.trim()} onClick={() => once(save)}>
+      {error && <ErrorText>{error}</ErrorText>}
+      <ActionBar>
+        <BlockButton disabled={busy || !name.trim()} onClick={() => once(save)}>
           {!checkType && <IonIcon slot="start" icon={addOutline} aria-hidden />}
           {checkType ? 'Speichern' : 'Prüfart anlegen'}
-        </IonButton>
+        </BlockButton>
         {checkType && (
-          <IonButton expand="block" color="danger" fill="clear" onClick={() => remove(checkType)}>
+          <BlockButton color="danger" fill="clear" onClick={() => remove(checkType)}>
             Prüfart löschen
-          </IonButton>
+          </BlockButton>
         )}
-      </div>
+      </ActionBar>
     </>
   )
 }

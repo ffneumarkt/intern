@@ -1,4 +1,4 @@
-import { IonButton, IonIcon, IonList, IonText } from '@ionic/react'
+import { IonIcon, IonList } from '@ionic/react'
 import { addOutline } from 'ionicons/icons'
 import { useState } from 'react'
 import { BarcodeTakenError } from '../api/errors'
@@ -6,6 +6,7 @@ import type { CheckType, Item, ItemInput } from '../api/material'
 import { futureDateMessage, isFuture, today } from '../today'
 import { useBusy } from '../useBusy'
 import { Field, TextAreaField } from './Field'
+import { ActionBar, BlockButton, ErrorText } from './ui'
 
 interface ItemFormProps {
   item?: Item
@@ -60,13 +61,13 @@ export default function ItemForm({ item, checkTypes = [], submitLabel, onSave }:
           />
         ))}
       </IonList>
-      {error && <IonText color="danger">{error}</IonText>}
-      <div className="ui-actions">
-        <IonButton expand="block" disabled={busy || !name.trim()} onClick={() => once(save)}>
+      {error && <ErrorText>{error}</ErrorText>}
+      <ActionBar>
+        <BlockButton disabled={busy || !name.trim()} onClick={() => once(save)}>
           {!item && <IonIcon slot="start" icon={addOutline} aria-hidden />}
           {submitLabel}
-        </IonButton>
-      </div>
+        </BlockButton>
+      </ActionBar>
     </>
   )
 }
