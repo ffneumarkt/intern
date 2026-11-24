@@ -1,0 +1,3 @@
+# ~backup/.ssh/authorized_keys. The key of the NAS can run the backup script and nothing else:
+# no shell, no port forwarding, no agent forwarding, no pty.
+command="sudo /usr/local/bin/intern-backup",restrict ssh-ed25519 AAAA...NAS-KEY-HERE nas-backup

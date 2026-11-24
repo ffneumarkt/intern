@@ -88,7 +88,7 @@ Last updated: 2026-11-05. Read this first, then the spec
   uses and checks with names, passkeys, push subscriptions, `localStorage`, PocketBase request logs for 5
   days incl. IP, Cloudflare). **Not legal advice: the owner must read it** and in particular confirm the
   hosting wording („gemieteter Server (VPS)“), the legal bases and the retention statements.
-- **Phase 5 done** (branch `feature/barcode-scanning`, PR pending; spec `specs/2026-11-24-barcode-scanning-design.md`,
+- **Phase 5 done** (PR #22; spec `specs/2026-11-24-barcode-scanning-design.md`,
   plan `plans/2026-11-24-barcode-scanning.md`): codes are manufacturer codes only, so the QR label page is
   gone and nothing is printed. `components/Scanner.tsx` (over `scan/useCamera.ts` and `scan/detector.ts`,
   `barcode-detector` with a self-hosted, precached wasm in its own lazy chunk) is used in „Verwendung
@@ -101,7 +101,13 @@ Last updated: 2026-11-05. Read this first, then the spec
 - Dependabot (`.github/dependabot.yml`) opens a weekly PR (Mondays) per ecosystem: Go modules, npm, GitHub
   Actions and the Docker base images; minor and patch updates are grouped, a major update comes alone.
   The normal CI runs on those PRs; the user merges.
-- Nothing is deployed to the VPS yet. No `deploy/` files exist yet.
+- **Deploy files done** (PR #24, no separate plan: spec §10 was the design):
+  `intern snapshot` (`internal/snapshot`, `VACUUM INTO` in a temporary directory, gzip to stdout, tests
+  restore the copy) and `deploy/` (systemd update timer, `intern-backup` wrapper with its sudoers line and
+  `authorized_keys` example, `.env` example, `restore-test.sh`, runbook `deploy/README.md`). The restore
+  test was run against a snapshot of the seed data and the published image. Not done: the VPS itself
+  (Docker, tunnel, hostname, users), the NAS job, the post-deploy checks on real devices.
+- Nothing is deployed to the VPS yet.
 
 ## How the process works here
 
@@ -111,8 +117,7 @@ line; work happens on branches with PRs against `main` (the user merges).
 
 ## Next steps (proposed order, each needs its own plan)
 
-1. **Deploy:** `deploy/` (systemd update timer, backup wrapper, `authorized_keys` example),
-   `intern snapshot` (spec §10), VPS setup with its own `cloudflared` and hostname
+1. **Deploy** (files done, see above): VPS setup with its own `cloudflared` and hostname
    `intern.ffneumarkt.at`, restore test. After the first deploy, check what can't be tested locally:
    passkeys on a real iPhone, Android phone and Windows device, including Safari with the two-tap
    confirmation, push on the same devices (iOS only from the home screen), and that rate limits count

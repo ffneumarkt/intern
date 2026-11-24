@@ -1,0 +1,2 @@
+# /etc/sudoers.d/intern-backup (mode 0440). Check with: visudo -c -f /etc/sudoers.d/intern-backup
+backup ALL=(root) NOPASSWD: /usr/local/bin/intern-backup
