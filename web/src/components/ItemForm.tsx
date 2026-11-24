@@ -6,6 +6,7 @@ import type { CheckType, Item, ItemInput, Location } from '../api/material'
 import { futureDateMessage, isFuture, today } from '../today'
 import { useBusy } from '../useBusy'
 import { Field, SelectField, TextAreaField } from './Field'
+import { focusFirstInvalid, requiredMessage } from './required'
 import { ActionBar, BlockButton, ErrorText } from './ui'
 
 interface ItemFormProps {
@@ -27,9 +28,16 @@ export default function ItemForm({ item, locations, checkTypes = [], submitLabel
   const [locationId, setLocationId] = useState(item?.locationId ?? locations.find((l) => l.isDefault)?.id ?? '')
   const [lastChecked, setLastChecked] = useState<Record<string, string>>({})
   const [error, setError] = useState<string | null>(null)
+  // Set by the first press of Speichern: only then do the required fields show their error.
+  const [tried, setTried] = useState(false)
   const { busy, once } = useBusy()
 
   const save = async () => {
+    if (!name.trim()) {
+      setTried(true)
+      focusFirstInvalid()
+      return
+    }
     const dates = Object.fromEntries(
       checkTypes.filter((t) => lastChecked[t.id]).map((t) => [t.id, lastChecked[t.id]]),
     )
@@ -48,7 +56,7 @@ export default function ItemForm({ item, locations, checkTypes = [], submitLabel
   return (
     <>
       <IonList>
-        <Field label="Bezeichnung" value={name} onChange={setName} />
+        <Field label="Bezeichnung" value={name} onChange={setName} required error={tried && !name.trim() ? requiredMessage : undefined} />
         <Field label="Seriennummer" value={serial} onChange={setSerial} autoCapitalize="off" />
         <Field label="Code" value={barcode} onChange={setBarcode} autoCapitalize="off" />
         <Field label="Hergestellt am" type="date" value={manufacturedOn} onChange={setManufacturedOn} />
@@ -73,7 +81,7 @@ export default function ItemForm({ item, locations, checkTypes = [], submitLabel
       </IonList>
       {error && <ErrorText>{error}</ErrorText>}
       <ActionBar>
-        <BlockButton disabled={busy || !name.trim()} onClick={() => once(save)}>
+        <BlockButton disabled={busy} onClick={() => once(save)}>
           {!item && <IonIcon slot="start" icon={addOutline} aria-hidden />}
           {submitLabel}
         </BlockButton>

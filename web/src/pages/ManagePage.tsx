@@ -21,6 +21,7 @@ import {
   type Location,
 } from '../api/material'
 import { CheckboxField, Field, SelectField } from '../components/Field'
+import { focusFirstInvalid, requiredMessage } from '../components/required'
 import ItemForm from '../components/ItemForm'
 import Loaded from '../components/Loaded'
 import Page from '../components/Page'
@@ -201,10 +202,16 @@ function CheckTypeForm({ categoryId, checkType, others, onDone }: CheckTypeFormP
   const [measurements, setMeasurements] = useState(checkType?.measurements ?? false)
   const [alsoSatisfies, setAlsoSatisfies] = useState(checkType?.alsoSatisfies ?? [])
   const [error, setError] = useState<string | null>(null)
+  const [tried, setTried] = useState(false)
   const { busy, once } = useBusy()
   const { confirm } = useDialogs()
 
   const save = async () => {
+    if (!name.trim()) {
+      setTried(true)
+      focusFirstInvalid()
+      return
+    }
     const intervalMonths = Number(months) || 0
     if (!intervalMonths && !afterUse) {
       setError('Intervall oder „nach Verwendung“ angeben.')
@@ -242,7 +249,7 @@ function CheckTypeForm({ categoryId, checkType, others, onDone }: CheckTypeFormP
         <IonListHeader>
           <IonLabel>{checkType ? 'Prüfart bearbeiten' : 'Neue Prüfart'}</IonLabel>
         </IonListHeader>
-        <Field label="Name" value={name} onChange={setName} />
+        <Field label="Name" value={name} onChange={setName} required error={tried && !name.trim() ? requiredMessage : undefined} />
         <Field label="Intervall in Monaten" type="number" value={months} onChange={setMonths} />
         <CheckboxField label="nach Verwendung" checked={afterUse} onChange={setAfterUse} />
         <CheckboxField label="Standardprüfung" checked={isDefault} onChange={setIsDefault} />
@@ -262,7 +269,7 @@ function CheckTypeForm({ categoryId, checkType, others, onDone }: CheckTypeFormP
       </IonList>
       {error && <ErrorText>{error}</ErrorText>}
       <ActionBar>
-        <BlockButton disabled={busy || !name.trim()} onClick={() => once(save)}>
+        <BlockButton disabled={busy} onClick={() => once(save)}>
           {!checkType && <IonIcon slot="start" icon={addOutline} aria-hidden />}
           {checkType ? 'Speichern' : 'Prüfart anlegen'}
         </BlockButton>
@@ -305,10 +312,16 @@ function LocationsTab({ locations, onChange }: { locations: Location[]; onChange
 function LocationForm({ location, onDone }: { location?: Location; onDone(): void }) {
   const [name, setName] = useState(location?.name ?? '')
   const [error, setError] = useState<string | null>(null)
+  const [tried, setTried] = useState(false)
   const { busy, once } = useBusy()
   const { confirm } = useDialogs()
 
   const save = async () => {
+    if (!name.trim()) {
+      setTried(true)
+      focusFirstInvalid()
+      return
+    }
     setError(null)
     try {
       if (location) await updateLocation(location.id, name.trim())
@@ -340,11 +353,11 @@ function LocationForm({ location, onDone }: { location?: Location; onDone(): voi
         <IonListHeader>
           <IonLabel>{location ? 'Standort bearbeiten' : 'Neuer Standort'}</IonLabel>
         </IonListHeader>
-        <Field label="Name" value={name} onChange={setName} />
+        <Field label="Name" value={name} onChange={setName} required error={tried && !name.trim() ? requiredMessage : undefined} />
       </IonList>
       <ErrorText>{error}</ErrorText>
       <ActionBar>
-        <BlockButton disabled={busy || !name.trim()} onClick={() => once(save)}>
+        <BlockButton disabled={busy} onClick={() => once(save)}>
           {!location && <IonIcon slot="start" icon={addOutline} aria-hidden />}
           {location ? 'Speichern' : 'Standort anlegen'}
         </BlockButton>

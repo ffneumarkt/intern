@@ -151,3 +151,66 @@ describe('CheckboxField', () => {
     expect(onChange).toHaveBeenLastCalledWith(true)
   })
 })
+
+describe('required fields', () => {
+  it('marks a required field so the label gets a red star, and leaves the others alone', async () => {
+    render(
+      <>
+        <Field label="Bezeichnung" value="" onChange={() => {}} required />
+        <Field label="Seriennummer" value="" onChange={() => {}} />
+      </>,
+    )
+    expect((await screen.findByLabelText('Bezeichnung')).closest('ion-input')).toHaveClass('ui-required')
+    expect(screen.getByLabelText('Seriennummer').closest('ion-input')).not.toHaveClass('ui-required')
+  })
+
+  it('does not change the label text, so fields are still found by it', async () => {
+    render(<Field label="Bezeichnung" value="" onChange={() => {}} required />)
+    expect(await screen.findByLabelText('Bezeichnung')).toBeInTheDocument()
+    expect(screen.queryByText('*')).toBeNull()
+  })
+
+  it('marks a required select and textarea the same way', async () => {
+    render(
+      <>
+        <SelectField label="Prüfart" value="" onChange={() => {}} required>
+          <IonSelectOption value="a">A</IonSelectOption>
+        </SelectField>
+        <TextAreaField label="Notiz" value="" onChange={() => {}} required />
+      </>,
+    )
+    expect((await findIon(() => ionSelect('Prüfart')))).toHaveClass('ui-required')
+    expect(screen.getByLabelText('Notiz').closest('ion-textarea')).toHaveClass('ui-required')
+  })
+})
+
+describe('field errors', () => {
+  it('shows a message under an input and marks it invalid', async () => {
+    render(<Field label="Bezeichnung" value="" onChange={() => {}} required error="Bitte ausfüllen." />)
+    const wrapper = (await screen.findByLabelText('Bezeichnung')).closest('ion-input')!
+    expect(wrapper).toHaveClass('ion-invalid', 'ion-touched')
+    expect(wrapper).toHaveProperty('errorText', 'Bitte ausfüllen.')
+  })
+
+  it('does the same for a select and a textarea', async () => {
+    render(
+      <>
+        <SelectField label="Prüfart" value="" onChange={() => {}} error="Bitte ausfüllen.">
+          <IonSelectOption value="a">A</IonSelectOption>
+        </SelectField>
+        <TextAreaField label="Notiz" value="" onChange={() => {}} error="Bitte ausfüllen." />
+      </>,
+    )
+    const select = await findIon(() => ionSelect('Prüfart'))
+    expect(select).toHaveClass('ion-invalid', 'ion-touched')
+    expect(select).toHaveProperty('errorText', 'Bitte ausfüllen.')
+    const area = screen.getByLabelText('Notiz').closest('ion-textarea')!
+    expect(area).toHaveClass('ion-invalid', 'ion-touched')
+    expect(area).toHaveProperty('errorText', 'Bitte ausfüllen.')
+  })
+
+  it('has no error state without a message', async () => {
+    render(<Field label="Bezeichnung" value="" onChange={() => {}} required />)
+    expect((await screen.findByLabelText('Bezeichnung')).closest('ion-input')).not.toHaveClass('ion-invalid')
+  })
+})

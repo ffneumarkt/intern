@@ -785,6 +785,159 @@ describe('retiring', () => {
   })
 })
 
+describe('required fields', () => {
+  const message = 'Bitte ausfüllen.'
+  const set = (label: string, value: string) => typeInto(screen.getByLabelText(label), value)
+  const field = (label: string) => screen.getByLabelText(label).closest('ion-input')!
+
+  describe('item form', () => {
+    it('marks Bezeichnung as required and the optional fields as not', async () => {
+      renderAt(paths.manage, 'manage')
+      await screen.findByLabelText('Bezeichnung')
+      expect(field('Bezeichnung')).toHaveClass('ui-required')
+      expect(field('Seriennummer')).not.toHaveClass('ui-required')
+    })
+
+    it('shows no error before Speichern is pressed, and the button can be pressed', async () => {
+      renderAt(paths.manage, 'manage')
+      await screen.findByLabelText('Bezeichnung')
+      expect(screen.queryByText(message)).toBeNull()
+      expect(ionButton('Gerät anlegen')).toHaveProperty('disabled', false)
+    })
+
+    it('marks the empty Bezeichnung with a message and saves nothing', async () => {
+      renderAt(paths.manage, 'manage')
+      await screen.findByLabelText('Bezeichnung')
+      fireEvent.click(ionButton('Gerät anlegen')!)
+      await waitFor(() => expect(field('Bezeichnung')).toHaveClass('ion-invalid', 'ion-touched'))
+      expect(field('Bezeichnung')).toHaveProperty('errorText', message)
+      expect(calls.createdItems).toEqual([])
+    })
+
+    it('treats a name of only spaces as empty', async () => {
+      renderAt(paths.manage, 'manage')
+      await screen.findByLabelText('Bezeichnung')
+      set('Bezeichnung', '   ')
+      fireEvent.click(ionButton('Gerät anlegen')!)
+      await waitFor(() => expect(field('Bezeichnung')).toHaveClass('ion-invalid'))
+      expect(calls.createdItems).toEqual([])
+    })
+
+    it('takes the error away once a name is typed, and then saves', async () => {
+      renderAt(paths.manage, 'manage')
+      await screen.findByLabelText('Bezeichnung')
+      fireEvent.click(ionButton('Gerät anlegen')!)
+      await waitFor(() => expect(field('Bezeichnung')).toHaveClass('ion-invalid'))
+      set('Bezeichnung', 'Maske 07')
+      await waitFor(() => expect(field('Bezeichnung')).not.toHaveClass('ion-invalid'))
+      fireEvent.click(ionButton('Gerät anlegen')!)
+      await waitFor(() => expect(calls.createdItems).toHaveLength(1))
+    })
+
+    it('does the same when editing an item', async () => {
+      renderAt(paths.itemEdit('m01'), 'manage')
+      await screen.findByLabelText('Bezeichnung')
+      set('Bezeichnung', '')
+      fireEvent.click(await findIon(() => ionButton('Speichern')))
+      await waitFor(() => expect(field('Bezeichnung')).toHaveClass('ion-invalid'))
+      expect(calls.updatedItems).toEqual([])
+    })
+  })
+
+  describe('check type form', () => {
+    const open = async () => {
+      renderAt(paths.manage, 'manage')
+      fireEvent.click(await screen.findByText('Prüfarten'))
+      await findIon(() => ionButton('Prüfart anlegen'))
+    }
+
+    it('marks Name as required', async () => {
+      await open()
+      expect(field('Name')).toHaveClass('ui-required')
+      expect(field('Intervall in Monaten')).not.toHaveClass('ui-required')
+    })
+
+    it('marks an empty Name and saves nothing', async () => {
+      await open()
+      fireEvent.click(ionButton('Prüfart anlegen')!)
+      await waitFor(() => expect(field('Name')).toHaveClass('ion-invalid'))
+      expect(field('Name')).toHaveProperty('errorText', message)
+      expect(calls.createdCheckTypes).toEqual([])
+    })
+
+    it('still asks for an interval or "nach Verwendung" once there is a name', async () => {
+      await open()
+      set('Name', 'Sichtprüfung')
+      fireEvent.click(ionButton('Prüfart anlegen')!)
+      expect(await screen.findByText('Intervall oder „nach Verwendung“ angeben.')).toBeInTheDocument()
+      expect(calls.createdCheckTypes).toEqual([])
+    })
+  })
+
+  describe('Standort form', () => {
+    it('marks Name as required and an empty one with a message', async () => {
+      renderAt(paths.manage, 'manage')
+      fireEvent.click(await screen.findByText('Standorte'))
+      await findIon(() => ionButton('Standort anlegen'))
+      expect(field('Name')).toHaveClass('ui-required')
+      fireEvent.click(ionButton('Standort anlegen')!)
+      await waitFor(() => expect(field('Name')).toHaveClass('ion-invalid'))
+      expect(calls.createdLocations).toEqual([])
+    })
+  })
+
+  describe('readings of a check', () => {
+    const open = async () => {
+      data.checkTypes = data.checkTypes.map((t, i) => (i === 0 ? { ...t, measurements: true } : t))
+      renderAt(paths.recordCheck('m01'), 'check')
+      await findIon(() => ionSelect('Prüfart'))
+    }
+    const readings = ['Startdruck (mbar)', 'Druck nach 60 s (mbar)', 'Öffnungsdruck (mbar)']
+
+    it('marks the three readings as required', async () => {
+      await open()
+      for (const label of readings) expect(field(label)).toHaveClass('ui-required')
+    })
+
+    it('marks every empty reading when Speichern is pressed, keeps the filled one clean and saves nothing', async () => {
+      await open()
+      fireEvent.click(ionButton('Speichern')!)
+      expect(await screen.findByText('Bitte alle Messwerte eintragen.')).toBeInTheDocument()
+      // The start pressure has its default value of -10.
+      expect(field('Startdruck (mbar)')).not.toHaveClass('ion-invalid')
+      for (const label of readings.slice(1)) {
+        await waitFor(() => expect(field(label)).toHaveClass('ion-invalid'))
+        expect(field(label)).toHaveProperty('errorText', message)
+      }
+      expect(calls.checks).toEqual([])
+    })
+
+    it('says that a reading is not a number', async () => {
+      await open()
+      set('Druck nach 60 s (mbar)', 'neun')
+      set('Öffnungsdruck (mbar)', '5')
+      fireEvent.click(ionButton('Speichern')!)
+      await waitFor(() => expect(field('Druck nach 60 s (mbar)')).toHaveProperty('errorText', 'Bitte eine Zahl eintragen.'))
+    })
+
+    it('shows no errors before Speichern, and takes each away as it is filled in', async () => {
+      await open()
+      for (const label of readings) expect(field(label)).not.toHaveClass('ion-invalid')
+      fireEvent.click(ionButton('Speichern')!)
+      await waitFor(() => expect(field('Öffnungsdruck (mbar)')).toHaveClass('ion-invalid'))
+      set('Öffnungsdruck (mbar)', '5,1')
+      await waitFor(() => expect(field('Öffnungsdruck (mbar)')).not.toHaveClass('ion-invalid'))
+      expect(field('Druck nach 60 s (mbar)')).toHaveClass('ion-invalid')
+    })
+
+    it('has no star on a check type without readings', async () => {
+      renderAt(paths.recordCheck('m01'), 'check')
+      await findIon(() => ionSelect('Prüfart'))
+      expect(document.querySelector('ion-input.ui-required')).toBeNull()
+    })
+  })
+})
+
 describe('locations in the forms', () => {
   const set = (label: string, value: string) => typeInto(screen.getByLabelText(label), value)
   const optionTexts = (label: string) => [...ionSelect(label)!.querySelectorAll('ion-select-option')].map((o) => o.textContent)
