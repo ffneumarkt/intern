@@ -62,7 +62,10 @@ export default function LoginPage() {
           </p>
         </>
       )}
-      <form onSubmit={submit}>
+      {/* noValidate: on iOS, Ionic's input shim adds an empty copy of the focused field to the form, with its
+          `required`. The browser's validation then refuses the submit without a word, so Enter does nothing.
+          The server rejects an empty or wrong login anyway. */}
+      <form noValidate onSubmit={submit}>
         <IonList>
           <Field label="E-Mail" type="email" autoComplete="username" value={email} onChange={setEmail} required />
           <Field

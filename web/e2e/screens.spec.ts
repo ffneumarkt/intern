@@ -72,7 +72,8 @@ test.describe('forms', () => {
     await shoot(page, info.project.name, 'login')
     await field(page, 'E-Mail').fill(email('verwendung'))
     await field(page, 'Passwort').fill('falsch')
-    await field(page, 'Passwort').press('Enter')
+    // The focused field, not a second lookup (see forms.spec.ts: Ionic's iOS input shim copies the field).
+    await page.keyboard.press('Enter')
     await expect(page.getByText('Anmeldung fehlgeschlagen. E-Mail und Passwort prüfen.')).toBeVisible()
     await shoot(page, info.project.name, 'login-error')
   })

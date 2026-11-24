@@ -127,6 +127,26 @@ describe('login', () => {
     expect(await screen.findByRole('heading', { name: 'Fällig' })).toBeInTheDocument()
   })
 
+  it('still submits when Ionic\'s iOS input shim has added an empty copy of a required field', async () => {
+    signOutWithLogin('use')
+    render(<App initialPath={paths.login} />)
+    typeInto(await screen.findByLabelText('E-Mail'), 'test@example.com')
+    const password = screen.getByLabelText('Passwort')
+    typeInto(password, 'richtig')
+    // On iOS the shim copies the focused field (attributes such as `required`, not the typed value) and
+    // moves the real one aside. An empty required field makes the browser's validation refuse the
+    // submit without a word, so Enter did nothing. The form must not depend on that validation.
+    const copy = password.cloneNode(false) as HTMLInputElement
+    copy.classList.add('cloned-input')
+    copy.tabIndex = -1
+    copy.value = ''
+    password.closest('form')!.appendChild(copy)
+    expect(copy.required).toBe(true)
+    expect(copy.value).toBe('')
+    fireEvent.click(screen.getByTestId('enter-submit'))
+    expect(await screen.findByRole('heading', { name: 'Fällig' })).toBeInTheDocument()
+  })
+
   it('shows an error for wrong credentials', async () => {
     renderAt(paths.login, null)
     await submitLogin('falsch')
