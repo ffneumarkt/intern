@@ -20,6 +20,10 @@ interface FieldProps {
   error?: string
 }
 
+// A required field gets a red star after its label (theme/ui.css); one with an error is drawn invalid.
+const fieldClass = (required?: boolean, error?: string) =>
+  [required && 'ui-required', error && 'ion-invalid ion-touched'].filter(Boolean).join(' ') || undefined
+
 export function Field({ label, value, onChange, type = 'text', autoComplete, required, max, autoCapitalize, inputMode, error }: FieldProps) {
   const typingHelp = (autoCapitalize ?? (type === 'text' ? 'sentences' : 'off')) !== 'off'
   return (
@@ -37,14 +41,14 @@ export function Field({ label, value, onChange, type = 'text', autoComplete, req
         max={max}
         inputmode={inputMode}
         errorText={error}
-        className={error ? 'ion-invalid ion-touched' : undefined}
+        className={fieldClass(required, error)}
         onIonInput={(e) => onChange(e.detail.value ?? '')}
       />
     </IonItem>
   )
 }
 
-export function TextAreaField({ label, value, onChange }: Pick<FieldProps, 'label' | 'value' | 'onChange'>) {
+export function TextAreaField({ label, value, onChange, required, error }: Pick<FieldProps, 'label' | 'value' | 'onChange' | 'required' | 'error'>) {
   return (
     <IonItem>
       <IonTextarea
@@ -54,6 +58,9 @@ export function TextAreaField({ label, value, onChange }: Pick<FieldProps, 'labe
         autocapitalize="sentences"
         spellcheck
         value={value}
+        required={required}
+        errorText={error}
+        className={fieldClass(required, error)}
         onIonInput={(e) => onChange(e.detail.value ?? '')}
       />
     </IonItem>
@@ -73,7 +80,7 @@ export function CheckboxField({ label, checked, onChange }: { label: string; che
 
 // Children are IonSelectOptions. A value that is not among them shows no selection. A popover takes
 // one tap, is anchored at the field and marks the current value.
-export function SelectField({ label, value, onChange, children }: Pick<FieldProps, 'label' | 'value' | 'onChange'> & { children: ReactNode }) {
+export function SelectField({ label, value, onChange, required, error, children }: Pick<FieldProps, 'label' | 'value' | 'onChange' | 'required' | 'error'> & { children: ReactNode }) {
   return (
     <IonItem>
       <IonSelect
@@ -81,6 +88,8 @@ export function SelectField({ label, value, onChange, children }: Pick<FieldProp
         labelPlacement="stacked"
         interface="popover"
         value={value}
+        errorText={error}
+        className={fieldClass(required, error)}
         onIonChange={(e) => onChange(e.detail.value ?? '')}
       >
         {children}

@@ -13,6 +13,7 @@ import {
 import { useCountdown } from '../material/useCountdown'
 import { Field } from './Field'
 import ListNote from './ListNote'
+import { requiredMessage } from './required'
 
 export interface Readings {
   start: number | null
@@ -23,7 +24,7 @@ export interface Readings {
 // The two readings of the mask test, as on the paper sheet: the Dichtprüfung with a 60 second
 // countdown and the Öffnungsdruck of the exhalation valve. Reports the parsed numbers (null while a
 // field is empty or not a number); the page decides what they mean for the result.
-export default function Measurements({ onChange }: { onChange(readings: Readings): void }) {
+export default function Measurements({ onChange, showErrors }: { onChange(readings: Readings): void; showErrors?: boolean }) {
   const [startText, setStartText] = useState(formatMbar(leakStartMbar))
   const [endText, setEndText] = useState('')
   const [openingText, setOpeningText] = useState('')
@@ -41,6 +42,10 @@ export default function Measurements({ onChange }: { onChange(readings: Readings
     report.current({ start, end, opening })
   }, [start, end, opening])
 
+  // What is wrong with a reading, once the user has tried to save: empty, or not a number.
+  const problem = (text: string, value: number | null) =>
+    !showErrors || value !== null ? undefined : text.trim() === '' ? requiredMessage : 'Bitte eine Zahl eintragen.'
+
   const loss = start !== null && end !== null ? leakLoss(start, end) : null
   const openingMessage = opening !== null ? openingHint(opening) : null
 
@@ -51,7 +56,7 @@ export default function Measurements({ onChange }: { onChange(readings: Readings
           <IonLabel>Dichtprüfung</IonLabel>
         </IonListHeader>
         <ListNote>−10 mbar → höchstens {leakLimitMbar} mbar in {leakSeconds} s, trocken</ListNote>
-        <Field label="Startdruck (mbar)" value={startText} autoComplete="off" autoCapitalize="off" onChange={setStartText} />
+        <Field label="Startdruck (mbar)" value={startText} autoComplete="off" autoCapitalize="off" onChange={setStartText} required error={problem(startText, start)} />
         <div className="ui-countdown">
           {(countdown.running || countdown.done) && (
             <div role="timer" className="ui-countdown-time" data-done={countdown.done}>
@@ -74,7 +79,7 @@ export default function Measurements({ onChange }: { onChange(readings: Readings
             </IonButton>
           )}
         </div>
-        <Field label={`Druck nach ${leakSeconds} s (mbar)`} value={endText} autoComplete="off" autoCapitalize="off" onChange={setEndText} />
+        <Field label={`Druck nach ${leakSeconds} s (mbar)`} value={endText} autoComplete="off" autoCapitalize="off" onChange={setEndText} required error={problem(endText, end)} />
         {loss !== null && (
           <ListNote tone={leakOk(loss) ? 'ok' : 'bad'}>
             {leakOk(loss) ? `Verlust ${formatMbar(loss)} mbar ✓` : `Verlust ${formatMbar(loss)} mbar: mehr als ${leakLimitMbar} mbar`}
@@ -87,7 +92,7 @@ export default function Measurements({ onChange }: { onChange(readings: Readings
           <IonLabel>Öffnungsdruck Ausatemventil</IonLabel>
         </IonListHeader>
         <ListNote>4,2–6,0 mbar bei 10 l/min (EN 137)</ListNote>
-        <Field label="Öffnungsdruck (mbar)" value={openingText} autoComplete="off" autoCapitalize="off" onChange={setOpeningText} />
+        <Field label="Öffnungsdruck (mbar)" value={openingText} autoComplete="off" autoCapitalize="off" onChange={setOpeningText} required error={problem(openingText, opening)} />
         {opening !== null && (
           <ListNote tone={openingMessage === null ? 'ok' : 'bad'}>
             {openingMessage === null

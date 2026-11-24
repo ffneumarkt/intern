@@ -449,6 +449,8 @@ ion-card.tile {
    fill="outline" is not drawn inside list items, and for textareas it would move the label out of
    reach of assistive tech and tests, so the boxes are drawn here. */
 .ui-page ion-list ion-item:has(ion-input, ion-textarea, ion-select) {
+  /* The fields draw their own box (and a red one when invalid), so Ionic's underline would double it. */
+  --highlight-height: 0;
   --padding-top: 6px;
   --padding-bottom: 6px;
   --padding-start: 14px;
@@ -638,4 +640,46 @@ ion-card.tile {
   margin: 8px 0 4px;
   min-height: 40px;
   font-weight: 600;
+}
+
+/* A required field: a small red star after its label. A pseudo-element adds no text, so the field is still
+   found by its label. The select keeps its label in a shadow part. */
+ion-input.ui-required .label-text::after,
+ion-textarea.ui-required .label-text::after {
+  content: ' *';
+  color: var(--ion-color-danger);
+  font-size: 0.8125em;
+}
+
+ion-select.ui-required::part(label) {
+  display: flex;
+  align-items: baseline;
+}
+
+ion-select.ui-required::part(label)::after {
+  content: '*';
+  margin-left: 3px;
+  color: var(--ion-color-danger);
+  font-size: 0.8125em;
+}
+
+/* A field with an error: a red box and the message under it. */
+.ui-page ion-input.ion-invalid.ion-touched .native-wrapper,
+.ui-page ion-textarea.ion-invalid.ion-touched .native-wrapper {
+  border-color: var(--ion-color-danger);
+}
+
+.ui-page ion-select.ion-invalid.ion-touched::part(container) {
+  border-color: var(--ion-color-danger);
+}
+
+/* The area under a field that holds its error: Ionic draws a line above it, which would double the red box. */
+.ui-page ion-input .input-bottom,
+.ui-page ion-textarea .input-bottom {
+  border-top: 0;
+  padding-top: 4px;
+}
+
+.ui-page ion-select::part(bottom) {
+  border-top: 0;
 }

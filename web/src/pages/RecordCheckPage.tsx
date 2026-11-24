@@ -5,6 +5,7 @@ import { listCheckTypes, listItems, listLocations, recordCheck, type CheckInput 
 import { Field, SelectField, TextAreaField } from '../components/Field'
 import Loaded from '../components/Loaded'
 import Measurements, { type Readings } from '../components/Measurements'
+import { showFirstInvalid } from '../components/required'
 import Page from '../components/Page'
 import { measurementsPass } from '../material/measurements'
 import { paths } from '../routes'
@@ -36,13 +37,18 @@ export default function RecordCheckPage() {
   const [readings, setReadings] = useState<Readings>({ start: null, end: null, opening: null })
   // A new key starts the readings (fields, countdown) over.
   const [readingsKey, setReadingsKey] = useState(0)
+  // Set by a Speichern with readings missing: only then do the empty ones show their error.
+  const [triedSave, setTriedSave] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { busy, once } = useBusy()
 
   // Ionic keeps the page mounted, possibly past midnight.
   useIonViewWillEnter(() => setDate(today()))
   // Ionic keeps the page mounted: leaving stops the countdown and clears the readings.
-  useIonViewWillLeave(() => setReadingsKey((k) => k + 1))
+  useIonViewWillLeave(() => {
+    setReadingsKey((k) => k + 1)
+    setTriedSave(false)
+  })
 
   return (
     <Page title="Prüfung erfassen" back={fromList ? paths.dueList : paths.item(itemId)}>
@@ -64,7 +70,9 @@ export default function RecordCheckPage() {
               return
             }
             if (measured && (readings.start === null || readings.end === null || readings.opening === null)) {
+              setTriedSave(true)
               setError('Bitte alle Messwerte eintragen.')
+              showFirstInvalid()
               return
             }
             setError(null)
@@ -86,6 +94,7 @@ export default function RecordCheckPage() {
               setResultPicked(false)
               setLocationId(null)
               setReadingsKey((k) => k + 1)
+              setTriedSave(false)
               if (!fromList) navigate(paths.item(itemId))
               else if (ionRouter.canGoBack()) ionRouter.goBack()
               else navigate(paths.dueList)
@@ -107,7 +116,7 @@ export default function RecordCheckPage() {
                 </SelectField>
                 <Field label="Datum" type="date" max={today()} value={date} onChange={setDate} />
               </IonList>
-              {measured && <Measurements key={`${checkTypeId}:${readingsKey}`} onChange={setReadings} />}
+              {measured && <Measurements key={`${checkTypeId}:${readingsKey}`} onChange={setReadings} showErrors={triedSave} />}
               <IonList>
                 <SelectField
                   label="Ergebnis"

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { PasskeyCancelledError, TooManyAttemptsError, tooManyAttemptsMessage } from '../api/errors'
 import { passkeysSupported } from '../api/passkeys'
 import { Field } from '../components/Field'
+import { showFirstInvalid, requiredMessage } from '../components/required'
 import Page from '../components/Page'
 import { paths } from '../routes'
 import { useSession } from '../session'
@@ -17,6 +18,8 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [failed, setFailed] = useState(false)
+  // Set when the form is sent with a field empty: only then do the required fields show their error.
+  const [tried, setTried] = useState(false)
   const [passkeyFailed, setPasskeyFailed] = useState(false)
   const [tooMany, setTooMany] = useState(false)
   const { busy, once } = useBusy()
@@ -36,6 +39,11 @@ export default function LoginPage() {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
+    if (!email.trim() || !password) {
+      setTried(true)
+      showFirstInvalid()
+      return
+    }
     setFailed(false)
     setPasskeyFailed(false)
     setTooMany(false)
@@ -68,7 +76,15 @@ export default function LoginPage() {
           The server rejects an empty or wrong login anyway. */}
       <form noValidate onSubmit={submit}>
         <IonList>
-          <Field label="E-Mail" type="email" autoComplete="username" value={email} onChange={setEmail} required />
+          <Field
+            label="E-Mail"
+            type="email"
+            autoComplete="username"
+            value={email}
+            onChange={setEmail}
+            required
+            error={tried && !email.trim() ? requiredMessage : undefined}
+          />
           <Field
             label="Passwort"
             type="password"
@@ -76,6 +92,7 @@ export default function LoginPage() {
             value={password}
             onChange={setPassword}
             required
+            error={tried && !password ? requiredMessage : undefined}
           />
         </IonList>
         {failed && <ErrorText>Anmeldung fehlgeschlagen. E-Mail und Passwort prüfen.</ErrorText>}
