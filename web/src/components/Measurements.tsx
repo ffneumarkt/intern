@@ -12,6 +12,7 @@ import {
 } from '../material/measurements'
 import { useCountdown } from '../material/useCountdown'
 import { Field } from './Field'
+import ListNote from './ListNote'
 
 export interface Readings {
   start: number | null
@@ -49,7 +50,7 @@ export default function Measurements({ onChange }: { onChange(readings: Readings
         <IonListHeader>
           <IonLabel>Dichtprüfung</IonLabel>
         </IonListHeader>
-        <p className="ui-hint">−10 mbar → höchstens {leakLimitMbar} mbar in {leakSeconds} s, trocken</p>
+        <ListNote>−10 mbar → höchstens {leakLimitMbar} mbar in {leakSeconds} s, trocken</ListNote>
         <Field label="Startdruck (mbar)" value={startText} autoComplete="off" autoCapitalize="off" onChange={setStartText} />
         <div className="ui-countdown">
           {(countdown.running || countdown.done) && (
@@ -57,7 +58,7 @@ export default function Measurements({ onChange }: { onChange(readings: Readings
               {countdown.remaining} s
             </div>
           )}
-          {countdown.done && <p className="ui-hint">Zeit abgelaufen: Druck jetzt ablesen.</p>}
+          {countdown.done && <ListNote>Zeit abgelaufen: Druck jetzt ablesen.</ListNote>}
           <IonButton
             expand="block"
             fill={countdown.running || countdown.done ? 'outline' : 'solid'}
@@ -69,9 +70,9 @@ export default function Measurements({ onChange }: { onChange(readings: Readings
         </div>
         <Field label={`Druck nach ${leakSeconds} s (mbar)`} value={endText} autoComplete="off" autoCapitalize="off" onChange={setEndText} />
         {loss !== null && (
-          <p className="ui-measure" data-ok={leakOk(loss)}>
+          <ListNote tone={leakOk(loss) ? 'ok' : 'bad'}>
             {leakOk(loss) ? `Verlust ${formatMbar(loss)} mbar ✓` : `Verlust ${formatMbar(loss)} mbar: mehr als ${leakLimitMbar} mbar`}
-          </p>
+          </ListNote>
         )}
       </IonList>
 
@@ -79,14 +80,14 @@ export default function Measurements({ onChange }: { onChange(readings: Readings
         <IonListHeader>
           <IonLabel>Öffnungsdruck Ausatemventil</IonLabel>
         </IonListHeader>
-        <p className="ui-hint">4,2–6,0 mbar bei 10 l/min (EN 137)</p>
+        <ListNote>4,2–6,0 mbar bei 10 l/min (EN 137)</ListNote>
         <Field label="Öffnungsdruck (mbar)" value={openingText} autoComplete="off" autoCapitalize="off" onChange={setOpeningText} />
         {opening !== null && (
-          <p className="ui-measure" data-ok={openingMessage === null}>
+          <ListNote tone={openingMessage === null ? 'ok' : 'bad'}>
             {openingMessage === null
               ? `Öffnungsdruck ${formatMbar(opening)} mbar ✓`
               : `Öffnungsdruck ${formatMbar(opening)} mbar: ${openingMessage}`}
-          </p>
+          </ListNote>
         )}
       </IonList>
     </>
