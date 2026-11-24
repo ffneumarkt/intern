@@ -1,8 +1,9 @@
-import { IonButton, IonItem, IonLabel, IonList, IonText } from '@ionic/react'
+import { IonButton, IonItem, IonLabel, IonList } from '@ionic/react'
 import { useState } from 'react'
 import { assignBarcode, type Item } from '../api/material'
 import { BarcodeTakenError } from '../api/errors'
 import { Field } from './Field'
+import { ErrorText } from './ui'
 
 interface Props {
   code: string
@@ -43,7 +44,7 @@ export default function AssignCode({ code, items, onAssigned }: Props) {
   return (
     <div>
       <Field label="Gerät suchen" value={text} autoComplete="off" onChange={setText} />
-      {error && <IonText color="danger">{error}</IonText>}
+      {error && <ErrorText>{error}</ErrorText>}
       <IonList aria-label="Geräte" className="suggestions">
         {candidates.map((i) => (
           <IonItem key={i.id} role="listitem" button detail={false} onClick={() => assign(i)}>

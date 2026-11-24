@@ -1,8 +1,9 @@
-import { IonSelect, IonSelectOption, IonText, useIonViewWillEnter, useIonViewWillLeave } from '@ionic/react'
+import { IonSelect, IonSelectOption, useIonViewWillEnter, useIonViewWillLeave } from '@ionic/react'
 import { useEffect, useRef, useState } from 'react'
 import { loadDetector } from '../scan/detector'
 import { useCamera } from '../scan/useCamera'
 import { CheckboxField } from './Field'
+import { ErrorText } from './ui'
 
 const interval = 200
 
@@ -59,9 +60,9 @@ export default function Scanner({ onCode, active = true }: Props) {
     <div className="scanner">
       <video ref={videoRef} className="scanner-video" playsInline muted aria-label="Kameravorschau" />
       {error && (
-        <IonText color="danger" role="status">
+        <ErrorText role="status">
           {error}
-        </IonText>
+        </ErrorText>
       )}
       {camera.devices.length > 1 && (
         // A compact control under the preview, not a full-width form field: only its own area is tappable.

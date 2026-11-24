@@ -23,6 +23,11 @@ Internal tools for FF Neumarkt at `intern.ffneumarkt.at`. Start with `docs/super
   `web/src/test/ionic.ts`. Plain text fields get capitalisation, autocorrect and spellcheck (Ionic turns
   them off by default); code-like ones (codes, serial numbers) pass `autoCapitalize="off"`. Dates are
   `IonInput type="date"` (the OS picker); only the Ruhezeit times stay native `<input type="time">`.
+- Shared UI pieces live once in `web/src/components/ui.tsx`: `ErrorText` (red message, renders nothing when empty,
+  optional `role`), `ActionBar` (sticky bar at the page bottom), `Hint` (muted paragraph), `Card` (`tone="warning"`)
+  and `BlockButton` (full-width `IonButton`); inside a list use `ListNote` (an Ionic item, so it takes the list's
+  padding). Pages use these instead of repeating the Ionic element and its `ui-*` classes; their look is in
+  `web/src/theme/ui.css`.
 - Confirm and prompt dialogs are IonAlerts through `useDialogs` (`web/src/components/useDialogs.ts`), never
   `window.confirm`/`prompt`; tests press the alert buttons with `alertButton` from `web/src/test/ionic.ts`.
 - Data pages load with `useResource`, not an effect: Ionic keeps pages mounted.

@@ -22,6 +22,7 @@ import { useDialogs } from '../components/useDialogs'
 import { useSession } from '../session'
 import { useBusy } from '../useBusy'
 import { useResource } from '../useResource'
+import { BlockButton } from '../components/ui'
 
 export default function SettingsPage() {
   const { user, logout } = useSession()
@@ -142,17 +143,17 @@ export default function SettingsPage() {
       <SettingsFooter message={error ? { text: error, role: 'alert' } : null} />
       <div className="ion-padding-horizontal">
         {canAdd && (
-          <IonButton expand="block" fill="outline" disabled={busy || !name.trim()} onClick={() => once(add)}>
+          <BlockButton fill="outline" disabled={busy || !name.trim()} onClick={() => once(add)}>
             <IonIcon slot="start" icon={addOutline} aria-hidden />
             Passkey hinzufügen
-          </IonButton>
+          </BlockButton>
         )}
         {needsConfirmation && (
           <>
-            <IonButton expand="block" fill="outline" disabled={busy} onClick={() => once(confirm)}>
+            <BlockButton fill="outline" disabled={busy} onClick={() => once(confirm)}>
               <IonIcon slot="start" icon={keyOutline} aria-hidden />
               Mit Passkey bestätigen
-            </IonButton>
+            </BlockButton>
             <IonNote className="ion-text-center ion-margin-vertical" style={{ display: 'block' }}>
               Kein Zugriff auf den Passkey? Nach dem Entfernen genügt das Passwort.
             </IonNote>
@@ -164,9 +165,9 @@ export default function SettingsPage() {
         <LegalItems />
       </IonList>
       <div className="ion-padding-horizontal">
-        <IonButton expand="block" fill="clear" color="danger" onClick={logout}>
+        <BlockButton fill="clear" color="danger" onClick={logout}>
           Abmelden
-        </IonButton>
+        </BlockButton>
       </div>
     </Page>
   )

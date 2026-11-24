@@ -1,4 +1,4 @@
-import { IonButton, IonIcon, IonList, IonText } from '@ionic/react'
+import { IonIcon, IonList } from '@ionic/react'
 import { keyOutline } from 'ionicons/icons'
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -9,6 +9,7 @@ import Page from '../components/Page'
 import { paths } from '../routes'
 import { useSession } from '../session'
 import { useBusy } from '../useBusy'
+import { BlockButton, ErrorText, Hint } from '../components/ui'
 
 export default function LoginPage() {
   const { login, loginWithPasskey } = useSession()
@@ -52,14 +53,14 @@ export default function LoginPage() {
       <img className="login-logo" src="/icons/intern-192.png" alt="" width="72" height="72" />
       {passkeysSupported() && (
         <>
-          <IonButton className="ui-button" expand="block" disabled={busy} onClick={() => once(signInWithPasskey)}>
+          <BlockButton className="ui-button" disabled={busy} onClick={() => once(signInWithPasskey)}>
             <IonIcon slot="start" icon={keyOutline} aria-hidden />
             Mit Passkey anmelden
-          </IonButton>
-          {passkeyFailed && <IonText color="danger">Anmeldung mit Passkey fehlgeschlagen.</IonText>}
-          <p className="ui-hint ui-hint--center">
+          </BlockButton>
+          {passkeyFailed && <ErrorText>Anmeldung mit Passkey fehlgeschlagen.</ErrorText>}
+          <Hint center>
             oder mit E-Mail und Passwort
-          </p>
+          </Hint>
         </>
       )}
       {/* noValidate: on iOS, Ionic's input shim adds an empty copy of the focused field to the form, with its
@@ -77,14 +78,14 @@ export default function LoginPage() {
             required
           />
         </IonList>
-        {failed && <IonText color="danger">Anmeldung fehlgeschlagen. E-Mail und Passwort prüfen.</IonText>}
-        {tooMany && <IonText color="danger">{tooManyAttemptsMessage}</IonText>}
+        {failed && <ErrorText>Anmeldung fehlgeschlagen. E-Mail und Passwort prüfen.</ErrorText>}
+        {tooMany && <ErrorText>{tooManyAttemptsMessage}</ErrorText>}
         {/* Enter submits through the form's default button. Ionic's button adds its own hidden one only after
             its lazy component has rendered; until then a form with two text fields would ignore Enter. */}
         <button type="submit" hidden data-testid="enter-submit" tabIndex={-1} aria-hidden="true" />
-        <IonButton className="ui-button" expand="block" fill={passkeysSupported() ? 'outline' : 'solid'} type="submit">
+        <BlockButton className="ui-button" fill={passkeysSupported() ? 'outline' : 'solid'} type="submit">
           Anmelden
-        </IonButton>
+        </BlockButton>
       </form>
     </Page>
   )

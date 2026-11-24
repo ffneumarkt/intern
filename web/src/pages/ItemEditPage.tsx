@@ -1,4 +1,3 @@
-import { IonButton, IonText } from '@ionic/react'
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ItemHasHistoryError } from '../api/errors'
@@ -10,6 +9,7 @@ import { useDialogs } from '../components/useDialogs'
 import { paths } from '../routes'
 import { useSession } from '../session'
 import { useResource } from '../useResource'
+import { BlockButton, ErrorText } from '../components/ui'
 
 const historyNotice = 'Gerät hat einen Verlauf und kann nicht gelöscht, nur ausgeschieden werden.'
 
@@ -52,13 +52,13 @@ export default function ItemEditPage() {
                   navigate(paths.item(item.id))
                 }}
               />
-              {error && <IonText color="danger">{error}</IonText>}
+              {error && <ErrorText>{error}</ErrorText>}
               {hasHistory ? (
                 !error && <p>{historyNotice}</p>
               ) : (
-                <IonButton expand="block" color="danger" fill="clear" onClick={() => remove(item)}>
+                <BlockButton color="danger" fill="clear" onClick={() => remove(item)}>
                   Gerät löschen
-                </IonButton>
+                </BlockButton>
               )}
             </>
           )

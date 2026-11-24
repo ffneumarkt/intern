@@ -1,8 +1,9 @@
-import { IonButton, IonCard, IonIcon } from '@ionic/react'
+import { IonCard, IonIcon } from '@ionic/react'
 import { chevronForward, constructOutline, documentTextOutline } from 'ionicons/icons'
 import Page from '../components/Page'
 import { paths } from '../routes'
 import { useSession } from '../session'
+import { BlockButton, Hint } from '../components/ui'
 
 function Tile({ to, icon, title, subtitle }: { to: string; icon: string; title: string; subtitle: string }) {
   return (
@@ -31,12 +32,12 @@ export default function StartPage() {
       ) : (
         <section className="ui-card" aria-label="Anmeldung">
           <h2>Materialverwaltung</h2>
-          <p className="ui-hint" style={{ margin: '6px 0 14px' }}>
+          <Hint style={{ margin: '6px 0 14px' }}>
             Prüffristen, Verwendungen und Erinnerungen für Geräte. Dafür bitte anmelden.
-          </p>
-          <IonButton expand="block" routerLink={paths.login}>
+          </Hint>
+          <BlockButton routerLink={paths.login}>
             Anmelden
-          </IonButton>
+          </BlockButton>
         </section>
       )}
     </Page>
