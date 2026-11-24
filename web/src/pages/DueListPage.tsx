@@ -8,6 +8,7 @@ import ItemRow from '../components/ItemRow'
 import Loaded from '../components/Loaded'
 import { maxLeadDays } from '../components/notificationText'
 import Page from '../components/Page'
+import ScanSearch from '../components/ScanSearch'
 import { paths } from '../routes'
 import { addDays, today } from '../today'
 import { useResource } from '../useResource'
@@ -48,6 +49,7 @@ export default function DueListPage() {
           const upcoming = only ? visible.filter((i) => i.dueState === 'ok' && (i.dues[0]?.date ?? '9999') <= horizon) : []
           return (
             <>
+              <ScanSearch items={items} />
               <div className="ui-chips">
                 <IonChip outline={category !== null} onClick={() => setCategory(null)}>
                   Alle
