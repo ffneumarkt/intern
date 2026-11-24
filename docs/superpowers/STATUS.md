@@ -121,7 +121,7 @@ Last updated: 2026-11-05. Read this first, then the spec
   The server keeps it: a use moves the item to the default location, a check with a location moves it there, a
   check without one records where the item is; the location is also stored on every use and check for the history
   („Standort: RLF“). „Prüfung erfassen“ offers a „Standort“ select (workshop preselected) when the result is
-  Bestanden. The due list and the category page have location chips that show only the items currently there; rows
+  Bestanden. The category page has location chips that show only the items currently there (not the due list); rows
   and the item page show the location; the item form has a location select. A location in use and the default one
   cannot be deleted; `is_default` cannot be set through the API. Rules: any logged in user reads, the manage level
   in any category manages. Not built: a location history page, locations per category, stock counts.

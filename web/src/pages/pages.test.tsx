@@ -53,46 +53,13 @@ describe('locations in the lists', () => {
     expect(ionItem('LA 01')).toHaveTextContent('RLF')
   })
 
-  describe('filter on the due list', () => {
-    it('offers all locations next to Alle', async () => {
-      renderAt(paths.dueList, 'use')
-      await screen.findByRole('region', { name: 'Überfällig' })
-      for (const name of ['AS-Werkstatt', 'LAST', 'RLF']) expect(ionChip(name)).not.toBeNull()
-    })
-
-    it('shows only the items that are in the chosen location', async () => {
-      renderAt(paths.dueList, 'use')
-      await screen.findByRole('region', { name: 'Überfällig' })
-      fireEvent.click(ionChip('RLF')!)
-      await waitFor(() => expect(visibleNames().sort()).toEqual(['LA 01', 'Maske 03']))
-      fireEvent.click(ionChip('LAST')!)
-      await waitFor(() => expect(visibleNames()).toEqual(['Maske 02']))
-    })
-
-    it('shows everything again with Alle of the location chips', async () => {
-      renderAt(paths.dueList, 'use')
-      await screen.findByRole('region', { name: 'Überfällig' })
-      fireEvent.click(ionChip('RLF')!)
-      await waitFor(() => expect(visibleNames()).toHaveLength(2))
-      fireEvent.click(screen.getAllByText('Alle').find((el) => el.closest('[aria-label="Standort"]'))!)
-      await waitFor(() => expect(visibleNames().length).toBeGreaterThan(2))
-    })
-
-    it('combines with the category filter', async () => {
-      renderAt(paths.dueList, 'use')
-      await screen.findByRole('region', { name: 'Überfällig' })
-      fireEvent.click(ionChip('RLF')!)
-      fireEvent.click(ionChip('Atemschutzmasken')!)
-      await waitFor(() => expect(visibleNames()).toEqual(['Maske 03']))
-    })
-
-    it('says so when nothing is in the location', async () => {
-      data.locations.push({ id: 'neu', name: 'Reserve', isDefault: false })
-      renderAt(paths.dueList, 'use')
-      await screen.findByRole('region', { name: 'Überfällig' })
-      fireEvent.click(ionChip('Reserve')!)
-      expect(await screen.findByText('Nichts in diesem Standort.')).toBeInTheDocument()
-    })
+  it('has no location filter on the due list, only on the category pages', async () => {
+    renderAt(paths.dueList, 'use')
+    await screen.findByRole('region', { name: 'Überfällig' })
+    expect(document.querySelector('[aria-label="Standort"]')).toBeNull()
+    expect(ionChip('RLF')).toBeNull()
+    // The category chips are still there.
+    expect(ionChip('Atemschutzmasken')).not.toBeNull()
   })
 
   describe('filter on the category page', () => {

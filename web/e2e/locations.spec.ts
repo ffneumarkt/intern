@@ -7,7 +7,13 @@ import { authState, expect, removeItemWithHistory, test, tokenOf } from './fixtu
 
 const select = (page: Page, label: string) =>
   page.locator('ion-select').filter({ visible: true, has: page.getByText(label, { exact: true }) })
-const chip = (page: Page, name: string) => page.locator('ion-chip').filter({ visible: true, hasText: name })
+// The location chips of the page with the given heading; Ionic keeps the page it came from mounted behind it.
+const chip = (page: Page, heading: string, name: string) =>
+  page
+    .locator('ion-content')
+    .filter({ has: page.locator('h1.page-heading', { hasText: heading }) })
+    .getByRole('group', { name: 'Standort' })
+    .getByText(name, { exact: true })
 
 async function createMask(request: APIRequestContext, name: string): Promise<string> {
   const headers = { Authorization: tokenOf('verwaltung') }
@@ -59,9 +65,10 @@ test.describe('as pruefung', () => {
       // The category page lists it under RLF and no longer under LAST.
       await page.goto('/material')
       await page.getByText('Atemschutzmasken', { exact: true }).last().click()
-      await chip(page, 'RLF').click()
+      await expect(page.locator('h1.page-heading').filter({ hasText: 'Atemschutzmasken' })).toBeVisible()
+      await chip(page, 'Atemschutzmasken', 'RLF').click()
       await expect(page.locator('ion-item.item-row').filter({ visible: true, hasText: name })).toBeVisible()
-      await chip(page, 'LAST').click()
+      await chip(page, 'Atemschutzmasken', 'LAST').click()
       await expect(page.locator('ion-item.item-row').filter({ visible: true, hasText: name })).toHaveCount(0)
     } finally {
       await removeItemWithHistory(request, id)

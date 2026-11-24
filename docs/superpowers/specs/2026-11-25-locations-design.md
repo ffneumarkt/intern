@@ -13,9 +13,9 @@ Replaces the „Standort“ column of the paper Betriebsnachweis. Extends §3 (d
   trucks are full stays there; otherwise the Wart picks the truck). With Mangel or ausgeschieden the select is hidden
   and the location does not change. The same form opens from the „Prüfen“ button on the due list.
 - The history keeps where the item was at each use and check („Standort: RLF“ in the entry).
-- A **filter by location** on the due list and on the category page: chips „Alle“ plus the locations, showing the
-  items currently there („the masks that are in RLF“).
-- The item page shows „Standort“, rows show it in the secondary line, the item form (Verwalten) has a select that
+- A **filter by location** on the category page only (not on the due list, which stays about what is due): chips
+  „Alle“ plus the locations, showing the items currently there („the masks that are in RLF“).
+- The item page shows „Standort“, rows (due list and category page) show it in the secondary line, the item form (Verwalten) has a select that
   defaults to AS-Werkstatt for a new item, so it can be corrected by hand.
 - Verwalten has a „Standorte“ tab to add, rename and remove locations. A location that items, uses or checks refer
   to cannot be deleted; the default location cannot be deleted or changed into a non-default one.
