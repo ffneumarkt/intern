@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatMbar, leakLoss, leakOk, measurementsPass, openingHint, openingOk, parseMbar } from './measurements'
+import { formatMbar, leakLoss, leakOk, measurementDetail, measurementsPass, openingHint, openingOk, parseMbar } from './measurements'
 
 describe('parseMbar', () => {
   it.each([
@@ -76,5 +76,17 @@ describe('measurementsPass', () => {
     expect(measurementsPass(-10, -9.5, 5.1)).toBe(true)
     expect(measurementsPass(-10, -5, 5.1)).toBe(false)
     expect(measurementsPass(-10, -9.5, 7)).toBe(false)
+  })
+})
+
+describe('measurementDetail', () => {
+  it('writes both readings for the history', () => {
+    expect(measurementDetail(-10, -9, 5.1)).toBe('Dichtheit -10 → -9 mbar (Verlust 1), Öffnungsdruck 5,1 mbar')
+    expect(measurementDetail(-10, -9.5, 4.2)).toBe('Dichtheit -10 → -9,5 mbar (Verlust 0,5), Öffnungsdruck 4,2 mbar')
+  })
+
+  it('is empty for a check without readings (the server stores empty numbers as 0)', () => {
+    expect(measurementDetail(0, 0, 0)).toBeNull()
+    expect(measurementDetail(undefined, undefined, undefined)).toBeNull()
   })
 })

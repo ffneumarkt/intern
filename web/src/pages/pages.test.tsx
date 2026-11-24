@@ -731,8 +731,33 @@ describe('manage', () => {
       intervalMonths: 6,
       afterUse: true,
       isDefault: true,
+      measurements: false,
       alsoSatisfies: ['maskenpruefung'],
     })
+  })
+
+  it('creates a check type that asks for measurements', async () => {
+    renderAt(paths.manage, 'manage')
+    await openCheckTypes()
+    set('Name', 'Dichtheitsprüfung')
+    set('Intervall in Monaten', '12')
+    fireEvent.click(screen.getByLabelText('Messwerte erfassen'))
+    fireEvent.click(ionButton('Prüfart anlegen')!)
+    await waitFor(() => expect(calls.createdCheckTypes).toHaveLength(1))
+    expect(calls.createdCheckTypes[0].measurements).toBe(true)
+  })
+
+  it('shows the measurements switch of an existing check type and saves a change', async () => {
+    data.checkTypes[0].measurements = true
+    renderAt(paths.manage, 'manage')
+    await openCheckTypes()
+    fireEvent.click(await findIon(() => ionItem('Maskenprüfung')))
+    const toggle = await screen.findByLabelText('Messwerte erfassen')
+    expect(toggle).toBeChecked()
+    fireEvent.click(toggle)
+    fireEvent.click(ionButton('Speichern')!)
+    await waitFor(() => expect(calls.updatedCheckTypes).toHaveLength(1))
+    expect(calls.updatedCheckTypes[0].input.measurements).toBe(false)
   })
 
   it('edits a check type, offering only others of its category', async () => {

@@ -35,3 +35,11 @@ export function measurementsPass(start: number | null, end: number | null, openi
   if (start === null || end === null || opening === null) return null
   return leakOk(leakLoss(start, end)) && openingOk(opening)
 }
+
+// The readings of a check for its history entry. The server stores an empty number as 0, so a check
+// with all three at 0 has no readings.
+export function measurementDetail(start?: number, end?: number, opening?: number): string | null {
+  if (!start && !end && !opening) return null
+  const loss = leakLoss(start ?? 0, end ?? 0)
+  return `Dichtheit ${formatMbar(start ?? 0)} → ${formatMbar(end ?? 0)} mbar (Verlust ${formatMbar(loss)}), Öffnungsdruck ${formatMbar(opening ?? 0)} mbar`
+}
