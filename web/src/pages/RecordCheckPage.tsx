@@ -1,6 +1,6 @@
-import { IonButton, IonList, IonSelectOption, IonText, useIonViewWillEnter, useIonViewWillLeave } from '@ionic/react'
+import { IonButton, IonList, IonSelectOption, IonText, useIonRouter, useIonViewWillEnter, useIonViewWillLeave } from '@ionic/react'
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { listCheckTypes, listItems, recordCheck, type CheckInput } from '../api/material'
 import { Field, SelectField, TextAreaField } from '../components/Field'
 import Loaded from '../components/Loaded'
@@ -20,6 +20,9 @@ const load = async () => {
 export default function RecordCheckPage() {
   const { itemId = '' } = useParams()
   const navigate = useNavigate()
+  const ionRouter = useIonRouter()
+  // Opened from a row of the due list: back and saving return there (with its filter), not to the item page.
+  const fromList = new URLSearchParams(useLocation().search).get('von') === 'liste'
   const resource = useResource(load)
   const [selectedType, setSelectedType] = useState('')
   const [date, setDate] = useState(today)
@@ -39,7 +42,7 @@ export default function RecordCheckPage() {
   useIonViewWillLeave(() => setReadingsKey((k) => k + 1))
 
   return (
-    <Page title="Prüfung erfassen" back={paths.item(itemId)}>
+    <Page title="Prüfung erfassen" back={fromList ? paths.dueList : paths.item(itemId)}>
       <Loaded resource={resource}>
         {({ items, checkTypes }) => {
           const item = items.find((i) => i.id === itemId)
@@ -76,7 +79,9 @@ export default function RecordCheckPage() {
               setResult('passed')
               setResultPicked(false)
               setReadingsKey((k) => k + 1)
-              navigate(paths.item(itemId))
+              if (!fromList) navigate(paths.item(itemId))
+              else if (ionRouter.canGoBack()) ionRouter.goBack()
+              else navigate(paths.dueList)
             } catch {
               setError('Speichern fehlgeschlagen.')
             }

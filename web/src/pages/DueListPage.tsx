@@ -76,7 +76,7 @@ export default function DueListPage() {
                         <IonLabel>{dueStateLabel(state)}</IonLabel>
                       </IonListHeader>
                       {inGroup.map((i) => (
-                        <ItemRow key={i.id} item={i} categoryName={categoryName(i.categoryId)} />
+                        <ItemRow key={i.id} item={i} categoryName={categoryName(i.categoryId)} checkAction />
                       ))}
                     </IonList>
                   </section>
@@ -89,7 +89,7 @@ export default function DueListPage() {
                       <IonLabel>Demnächst</IonLabel>
                     </IonListHeader>
                     {upcoming.map((i) => (
-                      <ItemRow key={i.id} item={i} categoryName={categoryName(i.categoryId)} />
+                      <ItemRow key={i.id} item={i} categoryName={categoryName(i.categoryId)} checkAction />
                     ))}
                   </IonList>
                 </section>
