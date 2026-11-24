@@ -69,18 +69,4 @@ test.describe('as verwaltung', () => {
       await removeItemWithHistory(request, id)
     }
   })
-
-  test('opens an item from the due list scanner', async ({ page, request, browserName }) => {
-    test.skip(browserName !== 'chromium', 'only Chromium has a fake camera that shows a chosen picture')
-    const name = `Scan ${randomBytes(3).toString('hex')}`
-    const id = await createMask(request, name, scanCode)
-    try {
-      await page.goto('/material')
-      await page.getByRole('button', { name: 'Scannen' }).click()
-      await expect(page.getByText('Status: Aktiv')).toBeVisible({ timeout: 20_000 })
-      await expect(page).toHaveURL(new RegExp(`/material/geraete/${id}$`))
-    } finally {
-      await removeItemWithHistory(request, id)
-    }
-  })
 })

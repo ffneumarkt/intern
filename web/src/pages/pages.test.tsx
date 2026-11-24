@@ -43,6 +43,13 @@ async function scan(code: string) {
 }
 
 describe('due list', () => {
+  it('has no scan button above the filter; scanning is part of recording a use', async () => {
+    renderAt(paths.dueList, 'manage')
+    await screen.findByRole('region', { name: 'Überfällig' })
+    expect(ionButton('Scannen')).toBeNull()
+    expect(ionChip('Alle')).not.toBeNull()
+  })
+
   it('groups items by state', async () => {
     renderAt(paths.dueList, 'use')
     const overdue = await screen.findByRole('region', { name: 'Überfällig' })
@@ -212,50 +219,6 @@ describe('item actions follow level', () => {
     renderAt(paths.item('m01'), 'manage')
     expect(await findIon(() => ionButton('Bearbeiten'))).toBeInTheDocument()
     expect(button('Etikett drucken')).not.toBeInTheDocument()
-  })
-})
-
-describe('scan search on the due list', () => {
-  async function openScanner(level: Level = 'use') {
-    renderAt(paths.dueList, level)
-    fireEvent.click(await findIon(() => ionButton('Scannen')))
-    await screen.findByTestId('scanner')
-  }
-
-  it('opens the item of a scanned code', async () => {
-    await openScanner()
-    scanCode('M-001')
-    expect(await screen.findByText('Status: Aktiv')).toBeInTheDocument()
-    expect(scannerActive()).toBe(false)
-  })
-
-  it('treats the code of a retired item as unknown', async () => {
-    await openScanner()
-    scanCode('M-006')
-    expect(await screen.findByText('Nicht gefunden: M-006')).toBeInTheDocument()
-    expect(screen.queryByText('Status: Ausgeschieden')).not.toBeInTheDocument()
-  })
-
-  it('shows an unknown code, with assignment only for manage', async () => {
-    await openScanner('use')
-    scanCode('UNKNOWN-1')
-    expect(await screen.findByText('Nicht gefunden: UNKNOWN-1')).toBeInTheDocument()
-    expect(button('Gerät zuordnen')).not.toBeInTheDocument()
-  })
-
-  it('closes the scanner with Schließen', async () => {
-    await openScanner()
-    fireEvent.click(ionButton('Schließen')!)
-    await waitFor(() => expect(scannerActive()).toBe(false))
-  })
-
-  it('assigns an unknown code and opens that item (manage)', async () => {
-    await openScanner('manage')
-    scanCode('UNKNOWN-1')
-    fireEvent.click(await findIon(() => ionButton('Gerät zuordnen')))
-    fireEvent.click(await findIon(() => ionItem('LA 02')))
-    expect(await screen.findByText('Status: Aktiv')).toBeInTheDocument()
-    expect(calls.assigned).toEqual([{ itemId: 'l02', barcode: 'UNKNOWN-1' }])
   })
 })
 

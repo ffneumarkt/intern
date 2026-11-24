@@ -56,6 +56,15 @@ describe('Scanner', () => {
     expect(document.querySelector('ion-select')).not.toBeNull()
   })
 
+  it('offers the camera picker as a compact select, not as a full-width form field', async () => {
+    installCamera({ devices: [{ deviceId: 'a', label: 'Vorne' }, { deviceId: 'b', label: 'Hinten' }] })
+    script()
+    await start()
+    const picker = document.querySelector('.scanner ion-select')!
+    expect(picker).toHaveClass('scanner-camera')
+    expect(picker.closest('ion-item')).toBeNull()
+  })
+
   it('has no picker with a single camera', async () => {
     installCamera()
     script()
