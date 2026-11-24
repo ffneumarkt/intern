@@ -22,6 +22,14 @@ updates:
     groups:
       npm-minor-patch:
         update-types: [minor, patch]
+    # @ionic/react-router (9.0.13, latest) accepts react-router and react-router-dom only below 7, and
+    # fails with them at 7 (useLocation outside a <Router>); react-router-dom has no 8. Lift this once a
+    # new @ionic/react-router release supports react-router 7 or later.
+    ignore:
+      - dependency-name: react-router
+        update-types: [version-update:semver-major]
+      - dependency-name: react-router-dom
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: github-actions
     directory: /

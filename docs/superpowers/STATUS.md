@@ -100,7 +100,9 @@ Last updated: 2026-11-05. Read this first, then the spec
   PWA scanning offline.
 - Dependabot (`.github/dependabot.yml`) opens a weekly PR (Mondays) per ecosystem: Go modules, npm, GitHub
   Actions and the Docker base images; minor and patch updates are grouped, a major update comes alone.
-  The normal CI runs on those PRs; the user merges.
+  The normal CI runs on those PRs; the user merges. Major updates of `react-router` and `react-router-dom` are
+  ignored: `@ionic/react-router` 9.0.13 allows only versions below 7 and breaks with 7 (checked: 179 of 338
+  tests fail inside `IonRouter`). Lift the rule when Ionic releases support for 7 or later.
 - **Deploy files done** (PR #24, no separate plan: spec §10 was the design):
   `intern snapshot` (`internal/snapshot`, `VACUUM INTO` in a temporary directory, gzip to stdout, tests
   restore the copy) and `deploy/` (systemd update timer, `intern-backup` wrapper with its sudoers line and
