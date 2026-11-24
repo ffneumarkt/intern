@@ -64,6 +64,35 @@ test.describe('as pruefung', () => {
     }
   })
 
+  test('ends the countdown with Beenden, next to Neu starten', async ({ page, request }) => {
+    const name = `E2E Messwerte ${randomBytes(3).toString('hex')}`
+    const id = await createMask(request, name)
+    try {
+      await page.goto(`/material/geraete/${id}/pruefung`)
+      await expect(page.getByRole('button', { name: 'Beenden' })).toHaveCount(0)
+      await page.getByRole('button', { name: '60 s starten' }).click()
+      await expect(page.getByRole('timer')).toBeVisible()
+
+      const restart = page.getByRole('button', { name: 'Neu starten' })
+      const end = page.getByRole('button', { name: 'Beenden' })
+      await expect(restart).toBeVisible()
+      await expect(end).toBeVisible()
+      // Side by side, not stacked.
+      const [a, b] = [await restart.boundingBox(), await end.boundingBox()]
+      expect(Math.abs(a!.y - b!.y)).toBeLessThan(2)
+      expect(b!.x).toBeGreaterThan(a!.x + a!.width - 1)
+      await page.screenshot({ path: test.info().outputPath('countdown-running.png') })
+
+      await end.click()
+      await expect(page.getByRole('timer')).toHaveCount(0)
+      await expect(page.getByRole('button', { name: '60 s starten' })).toBeVisible()
+      await expect(page.getByRole('button', { name: 'Beenden' })).toHaveCount(0)
+      await expect(field(page, 'Startdruck (mbar)')).toHaveValue('-10')
+    } finally {
+      await removeItemWithHistory(request, id)
+    }
+  })
+
   test('suggests Mangel for a reading outside the limits and asks for all values', async ({ page, request }) => {
     const name = `E2E Messwerte ${randomBytes(3).toString('hex')}`
     const id = await createMask(request, name)

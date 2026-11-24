@@ -59,14 +59,20 @@ export default function Measurements({ onChange }: { onChange(readings: Readings
             </div>
           )}
           {countdown.done && <ListNote>Zeit abgelaufen: Druck jetzt ablesen.</ListNote>}
-          <IonButton
-            expand="block"
-            fill={countdown.running || countdown.done ? 'outline' : 'solid'}
-            disabled={!countdown.running && !countdown.done && start === null}
-            onClick={countdown.start}
-          >
-            {countdown.running || countdown.done ? 'Neu starten' : `${leakSeconds} s starten`}
-          </IonButton>
+          {countdown.running || countdown.done ? (
+            <div className="ui-countdown-buttons">
+              <IonButton expand="block" fill="outline" onClick={countdown.start}>
+                Neu starten
+              </IonButton>
+              <IonButton expand="block" fill="outline" color="medium" onClick={countdown.reset}>
+                Beenden
+              </IonButton>
+            </div>
+          ) : (
+            <IonButton expand="block" disabled={start === null} onClick={countdown.start}>
+              {leakSeconds} s starten
+            </IonButton>
+          )}
         </div>
         <Field label={`Druck nach ${leakSeconds} s (mbar)`} value={endText} autoComplete="off" autoCapitalize="off" onChange={setEndText} />
         {loss !== null && (

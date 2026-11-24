@@ -60,7 +60,9 @@ test('logs in with Enter in the password field', async ({ page }) => {
   await expect(field(page, 'Passwort')).toHaveAttribute('type', 'password')
   await field(page, 'E-Mail').fill(email('verwendung'))
   await field(page, 'Passwort').fill(password)
-  await field(page, 'Passwort').press('Enter')
+  // Enter goes to the focused field, as for a person typing. A second lookup of the label would find the
+  // visible copy that Ionic's iOS input shim makes of a focused field, not the real one.
+  await page.keyboard.press('Enter')
   await expect(heading(page, 'Fällig')).toBeVisible()
 })
 

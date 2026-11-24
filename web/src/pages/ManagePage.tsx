@@ -1,4 +1,4 @@
-import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonSegment, IonSegmentButton, IonSelectOption, IonText } from '@ionic/react'
+import { IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonSegment, IonSegmentButton, IonSelectOption, IonText } from '@ionic/react'
 import { addOutline } from 'ionicons/icons'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -29,6 +29,7 @@ import { paths } from '../routes'
 import { useSession } from '../session'
 import { useBusy } from '../useBusy'
 import { useResource } from '../useResource'
+import { ActionBar, BlockButton, ErrorText } from '../components/ui'
 
 const load = async () => {
   const [categories, items, checkTypes, locations] = await Promise.all([listCategories(), listItems(), listCheckTypes(), listLocations()])
@@ -259,18 +260,18 @@ function CheckTypeForm({ categoryId, checkType, others, onDone }: CheckTypeFormP
             />
           ))}
       </IonList>
-      {error && <IonText color="danger">{error}</IonText>}
-      <div className="ui-actions">
-        <IonButton expand="block" disabled={busy || !name.trim()} onClick={() => once(save)}>
+      {error && <ErrorText>{error}</ErrorText>}
+      <ActionBar>
+        <BlockButton disabled={busy || !name.trim()} onClick={() => once(save)}>
           {!checkType && <IonIcon slot="start" icon={addOutline} aria-hidden />}
           {checkType ? 'Speichern' : 'Prüfart anlegen'}
-        </IonButton>
+        </BlockButton>
         {checkType && (
-          <IonButton expand="block" color="danger" fill="clear" onClick={() => remove(checkType)}>
+          <BlockButton color="danger" fill="clear" onClick={() => remove(checkType)}>
             Prüfart löschen
-          </IonButton>
+          </BlockButton>
         )}
-      </div>
+      </ActionBar>
     </>
   )
 }
@@ -341,18 +342,18 @@ function LocationForm({ location, onDone }: { location?: Location; onDone(): voi
         </IonListHeader>
         <Field label="Name" value={name} onChange={setName} />
       </IonList>
-      {error && <IonText color="danger">{error}</IonText>}
-      <div className="ui-actions">
-        <IonButton expand="block" disabled={busy || !name.trim()} onClick={() => once(save)}>
+      <ErrorText>{error}</ErrorText>
+      <ActionBar>
+        <BlockButton disabled={busy || !name.trim()} onClick={() => once(save)}>
           {!location && <IonIcon slot="start" icon={addOutline} aria-hidden />}
           {location ? 'Speichern' : 'Standort anlegen'}
-        </IonButton>
+        </BlockButton>
         {location && !location.isDefault && (
-          <IonButton expand="block" color="danger" fill="clear" onClick={() => remove(location)}>
+          <BlockButton color="danger" fill="clear" onClick={() => remove(location)}>
             Standort löschen
-          </IonButton>
+          </BlockButton>
         )}
-      </div>
+      </ActionBar>
     </>
   )
 }

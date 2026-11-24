@@ -645,6 +645,28 @@ describe('recording a check with measurements', () => {
     expect(ionButton('60 s starten')).toBeNull()
   })
 
+  it('offers Beenden next to Neu starten only while the countdown is on', async () => {
+    await open()
+    expect(ionButton('Beenden')).toBeNull()
+    fireEvent.click(ionButton('60 s starten')!)
+    await screen.findByRole('timer')
+    expect(ionButton('Neu starten')).not.toBeNull()
+    expect(ionButton('Beenden')).not.toBeNull()
+  })
+
+  it('ends the countdown with Beenden and is ready to start again', async () => {
+    await open()
+    fireEvent.click(ionButton('60 s starten')!)
+    await screen.findByRole('timer')
+    fireEvent.click(ionButton('Beenden')!)
+    await waitFor(() => expect(screen.queryByRole('timer')).not.toBeInTheDocument())
+    expect(ionButton('Beenden')).toBeNull()
+    expect(ionButton('Neu starten')).toBeNull()
+    expect(ionButton('60 s starten')).not.toBeNull()
+    // What was typed stays.
+    expect(field('Startdruck (mbar)')).toHaveValue('-10')
+  })
+
   it('offers the other check types of the item without measurements', async () => {
     await open()
     choose(ionSelect('Prüfart')!, 'fuenfjahr')

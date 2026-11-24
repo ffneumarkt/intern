@@ -1,4 +1,4 @@
-import { IonButton, IonList, IonSelectOption, IonText, useIonRouter, useIonViewWillEnter, useIonViewWillLeave } from '@ionic/react'
+import { IonList, IonSelectOption, useIonRouter, useIonViewWillEnter, useIonViewWillLeave } from '@ionic/react'
 import { useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { listCheckTypes, listItems, listLocations, recordCheck, type CheckInput } from '../api/material'
@@ -11,6 +11,7 @@ import { paths } from '../routes'
 import { futureDateMessage, isFuture, today } from '../today'
 import { useBusy } from '../useBusy'
 import { useResource } from '../useResource'
+import { ActionBar, BlockButton, ErrorText, Hint } from '../components/ui'
 
 const load = async () => {
   const [items, checkTypes, locations] = await Promise.all([listItems(), listCheckTypes(), listLocations()])
@@ -95,7 +96,7 @@ export default function RecordCheckPage() {
 
           return (
             <>
-              <p className="ui-hint"><strong>{item?.name}</strong></p>
+              <Hint><strong>{item?.name}</strong></Hint>
               <IonList>
                 <SelectField label="Prüfart" value={checkTypeId} onChange={setSelectedType}>
                   {types.map((t) => (
@@ -131,12 +132,12 @@ export default function RecordCheckPage() {
                 )}
                 <TextAreaField label="Notiz" value={note} onChange={setNote} />
               </IonList>
-              {error && <IonText color="danger">{error}</IonText>}
-              <div className="ui-actions">
-                <IonButton expand="block" disabled={busy} onClick={() => once(save)}>
+              {error && <ErrorText>{error}</ErrorText>}
+              <ActionBar>
+                <BlockButton disabled={busy} onClick={() => once(save)}>
                   Speichern
-                </IonButton>
-              </div>
+                </BlockButton>
+              </ActionBar>
             </>
           )
         }}
