@@ -158,3 +158,16 @@ func TestDueRouteSortsItemsByName(t *testing.T) {
 		}
 	}})
 }
+
+func TestDueRouteCarriesTheLocationOfAnItem(t *testing.T) {
+	app := testenv.New(t)
+	w := testenv.Seed(t, app)
+	rlf := newLocation(t, app, "RLF")
+	w.ItemA.Set("location", rlf.Id)
+	if err := app.Save(w.ItemA); err != nil {
+		t.Fatal(err)
+	}
+
+	runDue(t, app, dueCase{name: "location of the item", as: w.Use, status: 200,
+		contains: []string{`"locationId":"` + rlf.Id + `"`}})
+}
