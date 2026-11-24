@@ -1,7 +1,9 @@
 name: Image
 
-# Docs-only changes don't need a new image.
+# Docs-only changes don't need a new image. workflow_dispatch builds and publishes main like a push:
+# automerge.yml starts it, since a merge made with the built-in token starts no push workflow.
 on:
+  workflow_dispatch:
   pull_request:
     paths-ignore:
       - 'docs/**'
@@ -25,11 +27,11 @@ permissions:
 jobs:
   # Pull requests get these from web.yml and go.yml, and run them only when their code changed.
   web:
-    if: github.event_name == 'push'
+    if: github.event_name != 'pull_request'
     uses: ./.github/workflows/web.yml
 
   go:
-    if: github.event_name == 'push'
+    if: github.event_name != 'pull_request'
     uses: ./.github/workflows/go.yml
 
   image:
@@ -43,7 +45,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: docker/setup-buildx-action@v4
-      - if: github.event_name == 'push'
+      - if: github.event_name != 'pull_request'
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
@@ -52,7 +54,7 @@ jobs:
       - uses: docker/build-push-action@v7
         with:
           context: .
-          push: ${{ github.event_name == 'push' }}
+          push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ghcr.io/ffneumarkt/intern:latest
             ghcr.io/ffneumarkt/intern:${{ github.sha }}

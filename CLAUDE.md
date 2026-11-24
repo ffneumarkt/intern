@@ -31,7 +31,10 @@ Internal tools for FF Neumarkt at `intern.ffneumarkt.at`. Start with `docs/super
   one place, as `LoginRedirect` in `App.tsx` does.
 - Go tests that use `internal/testenv` live in external `_test` packages.
 - TDD: write the failing test first, watch it fail, then implement.
-- Work on a branch, open a PR against `main`; the user merges.
+- Work on a branch, open a PR against `main`. A PR by the owner or Dependabot merges itself once every check is
+  green (`.github/workflows/automerge.yml`, `.github/scripts/automerge.sh`); the user merges the rest: drafts, PRs
+  with the `no-automerge` label, PRs that change workflow files (the built-in token may not merge those) and docs-only
+  PRs (no check runs). To keep a PR from merging itself, open it as a draft or add `no-automerge`.
 - A reusable workflow's `concurrency` group is named literally: `github.workflow` there is the caller's
   name, and a shared group would make the two cancel each other.
 
