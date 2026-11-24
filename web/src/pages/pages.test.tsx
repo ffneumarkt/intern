@@ -8,12 +8,14 @@ import { calls, data, failing } from '../test/fakeMaterial'
 import { alertButton, choose, findIon, ionButton, ionChip, ionItem, ionSelect, ionTab, ionToggle, selectedText, typeInto } from '../test/ionic'
 import { notificationState } from '../test/fakeNotifications'
 import { pushState } from '../test/fakePush'
+import { scanCode, scannerActive } from '../test/fakeScanner'
 
 vi.mock('../api/auth', () => import('../test/fakeAuth'))
 vi.mock('../api/material', () => import('../test/fakeMaterial'))
 vi.mock('../api/notifications', () => import('../test/fakeNotifications'))
 vi.mock('../api/passkeys', () => import('../test/fakePasskeys'))
 vi.mock('../api/push', () => import('../test/fakePush'))
+vi.mock('../components/Scanner', () => import('../test/fakeScanner'))
 
 function renderAt(path: string, level: Level) {
   signInAs(level)
@@ -209,7 +211,51 @@ describe('item actions follow level', () => {
   it('manage', async () => {
     renderAt(paths.item('m01'), 'manage')
     expect(await findIon(() => ionButton('Bearbeiten'))).toBeInTheDocument()
-    expect(button('Etikett drucken')).toBeInTheDocument()
+    expect(button('Etikett drucken')).not.toBeInTheDocument()
+  })
+})
+
+describe('scan search on the due list', () => {
+  async function openScanner(level: Level = 'use') {
+    renderAt(paths.dueList, level)
+    fireEvent.click(await findIon(() => ionButton('Scannen')))
+    await screen.findByTestId('scanner')
+  }
+
+  it('opens the item of a scanned code', async () => {
+    await openScanner()
+    scanCode('M-001')
+    expect(await screen.findByText('Status: Aktiv')).toBeInTheDocument()
+    expect(scannerActive()).toBe(false)
+  })
+
+  it('treats the code of a retired item as unknown', async () => {
+    await openScanner()
+    scanCode('M-006')
+    expect(await screen.findByText('Nicht gefunden: M-006')).toBeInTheDocument()
+    expect(screen.queryByText('Status: Ausgeschieden')).not.toBeInTheDocument()
+  })
+
+  it('shows an unknown code, with assignment only for manage', async () => {
+    await openScanner('use')
+    scanCode('UNKNOWN-1')
+    expect(await screen.findByText('Nicht gefunden: UNKNOWN-1')).toBeInTheDocument()
+    expect(button('Gerät zuordnen')).not.toBeInTheDocument()
+  })
+
+  it('closes the scanner with Schließen', async () => {
+    await openScanner()
+    fireEvent.click(ionButton('Schließen')!)
+    await waitFor(() => expect(scannerActive()).toBe(false))
+  })
+
+  it('assigns an unknown code and opens that item (manage)', async () => {
+    await openScanner('manage')
+    scanCode('UNKNOWN-1')
+    fireEvent.click(await findIon(() => ionButton('Gerät zuordnen')))
+    fireEvent.click(await findIon(() => ionItem('LA 02')))
+    expect(await screen.findByText('Status: Aktiv')).toBeInTheDocument()
+    expect(calls.assigned).toEqual([{ itemId: 'l02', barcode: 'UNKNOWN-1' }])
   })
 })
 
@@ -235,7 +281,65 @@ describe('record use', () => {
   it('unknown code can be assigned at manage level', async () => {
     renderAt(paths.recordUse, 'manage')
     await scan('UNKNOWN-1')
-    expect(await findIon(() => ionButton('Gerät zuordnen'))).toBeInTheDocument()
+    fireEvent.click(await findIon(() => ionButton('Gerät zuordnen')))
+    fireEvent.click(await findIon(() => ionItem('LA 02')))
+    const list = await screen.findByRole('list', { name: 'Gescannte Geräte' })
+    await waitFor(() => expect(within(list).getAllByRole('listitem')).toHaveLength(1))
+    expect(within(list).getByText('LA 02')).toBeInTheDocument()
+    expect(calls.assigned).toEqual([{ itemId: 'l02', barcode: 'UNKNOWN-1' }])
+    expect(screen.queryByText('Nicht gefunden: UNKNOWN-1')).not.toBeInTheDocument()
+  })
+
+  it('a code that another item has is refused and nothing is added', async () => {
+    failing.barcode = true
+    renderAt(paths.recordUse, 'manage')
+    await scan('UNKNOWN-1')
+    fireEvent.click(await findIon(() => ionButton('Gerät zuordnen')))
+    fireEvent.click(await findIon(() => ionItem('LA 02')))
+    expect(await screen.findByText('Code ist bereits vergeben.')).toBeInTheDocument()
+    expect(within(screen.getByRole('list', { name: 'Gescannte Geräte' })).queryAllByRole('listitem')).toHaveLength(0)
+  })
+
+  describe('with the camera', () => {
+    const listed = async (count: number) => {
+      const list = await screen.findByRole('list', { name: 'Gescannte Geräte' })
+      await waitFor(() => expect(within(list).queryAllByRole('listitem')).toHaveLength(count))
+    }
+
+    it('adds a scanned item once', async () => {
+      renderAt(paths.recordUse, 'use')
+      await screen.findByTestId('scanner')
+      scanCode('M-001')
+      scanCode('M-001')
+      scanCode('M-002')
+      await listed(2)
+    })
+
+    it('treats the code of a retired item as unknown', async () => {
+      renderAt(paths.recordUse, 'use')
+      await screen.findByTestId('scanner')
+      scanCode('M-006')
+      expect(await screen.findByText('Nicht gefunden: M-006')).toBeInTheDocument()
+      await listed(0)
+    })
+
+    it('offers assignment only to manage', async () => {
+      renderAt(paths.recordUse, 'use')
+      await screen.findByTestId('scanner')
+      scanCode('UNKNOWN-1')
+      expect(await screen.findByText('Nicht gefunden: UNKNOWN-1')).toBeInTheDocument()
+      expect(button('Gerät zuordnen')).not.toBeInTheDocument()
+    })
+
+    it('stops the camera in the form step', async () => {
+      renderAt(paths.recordUse, 'use')
+      await screen.findByTestId('scanner')
+      scanCode('M-001')
+      await listed(1)
+      fireEvent.click(ionButton('Fertig')!)
+      await screen.findByLabelText('Erfasst von')
+      expect(scannerActive()).toBe(false)
+    })
   })
 })
 

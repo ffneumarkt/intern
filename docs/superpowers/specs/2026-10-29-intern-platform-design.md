@@ -308,7 +308,6 @@ Ionic tabs; tabs appear only when they apply to the logged-in user.
 | Record use | `use`+ | Scan loop (section 9), then one form: date (today), kind, "recorded by" (remembered per device), note; saves one use per item. Opened from an item's detail page via `/material/verwendung?geraet=<id>`, it starts with that item in the list |
 | Record check | `check`+ | Check type (preselects the category's default, else the first), date, result, note |
 | Manage | `manage` | Create and edit items (incl. "last checked on" per check type) and check types (incl. the category's default) |
-| QR label | `manage` | Printable QR label for an item; if the item has no barcode, one is generated from its ID and saved |
 | Settings | logged in | Notification settings per category (chips for 30, 14, 7, 3, 1 and 0 days, weekly reminder; other values up to 90 only in `/_/`; new rows default to `[14, 3, 0]` with the reminder on), quiet time once per user (toggle, from, until), push on this device with a test button (iOS outside home screen: "Add to Home Screen first" guide), passkeys, logout |
 
 ### Service worker
@@ -326,7 +325,8 @@ and navigates it, otherwise it opens a new one.
 
 ## 9. Barcode scanning
 
-- Codes are mixed: manufacturer codes where usable, own QR labels otherwise. `items.barcode` takes any
+- Codes are the manufacturers' own; the system prints no labels and generates no codes (refined in
+  `2026-11-24-barcode-scanning-design.md`, which wins where they differ). `items.barcode` takes any
   string. Supported formats: QR, DataMatrix, Code 128, EAN-13/8.
 - Camera only (no handheld scanner). The station device is a Microsoft Surface with a built-in camera.
 - Library `barcode-detector` (zxing-wasm based); native `BarcodeDetector` is missing on iOS Safari and

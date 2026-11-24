@@ -3,9 +3,12 @@ import { closeCircleOutline } from 'ionicons/icons'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { listItems, recordUse, type Item, type UseInput } from '../api/material'
+import AssignCode from '../components/AssignCode'
 import { Field, SelectField, TextAreaField } from '../components/Field'
 import Loaded from '../components/Loaded'
 import Page from '../components/Page'
+import Scanner from '../components/Scanner'
+import { findByBarcode, searchItems } from '../material/items'
 import { paths } from '../routes'
 import { useSession } from '../session'
 import { futureDateMessage, isFuture, today } from '../today'
@@ -28,20 +31,6 @@ function rememberRecordedBy(name: string) {
   } catch {
     // storage unavailable: the name is typed again next time
   }
-}
-
-const findByBarcode = (items: Item[], code: string) => items.find((i) => i.status !== 'retired' && i.barcode === code)
-
-// Live suggestions while typing a code: active items whose code or name contains the text.
-function searchItems(items: Item[], text: string, excludeIds: string[]) {
-  const q = text.trim().toLowerCase()
-  if (!q) return []
-  return items.filter(
-    (i) =>
-      i.status !== 'retired' &&
-      !excludeIds.includes(i.id) &&
-      (i.barcode?.toLowerCase().includes(q) || i.name.toLowerCase().includes(q)),
-  )
 }
 
 export default function RecordUsePage() {
@@ -78,13 +67,19 @@ export default function RecordUsePage() {
     setCode('')
   }
 
-  const submitCode = (e: FormEvent) => {
-    e.preventDefault()
-    const value = code.trim()
-    if (!value || !items) return
+  // A code from the camera or the manual field: known items join the list, anything else is reported.
+  const handleCode = (value: string) => {
+    if (!items) return
     const item = findByBarcode(items, value)
     setUnknown(item ? null : value)
     if (item) add(item)
+  }
+
+  const submitCode = (e: FormEvent) => {
+    e.preventDefault()
+    const value = code.trim()
+    if (!value) return
+    handleCode(value)
     setCode('')
   }
 
@@ -121,10 +116,13 @@ export default function RecordUsePage() {
             <>
               <IonCard>
                 <IonCardContent>
+                  {/* The field stays above the camera preview: on iOS, Ionic's input shim swaps in a cloned input
+                      for a field low on the page, which loses focus and stops Enter from submitting. */}
                   <form onSubmit={submitCode}>
                     <Field label="Code manuell eingeben" value={code} autoComplete="off" autoCapitalize="off" onChange={setCode} />
                   </form>
                   <Suggestions suggestions={searchItems(items, code, scanned.map((i) => i.id))} onPick={pick} />
+                  <Scanner onCode={handleCode} active={step === 'scan'} />
                 </IonCardContent>
               </IonCard>
               {unknown && (
@@ -132,9 +130,7 @@ export default function RecordUsePage() {
                   <IonCardContent>
                     <IonText>Nicht gefunden: {unknown}</IonText>
                     {canAnywhere('manage') && (
-                      <IonButton size="small" fill="outline" routerLink={paths.manage}>
-                        Gerät zuordnen
-                      </IonButton>
+                      <AssignCode code={unknown} items={items} onAssigned={(item) => { add(item); setUnknown(null) }} />
                     )}
                   </IonCardContent>
                 </IonCard>

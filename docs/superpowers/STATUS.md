@@ -88,7 +88,20 @@ Last updated: 2026-11-05. Read this first, then the spec
   uses and checks with names, passkeys, push subscriptions, `localStorage`, PocketBase request logs for 5
   days incl. IP, Cloudflare). **Not legal advice: the owner must read it** and in particular confirm the
   hosting wording („gemieteter Server (VPS)“), the legal bases and the retention statements.
-- **Deploy files done** (branch `feature/deploy`, PR pending, no separate plan: spec §10 was the design):
+- **Phase 5 done** (PR #22; spec `specs/2026-11-24-barcode-scanning-design.md`,
+  plan `plans/2026-11-24-barcode-scanning.md`): codes are manufacturer codes only, so the QR label page is
+  gone and nothing is printed. `components/Scanner.tsx` (over `scan/useCamera.ts` and `scan/detector.ts`,
+  `barcode-detector` with a self-hosted, precached wasm in its own lazy chunk) is used in „Verwendung
+  erfassen“ and, as `ScanSearch`, on the due list (a known code opens the item). A `manage` user assigns an
+  unknown code to an item with `AssignCode` (`assignBarcode`). Tests use `test/fakeScanner.tsx` and
+  `test/fakeCamera.ts`; `web/e2e/scan.spec.ts` decodes a real QR from a fake camera feed in Chromium only
+  (`e2e/fixtures/qr.y4m`); Firefox and WebKit check manual entry. Not observed: real iPhone and Android
+  cameras, the torch on hardware, the Surface webcam, scan speed on worn manufacturer codes, an installed
+  PWA scanning offline.
+- Dependabot (`.github/dependabot.yml`) opens a weekly PR (Mondays) per ecosystem: Go modules, npm, GitHub
+  Actions and the Docker base images; minor and patch updates are grouped, a major update comes alone.
+  The normal CI runs on those PRs; the user merges.
+- **Deploy files done** (PR #24, no separate plan: spec §10 was the design):
   `intern snapshot` (`internal/snapshot`, `VACUUM INTO` in a temporary directory, gzip to stdout, tests
   restore the copy) and `deploy/` (systemd update timer, `intern-backup` wrapper with its sudoers line and
   `authorized_keys` example, `.env` example, `restore-test.sh`, runbook `deploy/README.md`). The restore
