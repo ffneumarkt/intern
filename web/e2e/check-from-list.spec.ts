@@ -44,7 +44,8 @@ test.describe('as pruefung', () => {
 
       // The check form of that item, not its item page.
       await expect(heading(page, 'Prüfung erfassen')).toBeVisible()
-      await expect(page.getByText(name, { exact: true }).filter({ visible: true })).toBeVisible()
+      // Ionic keeps the list mounted behind the form, so the name is looked for in the form's own line.
+      await expect(page.locator('p.ui-hint strong').filter({ hasText: name })).toBeVisible()
       await expect(page).toHaveURL(new RegExp(`/material/geraete/${id}/pruefung`))
 
       // A check type without readings keeps the form short.
@@ -67,7 +68,8 @@ test.describe('as pruefung', () => {
     try {
       await page.goto('/material')
       await page.locator('ion-item').filter({ visible: true, hasText: name }).getByText(name, { exact: true }).click()
-      await expect(heading(page, name)).toBeVisible()
+      // The item page's own title (the list row behind it has an h2, not the page heading).
+      await expect(page.locator('h1.page-heading').filter({ hasText: name })).toBeVisible()
       await expect(page).toHaveURL(new RegExp(`/material/geraete/${id}$`))
     } finally {
       await removeItemWithHistory(request, id)
