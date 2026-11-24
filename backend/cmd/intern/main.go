@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/SherClockHolmes/webpush-go"
 	"github.com/pocketbase/pocketbase"
@@ -17,6 +18,7 @@ import (
 	"github.com/ffneumarkt/intern/backend/internal/passkey"
 	"github.com/ffneumarkt/intern/backend/internal/push"
 	"github.com/ffneumarkt/intern/backend/internal/server"
+	"github.com/ffneumarkt/intern/backend/internal/snapshot"
 	_ "github.com/ffneumarkt/intern/backend/migrations"
 	"github.com/ffneumarkt/intern/backend/ui"
 )
@@ -34,6 +36,7 @@ func main() {
 	})
 
 	app.RootCmd.AddCommand(vapidCommand())
+	app.RootCmd.AddCommand(snapshotCommand(app))
 
 	keys, pushEnabled := push.KeysFromEnv()
 
@@ -72,6 +75,19 @@ func vapidCommand() *cobra.Command {
 			fmt.Println("VAPID_PUBLIC_KEY=" + public)
 			fmt.Println("VAPID_PRIVATE_KEY=" + private)
 			return nil
+		},
+	}
+}
+
+// snapshotCommand writes a gzipped, consistent copy of data.db to stdout for the backup (spec §10).
+// Diagnostics go to stderr, so stdout carries only the archive.
+func snapshotCommand(app core.App) *cobra.Command {
+	return &cobra.Command{
+		Use:   "snapshot",
+		Short: "Write a gzipped consistent copy of data.db to stdout",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			return snapshot.Write(filepath.Join(app.DataDir(), "data.db"), cmd.OutOrStdout())
 		},
 	}
 }
