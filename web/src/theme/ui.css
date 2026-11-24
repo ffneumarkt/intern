@@ -572,11 +572,11 @@ ion-card.tile {
   font-size: 0.875rem;
 }
 
-/* The 60 second countdown of the Dichtprüfung and the verdict lines under the readings. */
+/* The 60 second countdown of the Dichtprüfung. It lines up with the field boxes (14px in the list). */
 .ui-countdown {
   display: grid;
   gap: 8px;
-  margin: 8px 16px;
+  margin: 8px 14px;
 }
 
 .ui-countdown-time {
@@ -592,15 +592,33 @@ ion-card.tile {
   color: var(--ui-ok);
 }
 
-.ui-measure {
-  margin: 4px 16px 12px;
-  font-size: 0.9375rem;
-  font-weight: 500;
-  color: var(--ion-color-danger);
+/* A line of explanation or verdict inside a list (components/ListNote.tsx): same left edge as the list
+   header (18px), muted, wrapping. */
+.ui-page ion-list ion-item.ui-list-note {
+  --padding-start: 18px;
+  --padding-end: 18px;
+  --inner-padding-end: 0;
+  --min-height: 0;
+  --background: transparent;
+  --border-width: 0;
+  --inner-border-width: 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--ui-muted);
 }
 
-.ui-measure[data-ok='true'] {
+.ui-page ion-list ion-item.ui-list-note ion-label {
+  margin: 4px 0;
+}
+
+.ui-page ion-list ion-item.ui-list-note[data-tone='ok'] {
   color: var(--ui-ok);
+  font-weight: 500;
+}
+
+.ui-page ion-list ion-item.ui-list-note[data-tone='bad'] {
+  color: var(--ion-color-danger);
+  font-weight: 500;
 }
 
 /* „Prüfen“ on a row of the due list: its own line under the text, a full-size tap target. */
