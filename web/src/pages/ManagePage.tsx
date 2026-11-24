@@ -182,6 +182,7 @@ function CheckTypeForm({ categoryId, checkType, others, onDone }: CheckTypeFormP
   const [months, setMonths] = useState(checkType?.intervalMonths ? String(checkType.intervalMonths) : '')
   const [afterUse, setAfterUse] = useState(checkType?.afterUse ?? false)
   const [isDefault, setIsDefault] = useState(checkType?.isDefault ?? false)
+  const [measurements, setMeasurements] = useState(checkType?.measurements ?? false)
   const [alsoSatisfies, setAlsoSatisfies] = useState(checkType?.alsoSatisfies ?? [])
   const [error, setError] = useState<string | null>(null)
   const { busy, once } = useBusy()
@@ -194,7 +195,7 @@ function CheckTypeForm({ categoryId, checkType, others, onDone }: CheckTypeFormP
       return
     }
     setError(null)
-    const input = { name, intervalMonths, afterUse, isDefault, alsoSatisfies }
+    const input = { name, intervalMonths, afterUse, isDefault, measurements, alsoSatisfies }
     try {
       if (checkType) await updateCheckType(checkType.id, input)
       else await createCheckType({ ...input, categoryId })
@@ -229,6 +230,7 @@ function CheckTypeForm({ categoryId, checkType, others, onDone }: CheckTypeFormP
         <Field label="Intervall in Monaten" type="number" value={months} onChange={setMonths} />
         <CheckboxField label="nach Verwendung" checked={afterUse} onChange={setAfterUse} />
         <CheckboxField label="Standardprüfung" checked={isDefault} onChange={setIsDefault} />
+        <CheckboxField label="Messwerte erfassen" checked={measurements} onChange={setMeasurements} />
         {others
           .filter((t) => t.id !== checkType?.id)
           .map((t) => (

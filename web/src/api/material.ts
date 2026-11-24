@@ -1,6 +1,7 @@
 import { ClientResponseError } from 'pocketbase'
 import type { DueState } from '../components/DueStateBadge'
 import { pb } from './client'
+import { measurementDetail } from '../material/measurements'
 import { BarcodeTakenError, CheckTypeInUseError, ItemHasHistoryError, ItemPartlySavedError } from './errors'
 
 export interface Category {
@@ -16,6 +17,8 @@ export interface CheckType {
   intervalMonths?: number
   afterUse: boolean
   isDefault: boolean
+  // Asks for the Dichtprüfung and Öffnungsdruck readings when a check is recorded.
+  measurements: boolean
   alsoSatisfies: string[]
 }
 
@@ -75,6 +78,7 @@ export async function listCheckTypes(): Promise<CheckType[]> {
     intervalMonths: r.interval_months || undefined,
     afterUse: r.after_use,
     isDefault: r.is_default,
+    measurements: !!r.measurements,
     alsoSatisfies: r.also_satisfies ?? [],
   }))
 }
@@ -118,7 +122,11 @@ export async function listHistory(itemId: string): Promise<HistoryEntry[]> {
       date: calendarDate(c.date),
       kind: 'check' as const,
       title: `${c.expand?.check_type?.name}: ${resultLabels[c.result]}`,
-      detail: joined(c.expand?.performed_by?.name, c.note),
+      detail: joined(
+        c.expand?.performed_by?.name,
+        measurementDetail(c.leak_start_mbar, c.leak_end_mbar, c.opening_pressure_mbar) ?? undefined,
+        c.note,
+      ),
     })),
   ]
   return entries.sort((a, b) => b.date.localeCompare(a.date) || (b.created ?? '').localeCompare(a.created ?? ''))
@@ -136,6 +144,10 @@ export interface CheckInput {
   date: string
   result: 'passed' | 'defect' | 'retired'
   note: string
+  // The readings of a check type with measurements, in mbar.
+  leakStartMbar?: number
+  leakEndMbar?: number
+  openingPressureMbar?: number
 }
 
 export async function recordUse(itemId: string, input: UseInput): Promise<void> {
@@ -157,6 +169,9 @@ export async function recordCheck(itemId: string, input: CheckInput): Promise<vo
     result: input.result,
     note: input.note,
     performed_by: pb.authStore.record?.id,
+    ...(input.leakStartMbar !== undefined && { leak_start_mbar: input.leakStartMbar }),
+    ...(input.leakEndMbar !== undefined && { leak_end_mbar: input.leakEndMbar }),
+    ...(input.openingPressureMbar !== undefined && { opening_pressure_mbar: input.openingPressureMbar }),
   })
 }
 
@@ -179,6 +194,7 @@ export interface CheckTypeInput {
   intervalMonths: number
   afterUse: boolean
   isDefault: boolean
+  measurements: boolean
   alsoSatisfies: string[]
 }
 
@@ -195,6 +211,7 @@ const checkTypeFields = (input: Omit<CheckTypeInput, 'categoryId'>) => ({
   interval_months: input.intervalMonths,
   after_use: input.afterUse,
   is_default: input.isDefault,
+  measurements: input.measurements,
   also_satisfies: input.alsoSatisfies,
 })
 

@@ -8,9 +8,9 @@ const categories: Category[] = [
 ]
 
 const checkTypes: CheckType[] = [
-  { id: 'maskenpruefung', categoryId: 'masken', name: 'Maskenprüfung', intervalMonths: 12, afterUse: true, isDefault: false, alsoSatisfies: [] },
-  { id: 'fuenfjahr', categoryId: 'masken', name: '5-Jahres-Prüfung', intervalMonths: 60, afterUse: false, isDefault: false, alsoSatisfies: ['maskenpruefung'] },
-  { id: 'la-jahr', categoryId: 'lungenautomaten', name: 'Jahresprüfung', intervalMonths: 12, afterUse: true, isDefault: false, alsoSatisfies: [] },
+  { id: 'maskenpruefung', categoryId: 'masken', name: 'Maskenprüfung', intervalMonths: 12, afterUse: true, isDefault: false, measurements: false, alsoSatisfies: [] },
+  { id: 'fuenfjahr', categoryId: 'masken', name: '5-Jahres-Prüfung', intervalMonths: 60, afterUse: false, isDefault: false, measurements: false, alsoSatisfies: ['maskenpruefung'] },
+  { id: 'la-jahr', categoryId: 'lungenautomaten', name: 'Jahresprüfung', intervalMonths: 12, afterUse: true, isDefault: false, measurements: false, alsoSatisfies: [] },
 ]
 
 const checkDue = (label: string, date: string, state: DueState, checkTypeId = 'maskenpruefung'): Due => ({
@@ -63,4 +63,5 @@ const history: HistoryEntry[] = [
   { itemId: 'm01', date: '2023-05-12', kind: 'check', title: '5-Jahres-Prüfung: bestanden', detail: 'Prüfstelle' },
 ]
 
-export const freshData = () => ({ categories, checkTypes, items: items(), history: [...history] })
+// Copies, so a test that changes a check type does not change the next test's data.
+export const freshData = () => ({ categories, checkTypes: checkTypes.map((t) => ({ ...t })), items: items(), history: [...history] })

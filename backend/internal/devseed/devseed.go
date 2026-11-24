@@ -52,7 +52,7 @@ func (s *seeder) run() {
 	s.checker = s.user("verwaltung", "Verwalter", "manage", masks, regulators)
 
 	maskCheck := s.create("check_types", map[string]any{"category": s.id(masks), "name": "Maskenprüfung",
-		"interval_months": 12, "after_use": true, "is_default": true})
+		"interval_months": 12, "after_use": true, "is_default": true, "measurements": true})
 	fiveYear := s.create("check_types", map[string]any{"category": s.id(masks), "name": "5-Jahres-Prüfung",
 		"interval_months": 60, "also_satisfies": []string{s.id(maskCheck)}})
 	regulatorCheck := s.create("check_types", map[string]any{"category": s.id(regulators), "name": "Jahresprüfung",

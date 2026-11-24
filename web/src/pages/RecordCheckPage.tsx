@@ -1,10 +1,12 @@
-import { IonButton, IonList, IonSelectOption, IonText, useIonViewWillEnter } from '@ionic/react'
+import { IonButton, IonList, IonSelectOption, IonText, useIonViewWillEnter, useIonViewWillLeave } from '@ionic/react'
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { listCheckTypes, listItems, recordCheck, type CheckInput } from '../api/material'
 import { Field, SelectField, TextAreaField } from '../components/Field'
 import Loaded from '../components/Loaded'
+import Measurements, { type Readings } from '../components/Measurements'
 import Page from '../components/Page'
+import { measurementsPass } from '../material/measurements'
 import { paths } from '../routes'
 import { futureDateMessage, isFuture, today } from '../today'
 import { useBusy } from '../useBusy'
@@ -23,11 +25,18 @@ export default function RecordCheckPage() {
   const [date, setDate] = useState(today)
   const [result, setResult] = useState<CheckInput['result']>('passed')
   const [note, setNote] = useState('')
+  // True once the user has picked a result, so the readings stop suggesting one.
+  const [resultPicked, setResultPicked] = useState(false)
+  const [readings, setReadings] = useState<Readings>({ start: null, end: null, opening: null })
+  // A new key starts the readings (fields, countdown) over.
+  const [readingsKey, setReadingsKey] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const { busy, once } = useBusy()
 
   // Ionic keeps the page mounted, possibly past midnight.
   useIonViewWillEnter(() => setDate(today()))
+  // Ionic keeps the page mounted: leaving stops the countdown and clears the readings.
+  useIonViewWillLeave(() => setReadingsKey((k) => k + 1))
 
   return (
     <Page title="Prüfung erfassen" back={paths.item(itemId)}>
@@ -36,17 +45,37 @@ export default function RecordCheckPage() {
           const item = items.find((i) => i.id === itemId)
           const types = checkTypes.filter((t) => t.categoryId === item?.categoryId)
           const checkTypeId = selectedType || (types.find((t) => t.isDefault) ?? types[0])?.id || ''
+          const measured = types.find((t) => t.id === checkTypeId)?.measurements ?? false
+          // With readings the result is suggested from them until the user picks one.
+          const passes = measured ? measurementsPass(readings.start, readings.end, readings.opening) : null
+          const shownResult: CheckInput['result'] = !resultPicked && passes !== null ? (passes ? 'passed' : 'defect') : result
 
           const save = async () => {
             if (isFuture(date)) {
               setError(futureDateMessage)
               return
             }
+            if (measured && (readings.start === null || readings.end === null || readings.opening === null)) {
+              setError('Bitte alle Messwerte eintragen.')
+              return
+            }
             setError(null)
             try {
-              await recordCheck(itemId, { checkTypeId, date, result, note })
+              await recordCheck(itemId, {
+                checkTypeId,
+                date,
+                result: shownResult,
+                note,
+                ...(measured && {
+                  leakStartMbar: readings.start ?? undefined,
+                  leakEndMbar: readings.end ?? undefined,
+                  openingPressureMbar: readings.opening ?? undefined,
+                }),
+              })
               setNote('')
               setResult('passed')
+              setResultPicked(false)
+              setReadingsKey((k) => k + 1)
               navigate(paths.item(itemId))
             } catch {
               setError('Speichern fehlgeschlagen.')
@@ -65,7 +94,17 @@ export default function RecordCheckPage() {
                   ))}
                 </SelectField>
                 <Field label="Datum" type="date" max={today()} value={date} onChange={setDate} />
-                <SelectField label="Ergebnis" value={result} onChange={(value) => setResult(value as CheckInput['result'])}>
+              </IonList>
+              {measured && <Measurements key={`${checkTypeId}:${readingsKey}`} onChange={setReadings} />}
+              <IonList>
+                <SelectField
+                  label="Ergebnis"
+                  value={shownResult}
+                  onChange={(value) => {
+                    setResult(value as CheckInput['result'])
+                    setResultPicked(true)
+                  }}
+                >
                   <IonSelectOption value="passed">Bestanden</IonSelectOption>
                   <IonSelectOption value="defect">Mangel</IonSelectOption>
                   <IonSelectOption value="retired">Ausgeschieden</IonSelectOption>

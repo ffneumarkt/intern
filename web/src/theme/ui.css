@@ -553,3 +553,34 @@ ion-card.tile {
   border-radius: 12px;
   background: #0f172a;
 }
+
+/* The 60 second countdown of the Dichtprüfung and the verdict lines under the readings. */
+.ui-countdown {
+  display: grid;
+  gap: 8px;
+  margin: 8px 16px;
+}
+
+.ui-countdown-time {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--ion-color-primary);
+}
+
+.ui-countdown-time[data-done='true'] {
+  color: var(--ui-ok);
+}
+
+.ui-measure {
+  margin: 4px 16px 12px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--ion-color-danger);
+}
+
+.ui-measure[data-ok='true'] {
+  color: var(--ui-ok);
+}

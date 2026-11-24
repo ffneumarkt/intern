@@ -1,6 +1,7 @@
 // In-memory stand-in for api/material. Tests read and change `data`; setup.ts resets it.
 import { BarcodeTakenError, CheckTypeInUseError, ItemHasHistoryError, ItemPartlySavedError } from '../api/errors'
 import type { CheckInput, CheckTypeInput, ItemInput, UseInput } from '../api/material'
+import { measurementDetail } from '../material/measurements'
 import { freshData } from './fixtures'
 
 export type * from '../api/material'
@@ -63,7 +64,7 @@ export async function recordCheck(itemId: string, input: CheckInput) {
     date: input.date,
     kind: 'check',
     title: `${type?.name}: ${resultLabels[input.result]}`,
-    detail: input.note,
+    detail: [measurementDetail(input.leakStartMbar, input.leakEndMbar, input.openingPressureMbar), input.note].filter(Boolean).join(' · '),
   })
 }
 

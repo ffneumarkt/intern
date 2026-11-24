@@ -416,6 +416,138 @@ describe('saving a use', () => {
   })
 })
 
+describe('recording a check with measurements', () => {
+  async function open() {
+    data.checkTypes[0].measurements = true
+    renderAt(paths.recordCheck('m01'), 'check')
+    await findIon(() => ionSelect('Prüfart'))
+  }
+  const field = (label: string) => screen.getByLabelText(label)
+  const enter = (start: string, end: string, opening: string) => {
+    typeInto(field('Startdruck (mbar)'), start)
+    typeInto(field('Druck nach 60 s (mbar)'), end)
+    typeInto(field('Öffnungsdruck (mbar)'), opening)
+  }
+  const result = () => ionSelect('Ergebnis')!.getAttribute('value') ?? (ionSelect('Ergebnis') as HTMLInputElement).value
+
+  it('shows both tests with their printed criteria, the start pressure prefilled', async () => {
+    await open()
+    expect(screen.getByText('Dichtprüfung')).toBeInTheDocument()
+    expect(screen.getByText(/−10 mbar → höchstens 1 mbar in 60 s/)).toBeInTheDocument()
+    expect(screen.getByText('Öffnungsdruck Ausatemventil')).toBeInTheDocument()
+    expect(screen.getByText(/4,2–6,0 mbar bei 10 l\/min/)).toBeInTheDocument()
+    expect(field('Startdruck (mbar)')).toHaveValue('-10')
+  })
+
+  it('stays as it was for a check type without measurements', async () => {
+    renderAt(paths.recordCheck('m01'), 'check')
+    await findIon(() => ionSelect('Prüfart'))
+    expect(screen.queryByText('Dichtprüfung')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Öffnungsdruck (mbar)')).not.toBeInTheDocument()
+  })
+
+  it('shows the loss and suggests Bestanden when both readings are within the limits', async () => {
+    await open()
+    enter('-10', '-9,5', '5,1')
+    expect(screen.getByText('Verlust 0,5 mbar ✓')).toBeInTheDocument()
+    expect(screen.getByText('Öffnungsdruck 5,1 mbar ✓')).toBeInTheDocument()
+    expect(result()).toBe('passed')
+  })
+
+  it('names the leak limit that was missed and suggests Mangel', async () => {
+    await open()
+    enter('-10', '-5', '5')
+    expect(screen.getByText('Verlust 5 mbar: mehr als 1 mbar')).toBeInTheDocument()
+    expect(result()).toBe('defect')
+  })
+
+  it('names the opening pressure limit that was missed and suggests Mangel', async () => {
+    await open()
+    enter('-10', '-9', '6,5')
+    expect(screen.getByText('Öffnungsdruck 6,5 mbar: zu hoch (höchstens 6,0 mbar)')).toBeInTheDocument()
+    expect(result()).toBe('defect')
+    typeInto(field('Öffnungsdruck (mbar)'), '3,9')
+    expect(screen.getByText('Öffnungsdruck 3,9 mbar: zu niedrig (mindestens 4,2 mbar)')).toBeInTheDocument()
+  })
+
+  it('follows the readings until the user picks a result, then keeps the choice', async () => {
+    await open()
+    enter('-10', '-5', '5')
+    expect(result()).toBe('defect')
+    typeInto(field('Druck nach 60 s (mbar)'), '-9,5')
+    expect(result()).toBe('passed')
+    choose(ionSelect('Ergebnis')!, 'defect')
+    typeInto(field('Druck nach 60 s (mbar)'), '-9,8')
+    expect(result()).toBe('defect')
+  })
+
+  it('saves the readings as numbers, accepting a comma or a dot', async () => {
+    await open()
+    enter('-10', '-9,5', '5.1')
+    fireEvent.click(ionButton('Speichern')!)
+    await waitFor(() => expect(calls.checks).toHaveLength(1))
+    expect(calls.checks[0].input).toMatchObject({
+      checkTypeId: 'maskenpruefung',
+      result: 'passed',
+      leakStartMbar: -10,
+      leakEndMbar: -9.5,
+      openingPressureMbar: 5.1,
+    })
+  })
+
+  it('saves a Mangel the user keeps although the readings pass', async () => {
+    await open()
+    enter('-10', '-9,5', '5,1')
+    choose(ionSelect('Ergebnis')!, 'defect')
+    fireEvent.click(ionButton('Speichern')!)
+    await waitFor(() => expect(calls.checks).toHaveLength(1))
+    expect(calls.checks[0].input.result).toBe('defect')
+  })
+
+  it('shows the readings in the history after saving', async () => {
+    await open()
+    enter('-10', '-9', '5,1')
+    fireEvent.click(ionButton('Speichern')!)
+    expect(await screen.findByText(/Dichtheit -10 → -9 mbar \(Verlust 1\), Öffnungsdruck 5,1 mbar/)).toBeInTheDocument()
+  })
+
+  it.each([
+    ['all three readings are missing', '', '', ''],
+    ['the pressure after 60 s is missing', '-10', '', '5'],
+    ['the opening pressure is missing', '-10', '-9', ''],
+    ['a reading is not a number', '-10', 'neun', '5'],
+  ])('does not save when %s', async (_name, start, end, opening) => {
+    await open()
+    enter(start, end, opening)
+    fireEvent.click(ionButton('Speichern')!)
+    expect(await screen.findByText('Bitte alle Messwerte eintragen.')).toBeInTheDocument()
+    expect(calls.checks).toEqual([])
+  })
+
+  it('needs a start pressure before the countdown can start', async () => {
+    await open()
+    typeInto(field('Startdruck (mbar)'), '')
+    expect(ionButton('60 s starten')).toHaveProperty('disabled', true)
+  })
+
+  it('runs the countdown and can start it over', async () => {
+    await open()
+    fireEvent.click(ionButton('60 s starten')!)
+    expect(await screen.findByRole('timer')).toHaveTextContent('60 s')
+    expect(ionButton('Neu starten')).not.toBeNull()
+    expect(ionButton('60 s starten')).toBeNull()
+  })
+
+  it('offers the other check types of the item without measurements', async () => {
+    await open()
+    choose(ionSelect('Prüfart')!, 'fuenfjahr')
+    await waitFor(() => expect(screen.queryByText('Dichtprüfung')).not.toBeInTheDocument())
+    fireEvent.click(ionButton('Speichern')!)
+    await waitFor(() => expect(calls.checks).toHaveLength(1))
+    expect(calls.checks[0].input.leakStartMbar).toBeUndefined()
+  })
+})
+
 describe('recording a check', () => {
   it('offers only the check types of the item', async () => {
     renderAt(paths.recordCheck('l01'), 'check')
@@ -731,8 +863,33 @@ describe('manage', () => {
       intervalMonths: 6,
       afterUse: true,
       isDefault: true,
+      measurements: false,
       alsoSatisfies: ['maskenpruefung'],
     })
+  })
+
+  it('creates a check type that asks for measurements', async () => {
+    renderAt(paths.manage, 'manage')
+    await openCheckTypes()
+    set('Name', 'Dichtheitsprüfung')
+    set('Intervall in Monaten', '12')
+    fireEvent.click(screen.getByLabelText('Messwerte erfassen'))
+    fireEvent.click(ionButton('Prüfart anlegen')!)
+    await waitFor(() => expect(calls.createdCheckTypes).toHaveLength(1))
+    expect(calls.createdCheckTypes[0].measurements).toBe(true)
+  })
+
+  it('shows the measurements switch of an existing check type and saves a change', async () => {
+    data.checkTypes[0].measurements = true
+    renderAt(paths.manage, 'manage')
+    await openCheckTypes()
+    fireEvent.click(await findIon(() => ionItem('Maskenprüfung')))
+    const toggle = await screen.findByLabelText('Messwerte erfassen')
+    expect(toggle).toBeChecked()
+    fireEvent.click(toggle)
+    fireEvent.click(ionButton('Speichern')!)
+    await waitFor(() => expect(calls.updatedCheckTypes).toHaveLength(1))
+    expect(calls.updatedCheckTypes[0].input.measurements).toBe(false)
   })
 
   it('edits a check type, offering only others of its category', async () => {
