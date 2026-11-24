@@ -12,10 +12,17 @@ on:
   workflow_run:
     workflows: [Web, Go, E2E, Image, Security]
     types: [completed]
+  # Checks a pull request again by hand, e.g. one whose checks finished before this workflow worked:
+  #   gh workflow run automerge.yml -f sha=<head commit of the pull request>
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: Head commit of the pull request to check again
+        required: true
 
 # Two workflows finishing together must not merge the same pull request twice.
 concurrency:
-  group: automerge-${{ github.event.workflow_run.head_sha }}
+  group: automerge-${{ github.event.workflow_run.head_sha || inputs.sha }}
 
 permissions:
   contents: read
@@ -23,16 +30,20 @@ permissions:
 jobs:
   merge:
     # A red or cancelled run leaves its pull request red; nothing to do.
-    if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success'
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
+    # Setting permissions drops every scope that is not listed, so each one the script needs is named.
     permissions:
       contents: write # merge
       pull-requests: write # merge
+      checks: read # the check runs of the head commit
       actions: write # start image.yml: a merge by the built-in token starts no push workflow
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_REPO: ${{ github.repository }}
-      SHA: ${{ github.event.workflow_run.head_sha }}
+      SHA: ${{ github.event.workflow_run.head_sha || inputs.sha }}
       # Whose pull requests merge themselves.
       AUTHORS: loisi105 dependabot[bot]
     steps:
