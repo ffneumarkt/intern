@@ -31,27 +31,6 @@
 }
 
 
-.label-preview {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  width: 50mm;
-  margin: 16px auto;
-  padding: 8px;
-  border: 1px dashed var(--ion-color-medium);
-}
-
-.qr-placeholder {
-  display: grid;
-  place-items: center;
-  width: 30mm;
-  height: 30mm;
-  background: repeating-linear-gradient(45deg, #000 0 4px, #fff 4px 8px);
-  color: #fff;
-  font-weight: bold;
-}
-
 .suggestions {
   margin-top: 4px;
   border: 1px solid var(--ion-color-light-shade);

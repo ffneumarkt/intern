@@ -209,7 +209,7 @@ describe('item actions follow level', () => {
   it('manage', async () => {
     renderAt(paths.item('m01'), 'manage')
     expect(await findIon(() => ionButton('Bearbeiten'))).toBeInTheDocument()
-    expect(button('Etikett drucken')).toBeInTheDocument()
+    expect(button('Etikett drucken')).not.toBeInTheDocument()
   })
 })
 
