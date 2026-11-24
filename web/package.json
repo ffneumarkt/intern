@@ -16,13 +16,15 @@
     "@ionic/react": "^9.0.10",
     "@ionic/react-router": "^9.0.10",
     "@simplewebauthn/browser": "14.0.0",
+    "barcode-detector": "3.2.4",
     "ionicons": "^8.1.0",
     "pdf-lib": "1.17.1",
     "pocketbase": "0.28.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-router": "^6.30.6",
-    "react-router-dom": "^6.30.6"
+    "react-router-dom": "^6.30.6",
+    "zxing-wasm": "3.1.7"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",

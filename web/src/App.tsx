@@ -9,7 +9,6 @@ import ImprintPage from './pages/ImprintPage'
 import InfoPage from './pages/InfoPage'
 import ItemEditPage from './pages/ItemEditPage'
 import ItemPage from './pages/ItemPage'
-import LabelPage from './pages/LabelPage'
 import LoginPage from './pages/LoginPage'
 import ManagePage from './pages/ManagePage'
 import PrivacyPage from './pages/PrivacyPage'
@@ -60,7 +59,6 @@ function Tabs() {
         {material(paths.itemEdit(), <ItemEditPage />)}
         {material(paths.recordUse, <RecordUsePage />)}
         {material(paths.recordCheck(), <RecordCheckPage />)}
-        {material(paths.label(), <LabelPage />)}
         {material(paths.manage, <ManagePage />)}
         {material(paths.settings, <SettingsPage />)}
       </IonRouterOutlet>

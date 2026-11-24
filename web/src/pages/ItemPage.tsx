@@ -68,11 +68,6 @@ export default function ItemPage() {
                     Bearbeiten
                   </IonButton>
                 )}
-                {can(item.categoryId, 'manage') && (
-                  <IonButton fill="outline" routerLink={paths.label(item.id)}>
-                    Etikett drucken
-                  </IonButton>
-                )}
                 {active && can(item.categoryId, 'check') && (
                   <IonButton color="medium" fill="outline" onClick={() => retire(item)}>
                     Ausscheiden
