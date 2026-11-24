@@ -579,6 +579,17 @@ ion-card.tile {
   margin: 8px 14px;
 }
 
+/* Neu starten and Beenden side by side while the countdown is on. */
+.ui-countdown-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.ui-countdown-buttons ion-button {
+  margin: 0;
+}
+
 .ui-countdown-time {
   font-size: 3rem;
   font-weight: 700;
