@@ -88,6 +88,16 @@ Last updated: 2026-11-05. Read this first, then the spec
   uses and checks with names, passkeys, push subscriptions, `localStorage`, PocketBase request logs for 5
   days incl. IP, Cloudflare). **Not legal advice: the owner must read it** and in particular confirm the
   hosting wording („gemieteter Server (VPS)“), the legal bases and the retention statements.
+- **Phase 5 done** (branch `feature/barcode-scanning`, PR pending; spec `specs/2026-11-24-barcode-scanning-design.md`,
+  plan `plans/2026-11-24-barcode-scanning.md`): codes are manufacturer codes only, so the QR label page is
+  gone and nothing is printed. `components/Scanner.tsx` (over `scan/useCamera.ts` and `scan/detector.ts`,
+  `barcode-detector` with a self-hosted, precached wasm in its own lazy chunk) is used in „Verwendung
+  erfassen“ and, as `ScanSearch`, on the due list (a known code opens the item). A `manage` user assigns an
+  unknown code to an item with `AssignCode` (`assignBarcode`). Tests use `test/fakeScanner.tsx` and
+  `test/fakeCamera.ts`; `web/e2e/scan.spec.ts` decodes a real QR from a fake camera feed in Chromium only
+  (`e2e/fixtures/qr.y4m`); Firefox and WebKit check manual entry. Not observed: real iPhone and Android
+  cameras, the torch on hardware, the Surface webcam, scan speed on worn manufacturer codes, an installed
+  PWA scanning offline.
 - Nothing is deployed to the VPS yet. No `deploy/` files exist yet.
 
 ## How the process works here
@@ -98,9 +108,7 @@ line; work happens on branches with PRs against `main` (the user merges).
 
 ## Next steps (proposed order, each needs its own plan)
 
-1. **Phase 5: camera scanning and QR labels** (spec §9, `barcode-detector`): camera picker and torch
-   removed in phase 2, the label page's QR placeholder, assigning an unknown code to an item.
-2. **Deploy:** `deploy/` (systemd update timer, backup wrapper, `authorized_keys` example),
+1. **Deploy:** `deploy/` (systemd update timer, backup wrapper, `authorized_keys` example),
    `intern snapshot` (spec §10), VPS setup with its own `cloudflared` and hostname
    `intern.ffneumarkt.at`, restore test. After the first deploy, check what can't be tested locally:
    passkeys on a real iPhone, Android phone and Windows device, including Safari with the two-tap
@@ -110,9 +118,9 @@ line; work happens on branches with PRs against `main` (the user merges).
    budget. The container must keep publishing no port, or that header can be spoofed. Generate the VAPID
    keys with `docker run --rm ghcr.io/ffneumarkt/intern vapid`; `VAPID_SUBJECT` (a `mailto:` address or
    https URL) is set by hand.
-3. **ffneumarkt-web follow-ups** (spec §12): revert #10 there now (production has no iOS icon), redirect
+2. **ffneumarkt-web follow-ups** (spec §12): revert #10 there now (production has no iOS icon), redirect
    and cleanup at go-live.
-4. **E2E follow-ups:** `image.yml` may gate on `e2e.yml` once it has run stably.
+3. **E2E follow-ups:** `image.yml` may gate on `e2e.yml` once it has run stably.
 
 ## Deferred minor findings (from the phase 1 review)
 
