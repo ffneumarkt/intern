@@ -98,6 +98,9 @@ Last updated: 2026-11-05. Read this first, then the spec
   (`e2e/fixtures/qr.y4m`); Firefox and WebKit check manual entry. Not observed: real iPhone and Android
   cameras, the torch on hardware, the Surface webcam, scan speed on worn manufacturer codes, an installed
   PWA scanning offline.
+- Dependabot (`.github/dependabot.yml`) opens a weekly PR (Mondays) per ecosystem: Go modules, npm, GitHub
+  Actions and the Docker base images; minor and patch updates are grouped, a major update comes alone.
+  The normal CI runs on those PRs; the user merges.
 - Nothing is deployed to the VPS yet. No `deploy/` files exist yet.
 
 ## How the process works here
