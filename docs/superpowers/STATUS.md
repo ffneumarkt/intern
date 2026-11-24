@@ -139,7 +139,11 @@ Last updated: 2026-11-05. Read this first, then the spec
   merge those) and docs-only PRs (no check runs). A merge by the built-in token starts no push workflow, so the
   script starts `image.yml` (it has `workflow_dispatch`) for non-docs merges; Security on main is not started.
   A personal access token secret would remove those limits (not set up). `--match-head-commit` guards against a
-  push after the checks started. Not observed in production until the first PR after this one.
+  push after the checks started. First real run (PR #49) found that the job's `permissions` block had no
+  `checks: read` (a listed block drops every other scope) and that a failed API call looked like "no checks";
+  both fixed, and a failing call now stops the script. To check a PR again by hand (e.g. its checks finished
+  before the fix): `gh workflow run automerge.yml -f sha=<head commit of the PR>`. The merge itself is still
+  not observed.
 - **Deploy files done** (PR #24, no separate plan: spec §10 was the design):
   `intern snapshot` (`internal/snapshot`, `VACUUM INTO` in a temporary directory, gzip to stdout, tests
   restore the copy) and `deploy/` (systemd update timer, `intern-backup` wrapper with its sudoers line and

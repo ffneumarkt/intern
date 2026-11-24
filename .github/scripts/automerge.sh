@@ -44,6 +44,10 @@ for pr in $prs; do
 
   # Every check on this commit has to be finished and green. Workflows that a pull request does not
   # trigger (path filters) create no checks, so only the ones that ran count.
+  # Read into a variable first: a failed API call (a missing permission, a 403) must stop the script, not
+  # look like "no checks" (a process substitution would swallow it).
+  runs=$(gh api "repos/$GH_REPO/commits/$SHA/check-runs?per_page=100" --paginate \
+    --jq '.check_runs[] | [.name, .status, (.conclusion // "")] | @tsv')
   pending=0
   red=0
   green=0
@@ -60,8 +64,7 @@ for pr in $prs; do
       say "#$pr: $name ended as $conclusion."
       red=1
     fi
-  done < <(gh api "repos/$GH_REPO/commits/$SHA/check-runs?per_page=100" --paginate \
-    --jq '.check_runs[] | [.name, .status, (.conclusion // "")] | @tsv')
+  done <<<"$runs"
 
   if ((pending)); then
     say "#$pr: waiting for the other checks; the next workflow to finish tries again."
