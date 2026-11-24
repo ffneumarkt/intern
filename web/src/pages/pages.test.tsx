@@ -348,14 +348,35 @@ describe('saving a use', () => {
     expect(calls.uses).toEqual([])
   })
 
-  it('remembers who recorded on this device', async () => {
-    localStorage.setItem('intern.recordedBy', 'Anna')
+  it('prefills Erfasst von with the name of the logged in user', async () => {
+    renderAt(paths.recordUse, 'use')
+    await scanAndOpenForm('M-001')
+    expect(screen.getByLabelText('Erfasst von')).toHaveValue('Test Benutzer')
+  })
+
+  it('saves the prefilled name with the use', async () => {
+    renderAt(paths.recordUse, 'use')
+    await scanAndOpenForm('M-001')
+    fireEvent.click(ionButton('Speichern')!)
+    await waitFor(() => expect(calls.uses).toHaveLength(1))
+    expect(calls.uses[0].input.recordedByName).toBe('Test Benutzer')
+  })
+
+  it('remembers who recorded for this account on this device', async () => {
+    localStorage.setItem('intern.recordedBy:u1', 'Anna')
     renderAt(paths.recordUse, 'use')
     await scanAndOpenForm('M-001')
     expect(screen.getByLabelText('Erfasst von')).toHaveValue('Anna')
     typeInto(screen.getByLabelText('Erfasst von'), 'Berta')
     fireEvent.click(ionButton('Speichern')!)
-    await waitFor(() => expect(localStorage.getItem('intern.recordedBy')).toBe('Berta'))
+    await waitFor(() => expect(localStorage.getItem('intern.recordedBy:u1')).toBe('Berta'))
+  })
+
+  it('does not show the name remembered for another account', async () => {
+    localStorage.setItem('intern.recordedBy:u2', 'Anna')
+    renderAt(paths.recordUse, 'use')
+    await scanAndOpenForm('M-001')
+    expect(screen.getByLabelText('Erfasst von')).toHaveValue('Test Benutzer')
   })
 
   it('keeps only the unsaved items after a failure, so a retry writes each once', async () => {
