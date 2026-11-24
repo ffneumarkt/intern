@@ -79,7 +79,7 @@ export default function RecordCheckPage() {
             if (measured && readings.start !== null && readings.end !== null && leakReadingProblem(readings.start, readings.end)) {
               setTriedSave(true)
               setError('Bitte die Messwerte prüfen.')
-              focusFirstInvalid()
+              showFirstInvalid()
               return
             }
             setError(null)
