@@ -15,26 +15,27 @@ import { futureDateMessage, isFuture, today } from '../today'
 import { useBusy } from '../useBusy'
 import { useResource } from '../useResource'
 
-const recordedByKey = 'intern.recordedBy'
+// Remembered per account and device, so a second account on the same phone does not get the first one's name.
+const recordedByKey = (userId: string | undefined) => `intern.recordedBy:${userId ?? ''}`
 
-function readRecordedBy(): string {
+function readRecordedBy(userId: string | undefined): string | null {
   try {
-    return localStorage.getItem(recordedByKey) ?? ''
+    return localStorage.getItem(recordedByKey(userId)) || null
   } catch {
-    return ''
+    return null
   }
 }
 
-function rememberRecordedBy(name: string) {
+function rememberRecordedBy(userId: string | undefined, name: string) {
   try {
-    localStorage.setItem(recordedByKey, name)
+    localStorage.setItem(recordedByKey(userId), name)
   } catch {
     // storage unavailable: the name is typed again next time
   }
 }
 
 export default function RecordUsePage() {
-  const { canAnywhere } = useSession()
+  const { canAnywhere, user } = useSession()
   const navigate = useNavigate()
   const resource = useResource(listItems)
   const [scanned, setScanned] = useState<Item[]>([])
@@ -43,7 +44,11 @@ export default function RecordUsePage() {
   const [step, setStep] = useState<'scan' | 'form'>('scan')
   const [date, setDate] = useState(today)
   const [kind, setKind] = useState<UseInput['kind']>('operation')
-  const [recordedBy, setRecordedBy] = useState(readRecordedBy)
+  // What the user typed; until then the name remembered for this account, else the account's own name.
+  const [typedRecordedBy, setRecordedBy] = useState<string | null>(null)
+  const recordedBy = typedRecordedBy ?? readRecordedBy(user?.id) ?? user?.name ?? ''
+  // Ionic keeps the page mounted across logins.
+  useEffect(() => setRecordedBy(null), [user?.id])
   const [note, setNote] = useState('')
   const [error, setError] = useState<string | null>(null)
   const { busy, once } = useBusy()
@@ -90,7 +95,7 @@ export default function RecordUsePage() {
       return
     }
     setError(null)
-    rememberRecordedBy(recordedBy)
+    rememberRecordedBy(user?.id, recordedBy)
     let remaining = scanned
     try {
       for (const item of scanned) {
