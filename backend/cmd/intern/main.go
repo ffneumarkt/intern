@@ -43,6 +43,7 @@ func main() {
 	keys, pushEnabled := push.KeysFromEnv()
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
+		server.ShieldAdminAPI(se)
 		material.RegisterRoutes(se, due.Today)
 		if err := passkey.Register(se, passkey.ConfigFromEnv(), logger); err != nil {
 			return err
