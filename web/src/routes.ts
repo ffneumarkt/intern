@@ -17,6 +17,16 @@ export const paths = {
   manageCategory: (categoryId: string) => `/material/verwalten?kategorie=${categoryId}`,
   itemEdit: (id = ':itemId') => `/material/geraete/${id}/bearbeiten`,
   settings: '/einstellungen',
+  admin: '/verwaltung',
+  adminMembers: '/verwaltung/mitglieder',
+  adminMemberNew: '/verwaltung/mitglieder/neu',
+  adminMember: (id = ':memberId') => `/verwaltung/mitglied/${id}`,
+  adminCategories: '/verwaltung/kategorien',
+  adminCategoryNew: '/verwaltung/kategorien/neu',
+  adminCategory: (id = ':categoryId') => `/verwaltung/kategorie/${id}`,
+  adminTransport: '/verwaltung/befoerderungspapier',
+  // Correct or delete one use or check of an item (kind: 'use' | 'check').
+  correction: (itemId = ':itemId', kind = ':kind', recordId = ':recordId') => `/material/geraete/${itemId}/korrektur/${kind}/${recordId}`,
   info: '/info',
   imprint: '/info/impressum',
   privacy: '/info/datenschutz',
@@ -24,4 +34,4 @@ export const paths = {
 
 // Everything under the material tool and the settings need a login.
 export const requiresLogin = (pathname: string) =>
-  pathname === paths.dueList || pathname.startsWith(`${paths.dueList}/`) || pathname === paths.settings
+  pathname === paths.dueList || pathname.startsWith(`${paths.dueList}/`) || pathname === paths.settings || pathname === paths.admin || pathname.startsWith(`${paths.admin}/`)

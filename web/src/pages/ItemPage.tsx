@@ -1,6 +1,7 @@
 import { IonButton, IonItem, IonLabel, IonList, IonListHeader, IonNote } from '@ionic/react'
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { listCorrections } from '../api/admin'
 import { listHistory, listItems, listLocations, retireItem, type Item } from '../api/material'
 import DueStateBadge from '../components/DueStateBadge'
 import Loaded from '../components/Loaded'
@@ -16,10 +17,16 @@ const statusLabel = { active: 'Aktiv', defective: 'Mangel', retired: 'Ausgeschie
 
 export default function ItemPage() {
   const { itemId = '' } = useParams()
-  const { can } = useSession()
+  const { can, holds } = useSession()
   const resource = useResource(async () => {
-    const [items, history, locations] = await Promise.all([listItems(), listHistory(itemId), listLocations()])
-    return { item: items.find((i) => i.id === itemId), history, locations }
+    const [items, history, locations, corrections] = await Promise.all([
+      listItems(),
+      listHistory(itemId),
+      listLocations(),
+      // Only holders of the corrections right can read them; a failure here must not hide the item.
+      listCorrections(itemId).catch(() => []),
+    ])
+    return { item: items.find((i) => i.id === itemId), history, locations, corrections }
   })
   const [failed, setFailed] = useState(false)
   const { confirm } = useDialogs()
@@ -40,7 +47,7 @@ export default function ItemPage() {
   return (
     <Page title={title} back={item ? paths.category(item.categoryId) : paths.dueList}>
       <Loaded resource={resource}>
-        {({ item, history, locations }) => {
+        {({ item, history, locations, corrections }) => {
           if (!item) return null
           const active = item.status !== 'retired'
           return (
@@ -91,7 +98,7 @@ export default function ItemPage() {
                   <IonLabel>Verlauf</IonLabel>
                 </IonListHeader>
                 {history.map((h, index) => (
-                  <IonItem key={index}>
+                  <IonItem key={index} routerLink={holds('corrections') ? paths.correction(item.id, h.kind, h.id) : undefined} detail={holds('corrections')}>
                     <IonLabel>
                       <h3>{h.title}</h3>
                       <p>{h.detail}</p>
@@ -100,6 +107,22 @@ export default function ItemPage() {
                   </IonItem>
                 ))}
               </IonList>
+              {corrections.length > 0 && (
+                <IonList>
+                  <IonListHeader>
+                    <IonLabel>Korrekturen</IonLabel>
+                  </IonListHeader>
+                  {corrections.map((c) => (
+                    <IonItem key={c.id}>
+                      <IonLabel>
+                        Korrigiert von {c.adminName}
+                        <p>{c.action === 'delete' ? 'Eintrag gelöscht' : 'Eintrag geändert'}</p>
+                      </IonLabel>
+                      <IonNote slot="end">{c.date}</IonNote>
+                    </IonItem>
+                  ))}
+                </IonList>
+              )}
               {active && (
                 // The two main actions, one above the other and equally prominent; the check in its own green, the use in the red of the app.
                 <ActionBar>

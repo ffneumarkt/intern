@@ -66,6 +66,13 @@ Last updated: 2026-11-05. Read this first, then the spec
   first password (at least 10 characters); `/api/setup/` is rate limited per IP. Not done: the passkey offer
   after the password (the member adds a passkey under Einstellungen after logging in), a per-link limit (the
   token has 256 bits). Next: PR 3, the admin screens and corrections.
+- **Admin UI (PR 3 of 3, branch `feature/admin-ui`)**: Einstellungen → Verwaltung (only with an admin area):
+  Mitglieder (list, new with a one-time setup link, name/email, per-category level, admin areas, new link,
+  deactivate), Kategorien (new/edit/delete when empty), Beförderungspapier settings, and Korrekturen
+  (`PATCH/DELETE /api/admin/uses|checks/:id`, behind the `corrections` right; the item page links its history
+  rows, the old values stay in `corrections`; a check that decides the item's status cannot be deleted, only
+  changed). Together with PR 1 and 2 the PocketBase dashboard is no longer needed. Not done: Standorte and
+  check types stay with the manage level; no viewer for `admin_audit`.
 - **Phase 6 done** (branch `feature/transport-document`, PR pending, no separate plan: the spec's §8 was
   the design): the Beförderungspapier page on `web/src/transportDocument/` (`calc.ts`, `fillForm.ts`,
   `formLayout.ts` and their tests copied from ffneumarkt-web; the fillForm test wraps the PDF bytes in a

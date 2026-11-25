@@ -3,6 +3,8 @@ import { pb } from './client'
 import { explainRateLimit } from './errors'
 
 export type Level = 'use' | 'check' | 'manage'
+// What an admin may do in the app; each is a row of admin_rights.
+export type Area = 'members' | 'categories' | 'transport' | 'corrections'
 
 export interface User {
   id: string
@@ -50,4 +52,13 @@ export async function listLevels(): Promise<Record<string, Level>> {
     filter: pb.filter('user = {:user}', { user: user.id }),
   })
   return Object.fromEntries(permissions.map((p) => [p.category, p.level as Level]))
+}
+
+// The admin areas of the current user, in the order of the app.
+export async function listAreas(): Promise<Area[]> {
+  const user = currentUser()
+  if (!user) return []
+  const rows = await pb.collection('admin_rights').getFullList({ filter: pb.filter('user = {:user}', { user: user.id }) })
+  const held = new Set(rows.map((r) => r.area as Area))
+  return (['members', 'categories', 'transport', 'corrections'] as Area[]).filter((a) => held.has(a))
 }

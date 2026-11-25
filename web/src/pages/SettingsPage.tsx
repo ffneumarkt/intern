@@ -1,5 +1,5 @@
 import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonNote } from '@ionic/react'
-import { addOutline, keyOutline, personCircleOutline } from 'ionicons/icons'
+import { addOutline, keyOutline, personCircleOutline, shieldCheckmarkOutline } from 'ionicons/icons'
 import { useState } from 'react'
 import { PasskeyCancelledError, PasskeyExistsError, TooManyAttemptsError, tooManyAttemptsMessage, WrongPasswordError } from '../api/errors'
 import {
@@ -19,13 +19,14 @@ import Loaded from '../components/Loaded'
 import Page from '../components/Page'
 import { SettingsFooter, SettingsHeader } from '../components/SettingsGroup'
 import { useDialogs } from '../components/useDialogs'
+import { paths } from '../routes'
 import { useSession } from '../session'
 import { useBusy } from '../useBusy'
 import { useResource } from '../useResource'
 import { BlockButton } from '../components/ui'
 
 export default function SettingsPage() {
-  const { user, logout } = useSession()
+  const { user, logout, areas } = useSession()
   const resource = useResource(listPasskeys)
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
@@ -107,6 +108,14 @@ export default function SettingsPage() {
           </IonLabel>
         </IonItem>
       </IonList>
+      {areas.length > 0 && (
+        <IonList inset>
+          <IonItem routerLink={paths.admin} detail>
+            <IonIcon slot="start" icon={shieldCheckmarkOutline} aria-hidden />
+            <IonLabel>Verwaltung</IonLabel>
+          </IonItem>
+        </IonList>
+      )}
       <NotificationSettings />
       <SettingsHeader>Passkeys</SettingsHeader>
       <IonList inset>

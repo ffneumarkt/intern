@@ -35,3 +35,6 @@ export class PushDeniedError extends Error {}
 
 // The setup link is unknown, expired, used or of a deactivated member; the server does not say which.
 export class SetupLinkInvalidError extends Error {}
+
+// The server refused an admin change (for example the last holder of the members right, or a category that still has devices).
+export class AdminRefusedError extends Error {}

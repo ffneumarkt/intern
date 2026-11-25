@@ -23,9 +23,10 @@ by the rate limits) can only come from the tunnel.
    - VAPID keys: `docker run --rm ghcr.io/ffneumarkt/intern vapid`; `VAPID_SUBJECT` by hand.
 3. `cd /srv/intern && docker compose up -d`. The image is public, no login is needed.
 4. Create the first superuser: `docker compose exec intern /intern superuser upsert EMAIL PASSWORD`,
-   then add the users in `https://intern.ffneumarkt.at/_/` (until the admin screens ship).
    Make the first admin: `docker compose exec intern /intern admin grant EMAIL members categories transport corrections`
    (`admin list` and `admin revoke` also exist; the last `members` holder cannot be revoked or deactivated).
+   From then on members, permissions, categories, the transport settings and corrections are managed in the app
+   (Einstellungen → Verwaltung); a new member gets a one-time setup link to pass on. The dashboard is not needed.
    The dashboard and PocketBase's admin API (superuser login, settings, backups, logs, schema) answer 404 to
    requests that come through the tunnel or any non-loopback address. To use the dashboard, set
    `ADMIN_API_ALLOW=true` in `.env`, `docker compose up -d`, and remove it again afterwards. Local access on the

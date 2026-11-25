@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import * as auth from './api/auth'
-import type { Level, User } from './api/auth'
+import type { Area, Level, User } from './api/auth'
 import * as passkeys from './api/passkeys'
 import * as push from './api/push'
 
@@ -15,6 +15,9 @@ interface Session {
   user: User | null
   can(categoryId: string, required: Level): boolean
   canAnywhere(required: Level): boolean
+  // The admin areas of the user, and whether they hold one.
+  areas: Area[]
+  holds(area: Area): boolean
   reloadLevels(): Promise<void>
   login(email: string, password: string): Promise<void>
   loginWithPasskey(): Promise<void>
@@ -26,14 +29,18 @@ const SessionContext = createContext<Session | null>(null)
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState(auth.currentUser)
   const [levels, setLevels] = useState<Record<string, Level>>({})
+  const [areas, setAreas] = useState<Area[]>([])
 
   // On failure the last known levels stay; the next page entry tries again.
   const reloadLevels = useCallback(
     () =>
-      auth
-        .listLevels()
-        .then(setLevels)
-        .catch(() => {}),
+      Promise.all([
+        auth.listLevels().then(setLevels),
+        auth.listAreas().then(setAreas),
+      ]).then(
+        () => {},
+        () => {},
+      ),
     [],
   )
 
@@ -55,6 +62,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     user,
     can: (categoryId, required) => reaches(levels[categoryId], required),
     canAnywhere: (required) => Object.values(levels).some((level) => reaches(level, required)),
+    areas,
+    holds: (area) => areas.includes(area),
     reloadLevels,
     login: async (email, password) => {
       await auth.login(email, password)

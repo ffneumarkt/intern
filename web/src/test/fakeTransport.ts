@@ -14,7 +14,7 @@ export const defaultSettings = (): TransportSettings => ({
   },
 })
 
-const fresh = () => ({ settings: defaultSettings(), failing: false })
+const fresh = () => ({ settings: defaultSettings(), failing: false, saved: [] as TransportSettings[] })
 
 export let transportState = fresh()
 
@@ -25,4 +25,10 @@ export function resetTransport() {
 export async function loadTransportSettings(): Promise<TransportSettings> {
   if (transportState.failing) throw new TypeError('Failed to fetch')
   return transportState.settings
+}
+
+export async function updateTransportSettings(settings: TransportSettings): Promise<void> {
+  if (transportState.failing) throw new TypeError('Failed to fetch')
+  transportState.saved.push(settings)
+  transportState.settings = settings
 }

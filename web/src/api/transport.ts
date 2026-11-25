@@ -69,3 +69,25 @@ async function fetchSettings(): Promise<TransportSettings> {
     },
   }
 }
+
+// Writes the single settings record (the admin area "transport" may). The copy kept for offline use is replaced
+// by the next load.
+export async function updateTransportSettings(settings: TransportSettings): Promise<void> {
+  const { items } = await pb.collection('transport_document_settings').getList(1, 1)
+  if (!items[0]) throw new Error('transport_document_settings has no record')
+  const { config } = settings
+  await pb.collection('transport_document_settings').update(items[0].id, {
+    station_name: config.station.name,
+    station_street: config.station.street,
+    station_postal_code: config.station.postalCode,
+    station_town: config.station.town,
+    cylinder_label: config.cylinder.label,
+    cylinder_litres_tenths: config.cylinder.litresTenths,
+    points_limit: config.pointsLimit,
+    filling_station_name: config.fillingStation?.name ?? '',
+    filling_station_street: config.fillingStation?.street ?? '',
+    filling_station_postal_code: config.fillingStation?.postalCode ?? '',
+    filling_station_town: config.fillingStation?.town ?? '',
+    checklist: settings.checklist,
+  })
+}
