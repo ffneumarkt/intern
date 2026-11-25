@@ -1,0 +1,22 @@
+/* Tailwind 4 without its preflight (reset): Ionic's own reset still styles the app until the shell moves over.
+   The tokens are the identity of ffneumarkt.at, the same colours as theme/variables.css. */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+@theme {
+  --font-sans: 'Roboto', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --color-primary: #af2b1e;
+  --color-primary-foreground: #ffffff;
+  --color-check: #1f7a4a;
+  --color-check-foreground: #ffffff;
+  --color-destructive: #b42318;
+  --color-background: #ffffff;
+  --color-foreground: #0f172a;
+  --color-muted: #f1f5f9;
+  --color-muted-foreground: #475569;
+  --color-border: #d4d8db;
+
+  --radius-md: 0.5rem;
+}
