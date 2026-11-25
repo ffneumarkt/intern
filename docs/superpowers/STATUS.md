@@ -5,6 +5,12 @@ Last updated: 2026-11-05. Read this first, then the spec
 
 ## Where things stand
 
+- **Ionic → shadcn migration done** (plan `plans/2026-11-25-shadcn-migration.md`, PRs #64–#69 and the docs PR): Tailwind 4,
+  native styled controls, lucide icons, list primitives, react-router shell with own header, tab bar and FAB; `@ionic/*`,
+  `ionicons` and `@lit/react` are gone. Older entries below that mention Ionic describe the state at their time.
+  Open follow-up: `.github/dependabot.yml` still ignores react-router 7 because of `@ionic/react-router`; that reason is
+  gone, so the rule can be lifted (and the react-router 7 audit finding fixed) in its own PR.
+
 - **Phase 1 done** (plan `plans/2026-10-29-basic-setup.md`, PR #1, merge `7204f2d`): Go + PocketBase
   skeleton serving the embedded frontend, German Ionic React UI sketch of all screens with mock data,
   Docker image, reference `compose.yaml`, Makefile, CI.

@@ -5,39 +5,39 @@ Internal tools for FF Neumarkt at `intern.ffneumarkt.at`. Start with `docs/super
 
 ## Conventions
 
-- Layout: Go module in `backend/` (`github.com/ffneumarkt/intern/backend`), Ionic React app in `web/`,
-  only tooling at the root. Vite builds into `backend/ui/dist`, which is embedded in the binary.
+- Layout: Go module in `backend/` (`github.com/ffneumarkt/intern/backend`), React app in `web/` (Tailwind 4 and
+  shadcn-style components in `web/src/components/ui/`, react-router, lucide icons), only tooling at the root. Vite builds
+  into `backend/ui/dist`, which is embedded in the binary.
 - Logging in Go: always `charmbracelet/log` via `internal/logging` (ReportCaller, ReportTimestamp,
   TimeFormat `15:04:05.00`, level from `LOG_LEVEL`). No `log`/`fmt.Print` for diagnostics.
 - UI text is German only; code, comments and identifiers are English.
-- Routes are defined once in `web/src/routes.ts` (`paths`).
-- Frontend tests: Ionic components are found by visible text with `web/src/test/ionic.ts`
-  (`ionButton`, `ionTab`, `ionChip`, `ionItem`, `ionToggle`, `findIon`) and inputs are driven with `fireEvent`;
-  jsdom does not model Ionic's shadow DOM roles or focus. Ionic controls can be tested in jsdom (props such
-  as `checked` reach the element, a click on an `ion-toggle` fires `onIonChange`) thanks to the `@lit/react`
-  alias in `web/vite.config.ts`; real-browser behaviour is covered by `make e2e`. `web/src/api/` is replaced by `test/fakeAuth.ts`,
+- Routes are defined once in `web/src/routes.ts` (`paths`). The shell (`App.tsx`: `<Routes>`, tab bar) and the page
+  frame (`components/Page.tsx`: header, back button, FAB) are ours; a page unmounts when it is left, so state and
+  loading start fresh on entry (`useResource` loads on mount).
+- Frontend tests: controls are found by visible text with `web/src/test/ionic.ts` (the file keeps its old name:
+  `ionButton`, `ionTab`, `ionChip`, `ionItem`, `ionToggle`, `findIon`) and inputs are driven with `typeInto`; everything
+  is plain DOM, so jsdom is enough; real-browser behaviour is covered by `make e2e`. `web/src/api/` is replaced by `test/fakeAuth.ts`,
   `test/fakeAdmin.ts`, `test/fakeSetup.ts`, `test/fakeMaterial.ts`, `test/fakePasskeys.ts`, `test/fakeNotifications.ts`, `test/fakePush.ts` and `test/fakeTransport.ts`.
-- Form fields go through `web/src/components/Field.tsx`, which wraps `IonInput`, `IonTextarea`, `IonSelect`
-  and `IonToggle`; tests drive them with `typeInto` (`fireEvent.change` does not reach Ionic inputs),
-  `choose` (find selects with `ionSelect`, their text with `selectedText`) and `setToggle` from
-  `web/src/test/ionic.ts`. Plain text fields get capitalisation, autocorrect and spellcheck (Ionic turns
-  them off by default); code-like ones (codes, serial numbers) pass `autoCapitalize="off"`. Dates are
-  `IonInput type="date"` (the OS picker); only the Ruhezeit times stay native `<input type="time">`.
+- Form fields go through `web/src/components/Field.tsx`, which wraps native `<input>`, `<textarea>`, `<select>` and the
+  switch; tests drive them with `typeInto`, `choose` (find selects with `ionSelect`, their text with `selectedText`)
+  and `setToggle` from `web/src/test/ionic.ts`. Plain text fields get capitalisation, autocorrect and spellcheck;
+  code-like ones (codes, serial numbers) pass `autoCapitalize="off"`. Dates are `<input type="date">` (the OS picker);
+  the Ruhezeit times are `<input type="time">`.
 - Required fields: pass `required` (a red * after the label, drawn in CSS so labels stay findable) and `error` to
   `Field`, `SelectField` and `TextAreaField`. A form never disables Speichern for an empty field: the first press
   sets a `tried` flag, the empty fields show `requiredMessage` ('Bitte ausfüllen.'), nothing is saved, and
-  `showFirstInvalid()` (`components/required.ts`) scrolls to the first one without taking the focus (it would start Ionic's iOS input shim).
+  `showFirstInvalid()` (`components/required.ts`) scrolls to the first one without taking the focus.
 - Shared UI pieces live once in `web/src/components/ui.tsx`: `ErrorText` (red message, renders nothing when empty,
   optional `role`), `ActionBar` (sticky bar at the page bottom), `Hint` (muted paragraph), `Card` (`tone="warning"`)
-  and `BlockButton` (full-width `IonButton`); inside a list use `ListNote` (an Ionic item, so it takes the list's
-  padding). Pages use these instead of repeating the Ionic element and its `ui-*` classes; their look is in
-  `web/src/theme/ui.css`.
-- Confirm and prompt dialogs are IonAlerts through `useDialogs` (`web/src/components/useDialogs.ts`), never
+  and `BlockButton` (full-width button); lists are `List`/`ListHeader`/`Row`/`RowLabel`/`Note` from
+  `web/src/components/ui/list.tsx` (a `Row` with `to` is a link, with `onClick` a button); inside a list use `ListNote`.
+  Pages use these instead of repeating the element and its `ui-*` classes; their look is in `web/src/theme/ui.css`.
+  Colours are the `--app-*` variables in `theme/variables.css` and the Tailwind tokens in `theme/tailwind.css`.
+- Confirm and prompt dialogs are alert dialogs through `useDialogs` (`web/src/components/useDialogs.ts`), never
   `window.confirm`/`prompt`; tests press the alert buttons with `alertButton` from `web/src/test/ionic.ts`.
-- Data pages load with `useResource`, not an effect: Ionic keeps pages mounted.
-- Never redirect from a page or route element (`<Navigate>`): Ionic keeps visited pages mounted, so each
-  one would redirect and the stack breaks (the next login stays on the login page in Firefox). Redirect in
-  one place, as `LoginRedirect` in `App.tsx` does.
+- Data pages load with `useResource`, not an effect.
+- Redirect a logged-out user in one place, as `LoginRedirect` in `App.tsx` does; pages render nothing without a login
+  (`RequireLogin`).
 - Go tests that use `internal/testenv` live in external `_test` packages.
 - TDD: write the failing test first, watch it fail, then implement.
 - Work on a branch, open a PR against `main`. A PR by the owner or Dependabot merges itself once every check is
