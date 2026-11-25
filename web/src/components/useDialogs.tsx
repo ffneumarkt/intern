@@ -1,3 +1,4 @@
+import { cn } from '@/lib/utils'
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import {
@@ -107,28 +108,33 @@ function DialogView({ pending, onClosed }: { pending: Pending; onClosed(): void 
   return (
     <AlertDialog open onOpenChange={(isOpen) => !isOpen && answer(false)}>
       <AlertDialogContent>
-        <form onSubmit={submit} className="grid gap-4">
+        <form onSubmit={submit} className="grid">
           {/* Every dialog has a name for screen readers; without a header it is the question. */}
           <AlertDialogTitle className={header ? undefined : 'sr-only'}>{header ?? 'Bitte bestätigen'}</AlertDialogTitle>
           {pending.kind === 'confirm' ? (
-            <AlertDialogDescription>{pending.options.message}</AlertDialogDescription>
+            <AlertDialogDescription className="px-4 pb-4 text-center">{pending.options.message}</AlertDialogDescription>
           ) : (
             <>
               <AlertDialogDescription className="sr-only">{pending.options.label}</AlertDialogDescription>
-              <label className="grid gap-1 text-sm">
+              <label className="grid gap-1 px-4 pb-4 text-[13px]">
                 {pending.options.label}
                 <Input value={text} onChange={(e) => setText(e.target.value)} aria-label={pending.options.label} autoFocus />
               </label>
             </>
           )}
-          <div className="flex justify-end gap-2">
+          <div className="flex border-t border-black/15">
             <AlertDialogCancel asChild>
-              <Button type="button" variant="outline">
+              <Button type="button" variant="outline" className="h-11 flex-1 rounded-none rounded-bl-[14px] bg-transparent font-normal">
                 Abbrechen
               </Button>
             </AlertDialogCancel>
             <AlertDialogAction asChild>
-              <Button type="submit" variant={destructive ? 'destructive' : 'default'} onClick={() => answer(true)}>
+              <Button
+                type="submit"
+                variant={destructive ? 'destructive' : 'default'}
+                className={cn('h-11 flex-1 rounded-none rounded-br-[14px] border-l border-black/15 bg-transparent', destructive ? 'text-destructive' : 'text-primary')}
+                onClick={() => answer(true)}
+              >
                 {confirmText}
               </Button>
             </AlertDialogAction>

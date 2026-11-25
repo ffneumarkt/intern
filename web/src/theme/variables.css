@@ -1,6 +1,6 @@
 /* The identity of ffneumarkt.at: RAL 3000 as the primary colour, slate neutrals, Roboto. */
 :root {
-  --app-font: 'Roboto', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --app-font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Helvetica Neue', 'Segoe UI', Roboto, sans-serif;
 
   --app-danger: #b42318;
   --app-danger-rgb: 180, 35, 24;
@@ -24,25 +24,17 @@
   --app-check-tint: #358759;
 
   /* The page behind grouped lists and cards. */
-  --app-light: #f1f5f9;
+  --app-light: #f2f2f7;
   --app-light-rgb: 241, 245, 249;
   --app-light-contrast: #0f172a;
   --app-light-contrast-rgb: 15, 23, 42;
   --app-light-shade: #d4d8db;
   --app-light-tint: #f2f6fa;
 
-  --app-text: #0f172a;
-  --app-text-rgb: 15, 23, 42;
+  --app-text: #1c1c1e;
+  --app-text-rgb: 28, 28, 30;
 }
 
-/* The toolbar already shows the title; the heading is kept for screen readers and tests. */
-.page-heading {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-}
 
 
 .suggestions {

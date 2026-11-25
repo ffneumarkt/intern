@@ -15,7 +15,7 @@ describe('Button', () => {
         Prüfung erfassen
       </Button>,
     )
-    expect(screen.getByRole('button', { name: 'Prüfung erfassen' })).toHaveClass('bg-check', 'h-12')
+    expect(screen.getByRole('button', { name: 'Prüfung erfassen' })).toHaveClass('bg-check', 'h-[50px]')
   })
 
   it('takes a class that overrides the variant', () => {
@@ -38,6 +38,6 @@ describe('Button', () => {
     )
     const link = screen.getByRole('link', { name: 'Zur Liste' })
     expect(link).toHaveAttribute('href', '/material')
-    expect(link).toHaveClass('border-primary')
+    expect(link).toHaveClass('bg-primary/10')
   })
 })

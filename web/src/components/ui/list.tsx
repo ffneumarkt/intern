@@ -8,7 +8,7 @@ export function List({ inset, className, ...props }: ComponentProps<'div'> & { i
   return (
     <div
       data-slot="list"
-      className={cn('bg-background [&>[data-slot=row]:last-child]:border-b-0', inset && 'mx-4 my-3 overflow-hidden rounded-xl', className)}
+      className={cn('bg-background [&>[data-slot=row]:last-child]:after:hidden', inset && 'mx-4 my-3 overflow-hidden rounded-xl', className)}
       {...props}
     />
   )
@@ -16,7 +16,7 @@ export function List({ inset, className, ...props }: ComponentProps<'div'> & { i
 
 // A small header above a list.
 export function ListHeader({ className, ...props }: ComponentProps<'div'>) {
-  return <div data-slot="list-header" className={cn('px-4 pt-4 pb-2 text-base font-bold text-foreground', className)} {...props} />
+  return <div data-slot="list-header" className={cn('px-4 pt-4 pb-1.5 text-[13px] font-normal text-muted-foreground uppercase', className)} {...props} />
 }
 
 type RowProps = Omit<ComponentProps<'div'>, 'onClick'> & {
@@ -35,15 +35,15 @@ type RowProps = Omit<ComponentProps<'div'>, 'onClick'> & {
 // first, children with slot="end" (a badge, a switch, a note) go to the right edge.
 export function Row({ to, onClick, disabled, detail, lines, className, children, ...props }: RowProps) {
   const classes = cn(
-    'flex min-h-12 w-full items-center gap-3 border-b border-border/70 bg-background px-4 py-2 text-left text-foreground no-underline [&>[slot=end]]:ml-auto [&>[slot=start]]:order-first',
-    lines === 'none' && 'border-b-0',
-    (to || onClick) && 'outline-offset-[-2px] focus-visible:outline-2 focus-visible:outline-primary',
+    'relative flex min-h-[44px] w-full items-center gap-3 bg-background px-4 py-2 text-left after:absolute after:right-0 after:bottom-0 after:left-4 after:h-px after:bg-border/70 after:content-[""] text-foreground no-underline [&>[slot=end]]:ml-auto [&>[slot=start]]:order-first',
+    lines === 'none' && 'after:hidden',
+    (to || onClick) && 'outline-offset-[-2px] transition-colors focus-visible:outline-2 focus-visible:outline-primary active:bg-[#d1d1d6]/60',
     className,
   )
   const content = (
     <>
       {children}
-      {detail && <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />}
+      {detail && <ChevronRight className="size-[18px] shrink-0 text-[#c4c4c7]" aria-hidden="true" />}
     </>
   )
   if (to) {
@@ -72,7 +72,7 @@ export function RowLabel({ className, ...props }: ComponentProps<'div'>) {
   return (
     <div
       data-slot="row-label"
-      className={cn('min-w-0 flex-1 [&_h2]:text-base [&_h2]:font-medium [&_h3]:text-sm [&_h3]:font-semibold [&_p]:text-sm [&_p]:text-muted-foreground', className)}
+      className={cn('min-w-0 flex-1 [&_h2]:text-[17px] [&_h2]:font-normal [&_h3]:text-[15px] [&_h3]:font-semibold [&_p]:text-[13px] [&_p]:text-muted-foreground', className)}
       {...props}
     />
   )
