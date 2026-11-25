@@ -526,6 +526,17 @@ body,
   height: 100%;
 }
 
+/* No double-tap zoom delay and no text selection on controls, as in a native app. */
+a,
+button,
+[role='tab'],
+[role='switch'] {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
 body {
   margin: 0;
   font-family: var(--app-font);
@@ -664,7 +675,7 @@ body {
   justify-content: center;
   gap: 1px;
   min-width: 0;
-  padding: 4px 0 3px;
+  padding: 5px 0 2px;
   font-size: 0.625rem;
   font-weight: 500;
   letter-spacing: -0.01em;
@@ -673,9 +684,9 @@ body {
 }
 
 .app-tabs a svg {
-  width: 25px;
-  height: 25px;
-  stroke-width: 1.75;
+  width: 27px;
+  height: 27px;
+  margin-bottom: 1px;
 }
 
 .app-tabs a span {
