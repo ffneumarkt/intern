@@ -35,7 +35,9 @@ func record(e *core.RecordRequestEvent, action string, next func() error, before
 		if err := next(); err != nil {
 			return err
 		}
-		if e.Auth == nil {
+		// A superuser (the PocketBase admin UI, outside the app's rights) is not in the users collection the audit
+		// row points to; the change is allowed and has no row.
+		if e.Auth == nil || e.Auth.Collection().Name == core.CollectionNameSuperusers {
 			return nil
 		}
 		return Log(tx, e.Auth.Id, action, e.Collection.Name, e.Record.Id, summary)
