@@ -48,7 +48,7 @@ export function Card({ children, tone }: { children: ReactNode; tone?: 'warning'
     <div
       className={cn(
         'mb-4 rounded-xl p-4',
-        tone === 'warning' ? 'border border-amber-300 bg-amber-100 text-amber-950' : 'bg-background text-foreground',
+        tone === 'warning' ? 'border border-amber-300 bg-amber-100 text-amber-950 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-100' : 'bg-background text-foreground',
       )}
     >
       {children}

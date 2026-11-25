@@ -25,7 +25,7 @@
 
   /* The page behind grouped lists and cards. */
   --app-light: #f2f2f7;
-  --app-light-rgb: 241, 245, 249;
+  --app-light-rgb: 242, 242, 247;
   --app-light-contrast: #0f172a;
   --app-light-contrast-rgb: 15, 23, 42;
   --app-light-shade: #d4d8db;
@@ -33,6 +33,43 @@
 
   --app-text: #1c1c1e;
   --app-text-rgb: 28, 28, 30;
+
+  color-scheme: light dark;
+}
+
+/* Dark mode follows the device. Charcoal page (#121212), cards one step lighter, light grey text, red lifted where it is
+   text and kept deeper where it is a surface behind white text. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --app-light: #121212;
+    --app-light-rgb: 18, 18, 18;
+    --app-text: #e0e0e0;
+    --app-text-rgb: 224, 224, 224;
+    --app-medium-shade: #b0b0b0;
+
+    --app-primary: #ff6a5c;
+    --app-primary-rgb: 255, 106, 92;
+    --app-danger: #ff5a4f;
+    --app-danger-rgb: 255, 90, 79;
+    --app-danger-shade: #ff8a80;
+    --app-check: #30d158;
+
+    --color-background: #1e1e1e;
+    --color-foreground: #e0e0e0;
+    --color-muted: #2a2a2a;
+    --color-muted-foreground: #b0b0b0;
+    --color-border: #444444;
+    --color-primary: #ff6a5c;
+    --color-primary-fill: #d63f30;
+    --color-check: #248a53;
+    --color-destructive: #ff5a4f;
+    --color-fill: rgba(255, 255, 255, 0.12);
+    --color-fill-strong: rgba(255, 255, 255, 0.2);
+    --color-disabled: #333333;
+    --color-disabled-foreground: #777777;
+    --color-placeholder: #6b6b6b;
+    --color-press: rgba(255, 255, 255, 0.1);
+  }
 }
 
 

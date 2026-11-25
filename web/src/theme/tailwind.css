@@ -8,6 +8,8 @@
   --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Helvetica Neue', 'Segoe UI', Roboto, sans-serif;
 
   --color-primary: #af2b1e;
+  /* Where red is a surface behind white text; in dark mode `primary` is lighter, for red text on dark. */
+  --color-primary-fill: #af2b1e;
   --color-primary-foreground: #ffffff;
   --color-check: #1f7a4a;
   --color-check-foreground: #ffffff;
@@ -18,6 +20,14 @@
   --color-muted: #f2f2f7;
   --color-muted-foreground: #636366;
   --color-border: #d1d1d6;
+
+  /* Quiet fills, as iOS draws them: segmented control, chips, switch track. */
+  --color-fill: rgba(118, 118, 128, 0.12);
+  --color-fill-strong: rgba(120, 120, 128, 0.16);
+  --color-disabled: #d1d1d6;
+  --color-disabled-foreground: #8e8e93;
+  --color-placeholder: #c4c4c7;
+  --color-press: rgba(60, 60, 67, 0.1);
 
   --radius-md: 0.625rem;
 }

@@ -6,6 +6,16 @@
   --ui-muted: #636366;
   --ui-line: #d9d9de;
   --ui-ok: #1f7a4a;
+  --ui-ok-rgb: 31, 122, 74;
+  --ui-ok-text: #14532d;
+  --ui-accent: #8e8e93;
+  --ui-warn-text: #a85a00;
+  --ui-fill: rgba(95, 107, 122, 0.12);
+  --ui-bar-bg: rgba(249, 249, 249, 0.8);
+  --ui-bar-bg-strong: rgba(249, 249, 249, 0.9);
+  --ui-bar-line: rgba(60, 60, 67, 0.29);
+  --ui-tint: rgba(60, 60, 67, 0.1);
+  --ui-hover: rgba(60, 60, 67, 0.05);
   /* iOS system orange: clearly a warning, stronger than the muted amber before. */
   --ui-warn: #ff9500;
   --ui-radius: 12px;
@@ -88,18 +98,18 @@
 }
 
 .ui-pill[data-tone='warn'] {
-  color: #a85a00;
+  color: var(--ui-warn-text);
   background: rgba(255, 149, 0, 0.2);
 }
 
 .ui-pill[data-tone='ok'] {
   color: var(--ui-ok);
-  background: rgba(31, 122, 74, 0.12);
+  background: rgba(var(--ui-ok-rgb), 0.14);
 }
 
 .ui-pill[data-tone='muted'] {
   color: var(--ui-muted);
-  background: rgba(95, 107, 122, 0.12);
+  background: var(--ui-fill);
 }
 
 /* Filters and the like: one scrolling row. */
@@ -418,8 +428,8 @@ a.tile {
   margin: 0 0 16px;
   padding: 14px 16px;
   line-height: 1.5;
-  color: #14532d;
-  background: rgba(31, 122, 74, 0.12);
+  color: var(--ui-ok-text);
+  background: rgba(var(--ui-ok-rgb), 0.14);
   border-radius: 14px;
 }
 
@@ -456,7 +466,7 @@ a.tile {
   height: 36px;
   padding: 0 14px;
   border-radius: 999px;
-  background: #fff;
+  background: var(--ui-surface);
   font-size: 0.875rem;
 }
 
@@ -591,8 +601,8 @@ body {
 }
 
 .app-header[data-collapsed='true'] {
-  background: rgba(249, 249, 249, 0.86);
-  border-bottom-color: rgba(60, 60, 67, 0.29);
+  background: var(--ui-bar-bg-strong);
+  border-bottom-color: var(--ui-bar-line);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   backdrop-filter: saturate(180%) blur(20px);
 }
@@ -681,8 +691,8 @@ body {
   min-height: var(--tabs-height);
   margin-inline: auto;
   padding: 4px;
-  background: rgba(249, 249, 249, 0.8);
-  border: 0.5px solid rgba(60, 60, 67, 0.18);
+  background: var(--ui-bar-bg);
+  border: 0.5px solid var(--ui-bar-line);
   border-radius: 999px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.16), 0 1px 3px rgba(0, 0, 0, 0.08);
   -webkit-backdrop-filter: saturate(180%) blur(24px);
@@ -702,7 +712,7 @@ body {
   font-size: 0.625rem;
   font-weight: 500;
   letter-spacing: -0.01em;
-  color: #8e8e93;
+  color: var(--ui-accent);
   text-decoration: none;
 }
 
@@ -720,7 +730,7 @@ body {
 /* The selected tab has its own capsule behind it. */
 .app-tabs a[aria-current='page'] {
   color: var(--app-primary);
-  background: rgba(60, 60, 67, 0.1);
+  background: var(--ui-tint);
 }
 
 /* Page changes: deeper slides in from the right, back from the left (a little, as iOS does). */
@@ -824,7 +834,7 @@ body {
 /* Pointer devices get hover states; touch devices only the press state. */
 @media (hover: hover) {
   [data-slot='row']:is(a, button):hover {
-    background: rgba(60, 60, 67, 0.05);
+    background: var(--ui-hover);
   }
 
   [data-slot='chip']:not([data-outline='true']):hover,
@@ -833,11 +843,11 @@ body {
   }
 
   [data-slot='chip'][data-outline='true']:hover {
-    background: rgba(118, 118, 128, 0.28);
+    background: var(--color-fill-strong);
   }
 
   .app-tabs a:not([aria-current='page']):hover {
-    background: rgba(60, 60, 67, 0.06);
+    background: var(--ui-hover);
   }
 
   .app-back:hover,
@@ -878,9 +888,9 @@ body {
     margin: 0;
     padding: 24px 12px;
     gap: 4px;
-    background: rgba(249, 249, 249, 0.92);
+    background: var(--ui-bar-bg-strong);
     border: 0;
-    border-right: 0.5px solid rgba(60, 60, 67, 0.29);
+    border-right: 0.5px solid var(--ui-bar-line);
     border-radius: 0;
     box-shadow: none;
   }
@@ -908,5 +918,26 @@ body {
 
   .app-header {
     padding-inline: max(16px, calc((100% - var(--column)) / 2 + 8px));
+  }
+}
+
+/* The same neutrals for dark mode; after the light values above so they win. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ui-surface: #1e1e1e;
+    --ui-muted: #b0b0b0;
+    --ui-line: #444444;
+    --ui-accent: #888888;
+    --ui-ok: #30d158;
+    --ui-ok-rgb: 48, 209, 88;
+    --ui-ok-text: #8ee0a8;
+    --ui-warn: #ff9f0a;
+    --ui-warn-text: #ffb340;
+    --ui-fill: rgba(255, 255, 255, 0.12);
+    --ui-bar-bg: rgba(30, 30, 30, 0.8);
+    --ui-bar-bg-strong: rgba(30, 30, 30, 0.9);
+    --ui-bar-line: rgba(255, 255, 255, 0.14);
+    --ui-tint: rgba(255, 255, 255, 0.1);
+    --ui-hover: rgba(255, 255, 255, 0.06);
   }
 }

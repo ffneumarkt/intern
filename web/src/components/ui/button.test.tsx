@@ -6,7 +6,7 @@ describe('Button', () => {
   it('is the red primary button by default', () => {
     render(<Button>Speichern</Button>)
     const button = screen.getByRole('button', { name: 'Speichern' })
-    expect(button).toHaveClass('bg-primary', 'text-primary-foreground')
+    expect(button).toHaveClass('bg-primary-fill', 'text-primary-foreground')
   })
 
   it('has the green check variant and a large size', () => {

@@ -122,7 +122,7 @@ function DialogView({ pending, onClosed }: { pending: Pending; onClosed(): void 
               </label>
             </>
           )}
-          <div className="flex border-t border-black/15">
+          <div className="flex border-t border-border">
             <AlertDialogCancel asChild>
               <Button type="button" variant="outline" className="h-11 flex-1 rounded-none rounded-bl-[14px] bg-transparent font-normal">
                 Abbrechen
@@ -132,7 +132,7 @@ function DialogView({ pending, onClosed }: { pending: Pending; onClosed(): void 
               <Button
                 type="submit"
                 variant={destructive ? 'destructive' : 'default'}
-                className={cn('h-11 flex-1 rounded-none rounded-br-[14px] border-l border-black/15 bg-transparent', destructive ? 'text-destructive' : 'text-primary')}
+                className={cn('h-11 flex-1 rounded-none rounded-br-[14px] border-l border-border bg-transparent', destructive ? 'text-destructive' : 'text-primary')}
                 onClick={() => answer(true)}
               >
                 {confirmText}
