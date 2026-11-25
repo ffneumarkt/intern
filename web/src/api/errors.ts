@@ -32,3 +32,6 @@ export function explainRateLimit(err: unknown): unknown {
 
 // The browser refused the notification permission.
 export class PushDeniedError extends Error {}
+
+// The setup link is unknown, expired, used or of a deactivated member; the server does not say which.
+export class SetupLinkInvalidError extends Error {}

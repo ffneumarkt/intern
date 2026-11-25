@@ -7,6 +7,7 @@ import { resetNotifications } from './fakeNotifications'
 import { resetPasskeys } from './fakePasskeys'
 import { resetPush } from './fakePush'
 import { resetScanner } from './fakeScanner'
+import { resetSetup } from './fakeSetup'
 import { resetTransport } from './fakeTransport'
 
 setupIonicReact({ mode: 'md' })
@@ -32,6 +33,7 @@ beforeEach(() => {
   resetPush()
   resetTransport()
   resetScanner()
+  resetSetup()
 })
 
 afterEach(() => {

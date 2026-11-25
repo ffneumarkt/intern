@@ -38,16 +38,21 @@ func record(e *core.RecordRequestEvent, action string, next func() error, before
 		if e.Auth == nil {
 			return nil
 		}
-		audit, err := tx.FindCollectionByNameOrId("admin_audit")
-		if err != nil {
-			return err
-		}
-		row := core.NewRecord(audit)
-		row.Set("admin", e.Auth.Id)
-		row.Set("action", action)
-		row.Set("collection", e.Collection.Name)
-		row.Set("record", e.Record.Id)
-		row.Set("summary", summary)
-		return tx.Save(row)
+		return Log(tx, e.Auth.Id, action, e.Collection.Name, e.Record.Id, summary)
 	})
+}
+
+// Log saves one audit row: who did what to which record. The summary must hold nothing secret.
+func Log(app core.App, adminID, action, collection, recordID string, summary map[string]any) error {
+	audit, err := app.FindCollectionByNameOrId("admin_audit")
+	if err != nil {
+		return err
+	}
+	row := core.NewRecord(audit)
+	row.Set("admin", adminID)
+	row.Set("action", action)
+	row.Set("collection", collection)
+	row.Set("record", recordID)
+	row.Set("summary", summary)
+	return app.Save(row)
 }

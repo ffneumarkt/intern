@@ -16,6 +16,7 @@ import PrivacyPage from './pages/PrivacyPage'
 import RecordCheckPage from './pages/RecordCheckPage'
 import RecordUsePage from './pages/RecordUsePage'
 import SettingsPage from './pages/SettingsPage'
+import SetupPage from './pages/SetupPage'
 import StartPage from './pages/StartPage'
 import TransportDocumentPage from './pages/TransportDocumentPage'
 import { paths, requiresLogin } from './routes'
@@ -50,6 +51,7 @@ function Tabs() {
       <IonRouterOutlet>
         <Route path={paths.start} element={<StartPage />} />
         <Route path={paths.login} element={<LoginPage />} />
+        <Route path={paths.setup} element={<SetupPage />} />
         <Route path={paths.transportDocument} element={<TransportDocumentPage />} />
         <Route path={paths.info} element={<InfoPage />} />
         <Route path={paths.imprint} element={<ImprintPage />} />

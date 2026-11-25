@@ -45,6 +45,7 @@ func main() {
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
 		server.ShieldAdminAPI(se)
+		admin.RegisterRoutes(se, logger)
 		material.RegisterRoutes(se, due.Today)
 		if err := passkey.Register(se, passkey.ConfigFromEnv(), logger); err != nil {
 			return err

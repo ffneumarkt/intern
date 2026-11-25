@@ -59,6 +59,13 @@ Last updated: 2026-11-05. Read this first, then the spec
   `admin_audit` records changes; a shield answers 404 to `/_/` and PocketBase's admin API unless the request
   is local (`ADMIN_API_ALLOW=true` opens it); `intern admin grant|revoke|list`. Next: PR 2 (members routes and
   one-time setup links) and PR 3 (screens, corrections), each with its own plan.
+- **Admin members (PR 2 of 3, branch `feature/admin-members`)**: plan `plans/2026-11-25-admin-members.md`.
+  `GET/POST /api/admin/members`, `PATCH /api/admin/members/:id` (name, email, deactivated only) and
+  `POST /api/admin/members/:id/setup-link` behind the `members` right; one-time setup links (hash stored, 24 h,
+  single use, token only in request bodies) and the public page `/einrichtung#<token>` where a member sets a
+  first password (at least 10 characters); `/api/setup/` is rate limited per IP. Not done: the passkey offer
+  after the password (the member adds a passkey under Einstellungen after logging in), a per-link limit (the
+  token has 256 bits). Next: PR 3, the admin screens and corrections.
 - **Phase 6 done** (branch `feature/transport-document`, PR pending, no separate plan: the spec's §8 was
   the design): the Beförderungspapier page on `web/src/transportDocument/` (`calc.ts`, `fillForm.ts`,
   `formLayout.ts` and their tests copied from ffneumarkt-web; the fillForm test wraps the PDF bytes in a
