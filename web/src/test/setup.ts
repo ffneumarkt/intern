@@ -1,6 +1,5 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
-import { setupIonicReact } from '@ionic/react'
 import { afterEach, beforeEach, vi } from 'vitest'
 import { resetAdmin } from './fakeAdmin'
 import { resetMaterial } from './fakeMaterial'
@@ -10,8 +9,6 @@ import { resetPush } from './fakePush'
 import { resetScanner } from './fakeScanner'
 import { resetSetup } from './fakeSetup'
 import { resetTransport } from './fakeTransport'
-
-setupIonicReact({ mode: 'md' })
 
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

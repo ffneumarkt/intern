@@ -1,13 +1,12 @@
-// Ionic web components keep roles and focus inside the shadow DOM, which jsdom does not model.
-// These helpers find them by their visible text instead.
+// Helpers that find the app's controls by their visible text. The file keeps its old name from the Ionic days.
 import { fireEvent, waitFor } from '@testing-library/react'
 
 const byText = (selector: string, text: string) =>
   [...document.querySelectorAll(selector)].find((el) => el.textContent?.trim() === text) ?? null
 
-export const ionButton = (text: string) => byText('ion-button, button[data-slot="button"], a[data-slot="button"]', text)
-export const ionTab = (text: string) => byText('ion-tab-button', text)
-export const ionSegmentButton = (text: string) => byText('ion-segment-button, [data-slot="segment-button"]', text)
+export const ionButton = (text: string) => byText('button[data-slot="button"], a[data-slot="button"]', text)
+export const ionTab = (text: string) => byText('[data-slot="tab"]', text)
+export const ionSegmentButton = (text: string) => byText('[data-slot="segment-button"]', text)
 
 export const findIon = <T,>(get: () => T | null) =>
   waitFor(() => {
@@ -16,58 +15,40 @@ export const findIon = <T,>(get: () => T | null) =>
     return el
   })
 
-export const ionChip = (text: string) => byText('ion-chip, [data-slot="chip"]', text)
+export const ionChip = (text: string) => byText('[data-slot="chip"]', text)
 
-// Items whose text starts with the label (a second line may follow).
+// Rows whose text starts with the label (a second line may follow).
 export const ionItem = (label: string) =>
-  [...document.querySelectorAll('ion-item, [data-slot="row"]')].find((el) => el.textContent?.trim().startsWith(label)) ?? null
+  [...document.querySelectorAll('[data-slot="row"]')].find((el) => el.textContent?.trim().startsWith(label)) ?? null
 
-// Toggles carry their label as aria-label, which Ionic passes to the input in its shadow DOM.
-export const ionToggle = (label: string) => document.querySelector<HTMLElement>(`[role="switch"][aria-label="${label}"], ion-toggle[aria-label="${label}"]`)
+// Switches carry their label as aria-label.
+export const ionToggle = (label: string) => document.querySelector<HTMLElement>(`[role="switch"][aria-label="${label}"]`)
 
-// A button of the open ion-alert; its buttons are real <button>s in the alert's light DOM. Ionic
-// marks an alert overlay-hidden until it is presented, and a click before that is ignored, so
-// the buttons of an alert still being presented are not offered.
-export const alertButton = (text: string) =>
-  byText('[role="alertdialog"] button, ion-alert:not(.overlay-hidden) button', text) as HTMLElement | null
+// A button of the open alert dialog.
+export const alertButton = (text: string) => byText('[role="alertdialog"] button', text) as HTMLElement | null
 
-// Form controls of components/Field.tsx. IonInput and IonTextarea render a native input in the
-// light DOM, which getByLabelText finds; Ionic listens for its native input event (not change).
+// Types into an input or textarea of components/Field.tsx.
 export function typeInto(input: HTMLElement, value: string): void {
   fireEvent.input(input, { target: { value } })
 }
 
-// A select is found by its label: the native <select> of components/Field.tsx, or an old ion-select.
+// A select is found by its label: the native <select> of components/Field.tsx.
 export const ionSelect = (label: string): HTMLElement | null => {
   const wanted = [...document.querySelectorAll<HTMLLabelElement>('label')].find((l) => l.textContent?.trim() === label)
   const native = wanted?.htmlFor ? document.getElementById(wanted.htmlFor) : null
-  if (native instanceof HTMLSelectElement) return native
-  return (
-    [...document.querySelectorAll<HTMLElement>('ion-select')].find(
-      (el) => el.shadowRoot?.querySelector('.label-text')?.textContent?.trim() === label,
-    ) ?? null
-  )
+  return native instanceof HTMLSelectElement ? native : null
 }
 
-export const selectedText = (select: HTMLElement) =>
-  select instanceof HTMLSelectElement
-    ? (select.selectedOptions[0]?.textContent ?? '')
-    : (select.shadowRoot?.querySelector('.select-text')?.textContent ?? '')
+export const selectedText = (select: HTMLElement) => (select as HTMLSelectElement).selectedOptions[0]?.textContent ?? ''
 
 // Picks an option as the user would. Only existing options.
 export function choose(select: HTMLElement, value: string): void {
-  if (select instanceof HTMLSelectElement) {
-    if (![...select.options].some((o) => o.value === value)) throw new Error(`no option ${value}`)
-    fireEvent.change(select, { target: { value } })
-    return
-  }
-  const options = [...select.querySelectorAll<HTMLIonSelectOptionElement>('ion-select-option')]
-  if (!options.some((o) => o.value === value)) throw new Error(`no option ${value}`)
-  fireEvent(select, new CustomEvent('ionChange', { detail: { value } }))
+  const native = select as HTMLSelectElement
+  if (![...native.options].some((o) => o.value === value)) throw new Error(`no option ${value}`)
+  fireEvent.change(native, { target: { value } })
 }
 
-// Clicks an ion-toggle unless it already shows the wanted state.
+// Clicks a switch unless it already shows the wanted state.
 export function setToggle(toggle: HTMLElement, on: boolean): void {
-  const checked = toggle.getAttribute('role') === 'switch' ? toggle.getAttribute('aria-checked') === 'true' : (toggle as HTMLInputElement).checked
-  if (checked !== on) fireEvent.click(toggle)
+  if ((toggle.getAttribute('aria-checked') === 'true') !== on) fireEvent.click(toggle)
 }

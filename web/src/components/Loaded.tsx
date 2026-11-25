@@ -7,7 +7,7 @@ export default function Loaded<T>({ resource, children }: { resource: Resource<T
   if (resource.error) {
     // Padded, since a grouped page (Einstellungen) has none of its own.
     return (
-      <div className="ion-padding">
+      <div className="p-4">
         <ErrorText>Keine Verbindung. Die Materialverwaltung braucht eine Internetverbindung.</ErrorText>
       </div>
     )

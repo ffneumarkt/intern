@@ -1,4 +1,3 @@
-import { useIonRouter, useIonViewWillEnter, useIonViewWillLeave } from '@ionic/react'
 import { List } from '@/components/ui/list'
 import { useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
@@ -8,6 +7,7 @@ import Loaded from '../components/Loaded'
 import Measurements, { type Readings } from '../components/Measurements'
 import { showFirstInvalid } from '../components/required'
 import Page from '../components/Page'
+import { useGoBack } from '../components/useGoBack'
 import { leakReadingProblem, measurementsPass } from '../material/measurements'
 import { paths } from '../routes'
 import { futureDateMessage, isFuture, today } from '../today'
@@ -23,7 +23,7 @@ const load = async () => {
 export default function RecordCheckPage() {
   const { itemId = '' } = useParams()
   const navigate = useNavigate()
-  const ionRouter = useIonRouter()
+  const goBack = useGoBack(paths.dueList)
   // Opened from a row of the due list: back and saving return there (with its filter), not to the item page.
   const fromList = new URLSearchParams(useLocation().search).get('von') === 'liste'
   const resource = useResource(load)
@@ -43,13 +43,6 @@ export default function RecordCheckPage() {
   const [error, setError] = useState<string | null>(null)
   const { busy, once } = useBusy()
 
-  // Ionic keeps the page mounted, possibly past midnight.
-  useIonViewWillEnter(() => setDate(today()))
-  // Ionic keeps the page mounted: leaving stops the countdown and clears the readings.
-  useIonViewWillLeave(() => {
-    setReadingsKey((k) => k + 1)
-    setTriedSave(false)
-  })
 
   return (
     <Page title="Prüfung erfassen" back={fromList ? paths.dueList : paths.item(itemId)}>
@@ -104,8 +97,7 @@ export default function RecordCheckPage() {
               setReadingsKey((k) => k + 1)
               setTriedSave(false)
               if (!fromList) navigate(paths.item(itemId))
-              else if (ionRouter.canGoBack()) ionRouter.goBack()
-              else navigate(paths.dueList)
+              else goBack()
             } catch {
               setError('Speichern fehlgeschlagen.')
             }

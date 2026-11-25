@@ -175,7 +175,7 @@ test.describe('passkey', () => {
     await visible('E-Mail').fill(email(owner))
     await visible('Passwort').fill(password)
     await page.getByRole('button', { name: 'Anmelden', exact: true }).click()
-    await page.getByRole('tab', { name: 'Einstellungen' }).click()
+    await page.getByRole('navigation', { name: 'Hauptmenü' }).getByRole('link', { name: 'Einstellungen' }).click()
     await visible('Name des Geräts').fill('E2E-Gerät')
     await visible('Passwort').fill(password)
     await page.getByRole('button', { name: 'Passkey hinzufügen' }).click()

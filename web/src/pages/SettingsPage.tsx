@@ -150,7 +150,7 @@ export default function SettingsPage() {
         )}
       </List>
       <SettingsFooter message={error ? { text: error, role: 'alert' } : null} />
-      <div className="ion-padding-horizontal">
+      <div className="px-4">
         {canAdd && (
           <BlockButton fill="outline" disabled={busy || !name.trim()} onClick={() => once(add)}>
             <Plus aria-hidden="true" />
@@ -173,7 +173,7 @@ export default function SettingsPage() {
       <List inset>
         <LegalItems />
       </List>
-      <div className="ion-padding-horizontal">
+      <div className="px-4">
         <BlockButton fill="clear" color="danger" onClick={logout}>
           Abmelden
         </BlockButton>

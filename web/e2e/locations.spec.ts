@@ -10,7 +10,7 @@ const select = (page: Page, label: string) => page.getByLabel(label, { exact: tr
 // The location chips of the page with the given heading; Ionic keeps the page it came from mounted behind it.
 const chip = (page: Page, heading: string, name: string) =>
   page
-    .locator('ion-content')
+    .locator('.app-page')
     .filter({ has: page.locator('h1.page-heading', { hasText: heading }) })
     .getByRole('group', { name: 'Standort' })
     .getByText(name, { exact: true })

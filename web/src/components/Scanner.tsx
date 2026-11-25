@@ -1,6 +1,5 @@
-import { useIonViewWillEnter, useIonViewWillLeave } from '@ionic/react'
 import { NativeSelect } from '@/components/ui/native-select'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { loadDetector } from '../scan/detector'
 import { useCamera } from '../scan/useCamera'
 import { CheckboxField } from './Field'
@@ -16,11 +15,7 @@ interface Props {
 
 // Live camera preview that reports every barcode once while it stays in the frame.
 export default function Scanner({ onCode, active = true }: Props) {
-  // Ionic keeps a page mounted after leaving it, so the camera follows the view as well.
-  const [away, setAway] = useState(false)
-  useIonViewWillLeave(() => setAway(true))
-  useIonViewWillEnter(() => setAway(false))
-  const running = active && !away
+  const running = active
   const camera = useCamera(running)
   const report = useRef(onCode)
   useEffect(() => {

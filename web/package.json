@@ -13,8 +13,6 @@
   },
   "dependencies": {
     "@fontsource/roboto": "5.3.0",
-    "@ionic/react": "^9.0.13",
-    "@ionic/react-router": "^9.0.13",
     "@radix-ui/react-alert-dialog": "^1.2.1",
     "@radix-ui/react-slot": "^1.5.0",
     "@radix-ui/react-switch": "^1.4.1",
@@ -23,7 +21,6 @@
     "barcode-detector": "3.2.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "ionicons": "^8.1.0",
     "lucide-react": "^1.80.0",
     "pdf-lib": "1.17.1",
     "pocketbase": "0.29.0",

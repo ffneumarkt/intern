@@ -9,7 +9,7 @@ const heading = (page: import('@playwright/test').Page, name: string) => page.ge
 test.describe('anonymous', () => {
   test('reaches Impressum and Datenschutzerklärung through the Info tab', async ({ page }) => {
     await page.goto('/')
-    await page.getByRole('tab', { name: 'Info' }).click()
+    await page.getByRole('navigation', { name: 'Hauptmenü' }).getByRole('link', { name: 'Info' }).click()
     await expect(heading(page, 'Info')).toBeVisible()
     await page.getByText('Impressum', { exact: true }).click()
     await expect(heading(page, 'Impressum')).toBeVisible()
@@ -23,7 +23,7 @@ test.describe('anonymous', () => {
   test('opens a legal page directly and has no Material tab', async ({ page }) => {
     await page.goto('/info/datenschutz')
     await expect(heading(page, 'Datenschutzerklärung')).toBeVisible()
-    await expect(page.getByRole('tab', { name: 'Material' })).toHaveCount(0)
+    await expect(page.getByRole('navigation', { name: 'Hauptmenü' }).getByRole('link', { name: 'Material' })).toHaveCount(0)
   })
 
   test('works offline after the first visit', async ({ page, context }) => {
@@ -44,7 +44,7 @@ test.describe('signed in', () => {
 
   test('reaches the legal pages from Einstellungen, and the Info tab is gone', async ({ page }) => {
     await page.goto('/einstellungen')
-    await expect(page.getByRole('tab', { name: 'Info' })).toHaveCount(0)
+    await expect(page.getByRole('navigation', { name: 'Hauptmenü' }).getByRole('link', { name: 'Info' })).toHaveCount(0)
     await expect(page.getByText('Rechtliches', { exact: true })).toBeVisible()
     await page.getByText('Impressum', { exact: true }).click()
     await expect(heading(page, 'Impressum')).toBeVisible()

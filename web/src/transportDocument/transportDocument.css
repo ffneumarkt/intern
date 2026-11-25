@@ -42,13 +42,13 @@
   width: 14px;
   height: 14px;
   margin-top: 4px;
-  border: 3px solid var(--ion-color-primary);
+  border: 3px solid var(--app-primary);
   border-radius: 50%;
   background: var(--ui-surface);
 }
 
 .td-stop:last-child::before {
-  background: var(--ion-color-primary);
+  background: var(--app-primary);
 }
 
 .td-stop:not(:last-child)::after {
@@ -93,11 +93,11 @@
   height: 56px;
   padding: 0;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--ion-color-primary) 10%, transparent);
+  background: color-mix(in srgb, var(--app-primary) 10%, transparent);
 }
 
 .td-step:hover {
-  background: color-mix(in srgb, var(--ion-color-primary) 16%, transparent);
+  background: color-mix(in srgb, var(--app-primary) 16%, transparent);
 }
 
 .td-step svg {
@@ -154,7 +154,7 @@
 
 .td-gauge-text strong {
   font-size: 1rem;
-  color: var(--ion-text-color, #000);
+  color: var(--app-text, #000);
 }
 
 .td-gauge-track {
@@ -177,7 +177,7 @@
 }
 
 .td-gauge-fill[data-level='over'] {
-  background: var(--ion-color-danger);
+  background: var(--app-danger);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -186,24 +186,22 @@
   }
 }
 
-/* The unusual route sits in a quiet inset accordion. */
-.td ion-accordion-group {
+/* The unusual route sits in a quiet card that opens. */
+.td-details {
   margin: 0 0 16px;
-}
-
-.td ion-accordion-group ion-accordion {
-  --ui-radius: 18px;
-}
-
-.td ion-accordion-group.accordion-group-expand-inset > ion-accordion {
-  margin: 0;
+  overflow: hidden;
+  background: var(--ui-surface);
   border-radius: 18px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 6px 20px -12px rgba(0, 0, 0, 0.18);
 }
 
-.td ion-accordion ion-item[slot='header'] {
-  --min-height: 56px;
+.td-details > summary {
+  display: flex;
+  align-items: center;
+  min-height: 56px;
+  padding: 0 16px;
   font-weight: 600;
+  cursor: pointer;
 }
 
 .td-return-total {
@@ -248,22 +246,4 @@
 
 .td-checklist-title {
   margin-bottom: 4px;
-}
-
-/* The optional route: a summary line that opens the fields below it. */
-.td-details {
-  margin-top: 16px;
-}
-
-.td-details > summary {
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  font-weight: 600;
-  color: var(--ion-color-primary);
-}
-
-.td-details[open] > summary {
-  margin-bottom: 8px;
 }
