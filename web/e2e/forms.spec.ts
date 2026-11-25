@@ -115,8 +115,9 @@ test.describe('as verwendung', () => {
     const id = await createMask(request, name)
     try {
       await page.goto(`/material/verwendung?geraet=${id}`)
-      await expect(page.getByRole('list', { name: 'Gescannte Geräte' }).getByText(name)).toBeVisible()
-      await page.getByRole('button', { name: 'Fertig' }).click()
+      // Opened from an item page: the form starts with that device, no scan step.
+      await expect(page.getByText(name)).toBeVisible()
+      await expect(page.getByRole('button', { name: 'Weiteres Gerät hinzufügen' })).toBeVisible()
 
       await expect(field(page, 'Datum')).toHaveValue(viennaToday())
       await choose(page, 'Art', 'Übung')
