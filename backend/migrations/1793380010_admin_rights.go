@@ -38,10 +38,51 @@ func addAdminRights(app core.App) error {
 	rights.ListRule, rights.ViewRule = both, both
 	rights.CreateRule = types.Pointer(holds(admin.Members))
 	rights.DeleteRule = types.Pointer(holds(admin.Members))
-	return app.Save(rights)
+	if err := app.Save(rights); err != nil {
+		return err
+	}
+	return widenRules(app)
+}
+
+// widenRules lets the admin areas write where the dashboard was needed before. The users rules stay
+// closed: members are managed through Go routes, which accept only the fields they name.
+func widenRules(app core.App) error {
+	permissions, err := app.FindCollectionByNameOrId("permissions")
+	if err != nil {
+		return err
+	}
+	mine := types.Pointer(`user = @request.auth.id || ` + holds(admin.Members))
+	permissions.ListRule, permissions.ViewRule = mine, mine
+	admins := types.Pointer(holds(admin.Members))
+	permissions.CreateRule, permissions.UpdateRule, permissions.DeleteRule = admins, admins, admins
+	if err := app.Save(permissions); err != nil {
+		return err
+	}
+
+	categories, err := app.FindCollectionByNameOrId("categories")
+	if err != nil {
+		return err
+	}
+	visible := types.Pointer(anyLevel("id") + ` || ` + holds(admin.Categories))
+	categories.ListRule, categories.ViewRule = visible, visible
+	editors := types.Pointer(holds(admin.Categories))
+	categories.CreateRule, categories.UpdateRule, categories.DeleteRule = editors, editors, editors
+	if err := app.Save(categories); err != nil {
+		return err
+	}
+
+	transport, err := app.FindCollectionByNameOrId("transport_document_settings")
+	if err != nil {
+		return err
+	}
+	transport.UpdateRule = types.Pointer(holds(admin.Transport))
+	return app.Save(transport)
 }
 
 func removeAdminRights(app core.App) error {
+	if err := setRules(app); err != nil {
+		return err
+	}
 	rights, err := app.FindCollectionByNameOrId("admin_rights")
 	if err != nil {
 		return err
