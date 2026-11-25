@@ -53,23 +53,23 @@ describe('Scanner', () => {
     installCamera({ devices: [{ deviceId: 'a', label: 'Vorne' }, { deviceId: 'b', label: 'Hinten' }] })
     script()
     await start()
-    expect(document.querySelector('ion-select')).not.toBeNull()
+    expect(document.querySelector('select')).not.toBeNull()
   })
 
   it('offers the camera picker as a compact select, not as a full-width form field', async () => {
     installCamera({ devices: [{ deviceId: 'a', label: 'Vorne' }, { deviceId: 'b', label: 'Hinten' }] })
     script()
     await start()
-    const picker = document.querySelector('.scanner ion-select')!
+    const picker = document.querySelector('.scanner select')!
     expect(picker).toHaveClass('scanner-camera')
-    expect(picker.closest('ion-item')).toBeNull()
+    expect(picker.closest('[data-slot="row"]')).toBeNull()
   })
 
   it('has no picker with a single camera', async () => {
     installCamera()
     script()
     await start()
-    expect(document.querySelector('ion-select')).toBeNull()
+    expect(document.querySelector('select')).toBeNull()
   })
 
   it('shows the camera error as a status and stops detecting', async () => {

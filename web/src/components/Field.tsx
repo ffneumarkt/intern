@@ -1,5 +1,5 @@
-import { IonItem } from '@ionic/react'
 import { Children, isValidElement, useId, type ReactNode } from 'react'
+import { Row } from '@/components/ui/list'
 import { Input } from '@/components/ui/input'
 import { NativeSelect } from '@/components/ui/native-select'
 import { Switch } from '@/components/ui/switch'
@@ -30,7 +30,7 @@ function FieldFrame({ label, required, error, children }: { label: string; requi
   const id = useId()
   const errorId = `${id}-error`
   return (
-    <IonItem>
+    <Row>
       <div className="w-full py-2">
         <label
           htmlFor={id}
@@ -45,7 +45,7 @@ function FieldFrame({ label, required, error, children }: { label: string; requi
           </p>
         )}
       </div>
-    </IonItem>
+    </Row>
   )
 }
 
@@ -89,12 +89,12 @@ export function TextAreaField({ label, value, onChange, required, error }: Pick<
 // A switch with its label on the left. The aria-label names the switch itself.
 export function CheckboxField({ label, checked, onChange }: { label: string; checked: boolean; onChange(checked: boolean): void }) {
   return (
-    <IonItem>
+    <Row>
       <div className="flex w-full items-center justify-between py-2">
         <span>{label}</span>
         <Switch aria-label={label} checked={checked} onCheckedChange={onChange} />
       </div>
-    </IonItem>
+    </Row>
   )
 }
 

@@ -1,5 +1,5 @@
-import { IonItem, IonLabel } from '@ionic/react'
 import { AppButton } from './ui'
+import { Row, RowLabel } from '@/components/ui/list'
 import { useNavigate } from 'react-router-dom'
 import type { Item } from '../api/material'
 import { paths } from '../routes'
@@ -14,8 +14,8 @@ export default function ItemRow({ item, categoryName, locationName, checkAction 
   const retired = item.status === 'retired'
   const canCheck = checkAction && !retired && can(item.categoryId, 'check')
   return (
-    <IonItem routerLink={paths.item(item.id)} detail className="item-row" data-state={retired ? 'retired' : item.dueState}>
-      <IonLabel>
+    <Row to={paths.item(item.id)} detail className="item-row" data-state={retired ? 'retired' : item.dueState}>
+      <RowLabel>
         <h2>{item.name}</h2>
         <p>
           {categoryName ? `${categoryName} · ` : ''}
@@ -38,7 +38,7 @@ export default function ItemRow({ item, categoryName, locationName, checkAction 
             Prüfen
           </AppButton>
         )}
-      </IonLabel>
+      </RowLabel>
       {retired ? (
         <span className="ui-pill" data-tone="muted" slot="end">
           Ausgeschieden
@@ -46,6 +46,6 @@ export default function ItemRow({ item, categoryName, locationName, checkAction 
       ) : (
         <DueStateBadge state={item.dueState} />
       )}
-    </IonItem>
+    </Row>
   )
 }

@@ -2,7 +2,7 @@ import { BlockButton } from '../components/ui'
 import { CircleAlert, CircleCheck, FileText, Minus, Plus, Repeat } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { IonAccordion, IonAccordionGroup, IonItem, IonLabel, IonList } from '@ionic/react'
+import { List } from '@/components/ui/list'
 import { useState } from 'react'
 import { Field, SelectField } from '../components/Field'
 import type { TransportSettings } from '../api/transport'
@@ -216,22 +216,18 @@ export default function TransportDocumentForm({ settings }: { settings: Transpor
         </div>
       </section>
 
-      <IonAccordionGroup expand="inset">
-        <IonAccordion value="route">
-          <IonItem slot="header">
-            <IonLabel>Abweichende Route</IonLabel>
-          </IonItem>
-          <div slot="content">
-            <IonList lines="full">
+      <details className="td-details">
+        <summary>Abweichende Route</summary>
+        <div>
+            <List>
               <PartyFields role="sender" label="Absender" suffix="Absender" party={sender} onChange={setSender} options={options} fieldErrors={result.fieldErrors} />
               <PartyFields role="recipient" label="Empfänger" suffix="Empfänger" party={recipient} onChange={setRecipient} options={options} fieldErrors={result.fieldErrors} />
               <Field label="Anzahl Flaschen zurück" type="number" inputMode="numeric" autoComplete="off" value={state.returnCount} onChange={setReturnCountOverride} />
-            </IonList>
+            </List>
             <p className="td-return-total">{returnSummary(parseCount(state.returnCount), config)}</p>
             <p className="td-hint ion-color-medium">Die Rückfahrt übernimmt die Anzahl der Hinfahrt, bis sie geändert wird. 0, wenn keine Flaschen zurückkommen.</p>
-          </div>
-        </IonAccordion>
-      </IonAccordionGroup>
+        </div>
+      </details>
 
       {errors.length > 0 && (
         <div className="ui-problems" aria-live="polite">

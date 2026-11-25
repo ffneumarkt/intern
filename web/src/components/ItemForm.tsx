@@ -1,5 +1,5 @@
-import { IonList } from '@ionic/react'
 import { Plus } from 'lucide-react'
+import { List } from '@/components/ui/list'
 import { useState } from 'react'
 import { BarcodeTakenError } from '../api/errors'
 import type { CheckType, Item, ItemInput, Location } from '../api/material'
@@ -55,7 +55,7 @@ export default function ItemForm({ item, locations, checkTypes = [], submitLabel
 
   return (
     <>
-      <IonList>
+      <List>
         <Field label="Bezeichnung" value={name} onChange={setName} required error={tried && !name.trim() ? requiredMessage : undefined} />
         <Field label="Seriennummer" value={serial} onChange={setSerial} autoCapitalize="off" />
         <Field label="Code" value={barcode} onChange={setBarcode} autoCapitalize="off" />
@@ -78,7 +78,7 @@ export default function ItemForm({ item, locations, checkTypes = [], submitLabel
             onChange={(date) => setLastChecked((dates) => ({ ...dates, [t.id]: date }))}
           />
         ))}
-      </IonList>
+      </List>
       {error && <ErrorText>{error}</ErrorText>}
       <ActionBar>
         <BlockButton disabled={busy} onClick={() => once(save)}>

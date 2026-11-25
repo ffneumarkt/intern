@@ -1,4 +1,3 @@
-import { IonCard, IonCardContent, IonText } from '@ionic/react'
 import type { ComponentProps, CSSProperties, ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
@@ -12,9 +11,9 @@ import { cn } from '@/lib/utils'
 export function ErrorText({ children, role }: { children?: ReactNode; role?: 'status' | 'alert' }) {
   if (!children) return null
   return (
-    <IonText color="danger" role={role}>
+    <p role={role} className="mb-4 block rounded-[14px] bg-destructive/10 px-3.5 py-3 text-[0.9375rem] leading-snug text-destructive">
       {children}
-    </IonText>
+    </p>
   )
 }
 
@@ -35,9 +34,14 @@ export function Hint({ children, center, style }: { children: ReactNode; center?
 // A white card around some content; `tone` colours it as a warning.
 export function Card({ children, tone }: { children: ReactNode; tone?: 'warning' }) {
   return (
-    <IonCard color={tone}>
-      <IonCardContent>{children}</IonCardContent>
-    </IonCard>
+    <div
+      className={cn(
+        'mx-4 my-3 rounded-2xl p-4 shadow-sm',
+        tone === 'warning' ? 'border border-amber-300 bg-amber-100 text-amber-950' : 'bg-background text-foreground',
+      )}
+    >
+      {children}
+    </div>
   )
 }
 

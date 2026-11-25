@@ -1,5 +1,5 @@
-import { IonItem, IonLabel, IonList, IonListHeader } from '@ionic/react'
 import { Plus } from 'lucide-react'
+import { List, ListHeader, Row, RowLabel } from '@/components/ui/list'
 import { Segment, SegmentButton } from '@/components/ui/segment'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -53,7 +53,7 @@ export default function ManagePage() {
             <>
               {/* The locations belong to no category. */}
               {tab !== 'locations' && (
-                <IonList>
+                <List>
                   <SelectField label="Kategorie" value={categoryId} onChange={(id) => show(id, tab)}>
                     {manageable.map((c) => (
                       <option key={c.id} value={c.id}>
@@ -61,7 +61,7 @@ export default function ManagePage() {
                       </option>
                     ))}
                   </SelectField>
-                </IonList>
+                </List>
               )}
               <Segment value={tab}>
                 <SegmentButton value="items" onClick={() => show(categoryId, 'items')}>
@@ -93,13 +93,13 @@ export default function ManagePage() {
 function ItemsTab({ categoryId, items }: { categoryId: string; items: Item[] }) {
   return (
     <>
-      <IonList>
+      <List>
         {items.map((i) => (
-          <IonItem key={i.id} routerLink={paths.itemEdit(i.id)}>
-            <IonLabel>{i.name}</IonLabel>
-          </IonItem>
+          <Row key={i.id} to={paths.itemEdit(i.id)}>
+            <RowLabel>{i.name}</RowLabel>
+          </Row>
         ))}
-      </IonList>
+      </List>
       <ActionBar>
         <BlockButton routerLink={paths.itemNew(categoryId)}>
           <Plus aria-hidden="true" />
@@ -124,16 +124,16 @@ function CheckTypesTab({ categoryId, checkTypes }: { categoryId: string; checkTy
 
   return (
     <>
-      <IonList>
+      <List>
         {checkTypes.map((t) => (
-          <IonItem key={t.id} routerLink={paths.checkTypeEdit(t.id)} detail={false}>
-            <IonLabel>
+          <Row key={t.id} to={paths.checkTypeEdit(t.id)} detail={false}>
+            <RowLabel>
               {t.name}
               <p>{describe(t)}</p>
-            </IonLabel>
-          </IonItem>
+            </RowLabel>
+          </Row>
         ))}
-      </IonList>
+      </List>
       <ActionBar>
         <BlockButton routerLink={paths.checkTypeNew(categoryId)}>
           <Plus aria-hidden="true" />
@@ -155,16 +155,16 @@ function LocationsTab({ locations, onChange }: { locations: Location[]; onChange
 
   return (
     <>
-      <IonList>
+      <List>
         {locations.map((l) => (
-          <IonItem key={l.id} button detail={false} onClick={() => setEditingId(l.id)}>
-            <IonLabel>
+          <Row key={l.id} detail={false} onClick={() => setEditingId(l.id)}>
+            <RowLabel>
               {l.name}
               {l.isDefault && <p>Standard</p>}
-            </IonLabel>
-          </IonItem>
+            </RowLabel>
+          </Row>
         ))}
-      </IonList>
+      </List>
       <LocationForm key={editingId ?? 'new'} location={editing} onDone={done} />
     </>
   )
@@ -210,12 +210,10 @@ function LocationForm({ location, onDone }: { location?: Location; onDone(): voi
 
   return (
     <>
-      <IonList>
-        <IonListHeader>
-          <IonLabel>{location ? 'Standort bearbeiten' : 'Neuer Standort'}</IonLabel>
-        </IonListHeader>
+      <List>
+        <ListHeader>{location ? 'Standort bearbeiten' : 'Neuer Standort'}</ListHeader>
         <Field label="Name" value={name} onChange={setName} required error={tried && !name.trim() ? requiredMessage : undefined} />
-      </IonList>
+      </List>
       <ErrorText>{error}</ErrorText>
       <ActionBar>
         <BlockButton disabled={busy} onClick={() => once(save)}>

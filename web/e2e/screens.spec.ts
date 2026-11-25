@@ -126,7 +126,7 @@ test.describe('forms', () => {
     test('check type form and its validation error', async ({ page }, info) => {
       await page.goto('/material/verwalten')
       await page.getByRole('tab', { name: 'Prüfarten' }).click()
-      await page.locator('ion-item', { hasText: 'Maskenprüfung' }).filter({ visible: true }).first().click()
+      await page.locator('[data-slot="row"]', { hasText: 'Maskenprüfung' }).filter({ visible: true }).first().click()
       await expect(page.getByText('Prüfart bearbeiten')).toBeVisible()
       await shoot(page, info.project.name, 'checktype-edit')
 

@@ -10,7 +10,6 @@ import { authState, email, expect, password, removeItemWithHistory, test, tokenO
 // Ionic keeps visited pages mounted and hidden; only the visible field is meant.
 const field = (page: Page, label: string) => page.getByLabel(label, { exact: true }).filter({ visible: true })
 const heading = (page: Page, name: string) => page.getByRole('heading', { name, exact: true })
-// An ion-select by its label, which lives in the select's shadow DOM (CSS and text locators pierce it).
 // The native select of components/Field.tsx by its label (the page the user came from stays mounted, hence visible).
 const select = (page: Page, label: string) => page.getByLabel(label, { exact: true }).filter({ visible: true })
 const unique = () => randomBytes(3).toString('hex')
@@ -21,7 +20,7 @@ async function choose(page: Page, label: string, option: string) {
   await expect(select(page, label).locator('option:checked')).toHaveText(option)
 }
 
-const historyEntry = (page: Page, title: string) => page.locator('ion-item').filter({ visible: true, has: heading(page, title) })
+const historyEntry = (page: Page, title: string) => page.locator('[data-slot="row"]').filter({ visible: true, has: heading(page, title) })
 
 async function categoryId(request: APIRequestContext, name: string): Promise<string> {
   const list = await request.get('/api/collections/categories/records', {

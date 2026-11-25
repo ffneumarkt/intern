@@ -1,5 +1,5 @@
-import { IonList } from '@ionic/react'
 import { Plus } from 'lucide-react'
+import { List } from '@/components/ui/list'
 import { useState } from 'react'
 import { CheckTypeInUseError } from '../api/errors'
 import { createCheckType, deleteCheckType, updateCheckType, type CheckType } from '../api/material'
@@ -67,7 +67,7 @@ export default function CheckTypeForm({ categoryId, checkType, others, onDone }:
 
   return (
     <>
-      <IonList>
+      <List>
         <Field label="Name" value={name} onChange={setName} required error={tried && !name.trim() ? requiredMessage : undefined} />
         <Field label="Intervall in Monaten" type="number" value={months} onChange={setMonths} />
         <CheckboxField label="nach Verwendung" checked={afterUse} onChange={setAfterUse} />
@@ -85,7 +85,7 @@ export default function CheckTypeForm({ categoryId, checkType, others, onDone }:
               }
             />
           ))}
-      </IonList>
+      </List>
       {error && <ErrorText>{error}</ErrorText>}
       <ActionBar>
         <BlockButton disabled={busy} onClick={() => once(save)}>

@@ -1,4 +1,4 @@
-import { IonCard } from '@ionic/react'
+import { Link } from 'react-router-dom'
 import { ChevronRight, FileText, Wrench, type LucideIcon } from 'lucide-react'
 import Page from '../components/Page'
 import { paths } from '../routes'
@@ -7,7 +7,7 @@ import { BlockButton, Hint } from '../components/ui'
 
 function Tile({ to, icon: Icon, title, subtitle }: { to: string; icon: LucideIcon; title: string; subtitle: string }) {
   return (
-    <IonCard routerLink={to} button className="tile">
+    <Link to={to} className="tile">
       <span className="tile-body">
         <span className="tile-icon">
           <Icon aria-hidden="true" />
@@ -18,7 +18,7 @@ function Tile({ to, icon: Icon, title, subtitle }: { to: string; icon: LucideIco
         </span>
         <ChevronRight className="tile-chevron" aria-hidden="true" />
       </span>
-    </IonCard>
+    </Link>
   )
 }
 

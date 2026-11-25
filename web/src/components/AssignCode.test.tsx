@@ -16,7 +16,7 @@ async function open() {
 describe('AssignCode', () => {
   it('lists items without a code before items with one', async () => {
     await open()
-    const rows = [...document.querySelectorAll('ion-item')].map((el) => el.textContent?.trim() ?? '')
+    const rows = [...document.querySelectorAll('[data-slot="row"]')].map((el) => el.textContent?.trim() ?? '')
     expect(rows.findIndex((t) => t.startsWith('LA 02'))).toBeLessThan(rows.findIndex((t) => t.startsWith('Maske 01')))
   })
 

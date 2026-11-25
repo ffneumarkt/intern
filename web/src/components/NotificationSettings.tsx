@@ -1,5 +1,5 @@
-import { IonItem, IonLabel, IonList } from '@ionic/react'
 import { Bell, Check } from 'lucide-react'
+import { List, Row, RowLabel } from '@/components/ui/list'
 import { Chip } from '@/components/ui/chip'
 import { Switch } from '@/components/ui/switch'
 import { useRef, useState } from 'react'
@@ -159,7 +159,7 @@ function Content({ data, reload }: { data: LoadedAll; reload(): void }) {
       {data.categories.length === 0 && <SettingsFooter text="Noch keine Kategorie freigegeben, daher keine Erinnerungen." />}
       {data.categories.length > 0 && (
         <>
-          <IonList inset>
+          <List inset>
             {data.categories.map((category) => (
               <Category
                 key={category.id}
@@ -174,17 +174,17 @@ function Content({ data, reload }: { data: LoadedAll; reload(): void }) {
                 update={(setting, update) => void change('reminders', () => updateSetting(setting.id, update))}
               />
             ))}
-          </IonList>
+          </List>
           <SettingsFooter text="Neue Fälligkeiten werden sofort gemeldet, wenn „Am Tag“ gewählt ist." message={messageFor('reminders')} />
         </>
       )}
       <SettingsHeader>Ruhezeit</SettingsHeader>
-      <IonList inset>
-        <IonItem>
-          <IonLabel>
+      <List inset>
+        <Row>
+          <RowLabel>
             Nicht stören
             <p className="settings-summary">{quietSummary(data.quiet)}</p>
-          </IonLabel>
+          </RowLabel>
           <Switch
             slot="end"
             aria-label="Nicht stören"
@@ -192,14 +192,14 @@ function Content({ data, reload }: { data: LoadedAll; reload(): void }) {
             disabled={busy}
             onCheckedChange={switchQuiet}
           />
-        </IonItem>
+        </Row>
         {quietOn && (
           <>
             <TimeItem label="Von" value={from} onChange={(value) => changeTime({ from: value, until })} />
             <TimeItem label="Bis" value={until} onChange={(value) => changeTime({ from, until: value })} />
           </>
         )}
-      </IonList>
+      </List>
       <SettingsFooter text="In dieser Zeit kommen keine Push-Nachrichten." message={messageFor('quiet')} />
     </>
   )
@@ -234,13 +234,13 @@ function Push({
   return (
     <>
       <SettingsHeader>Dieses Gerät</SettingsHeader>
-      <IonList inset>
-        <IonItem>
+      <List inset>
+        <Row>
           <Bell aria-hidden="true" />
-          <IonLabel>
+          <RowLabel>
             Push-Nachrichten
             <p className="settings-summary">{on ? 'Aktiv auf diesem Gerät' : 'Aus'}</p>
-          </IonLabel>
+          </RowLabel>
           <Switch
             slot="end"
             aria-label="Push-Nachrichten"
@@ -248,13 +248,13 @@ function Push({
             disabled={busy || !push.available}
             onCheckedChange={change}
           />
-        </IonItem>
+        </Row>
         {on && (
-          <IonItem button detail={false} disabled={busy} onClick={test}>
-            <IonLabel color="primary">Testnachricht senden</IonLabel>
-          </IonItem>
+          <Row detail={false} disabled={busy} onClick={test}>
+            <RowLabel className="text-primary">Testnachricht senden</RowLabel>
+          </Row>
         )}
-      </IonList>
+      </List>
       <SettingsFooter text={footer} message={message} />
     </>
   )
@@ -284,11 +284,11 @@ function Category({
   return (
     <>
       {/* While on, the category and its detail rows read as one block, closed by a full line. */}
-      <IonItem lines={setting ? 'none' : undefined}>
-        <IonLabel>
+      <Row lines={setting ? 'none' : undefined}>
+        <RowLabel>
           {name}
           <p className="settings-summary">{setting ? summarize(setting.timings, setting.weeklyOverdue) : 'Aus'}</p>
-        </IonLabel>
+        </RowLabel>
         <Switch
           slot="end"
           aria-label={name}
@@ -300,11 +300,11 @@ function Category({
             else if (setting) disable(setting)
           }}
         />
-      </IonItem>
+      </Row>
       {setting && (
         <>
-          <IonItem className="settings-detail">
-            <IonLabel className="ion-text-wrap">
+          <Row className="settings-detail">
+            <RowLabel>
               Erinnerung vor Fälligkeit
               <div className="day-chips">
                 {dayChips.map(({ days, label }) => {
@@ -323,10 +323,10 @@ function Category({
                   )
                 })}
               </div>
-            </IonLabel>
-          </IonItem>
-          <IonItem className="settings-detail" lines="full">
-            <IonLabel>Wöchentlich bei Überfälligem</IonLabel>
+            </RowLabel>
+          </Row>
+          <Row className="settings-detail">
+            <RowLabel>Wöchentlich bei Überfälligem</RowLabel>
             <Switch
               slot="end"
               aria-label="Wöchentlich bei Überfälligem"
@@ -337,7 +337,7 @@ function Category({
                 update(setting, { weeklyOverdue: checked })
               }}
             />
-          </IonItem>
+          </Row>
         </>
       )}
     </>
@@ -346,9 +346,9 @@ function Category({
 
 function TimeItem({ label, value, onChange }: { label: string; value: string; onChange(value: string): void }) {
   return (
-    <IonItem>
-      <IonLabel>{label}</IonLabel>
+    <Row>
+      <RowLabel>{label}</RowLabel>
       <input slot="end" className="time-input" type="time" aria-label={label} value={value} onChange={(e) => onChange(e.target.value)} />
-    </IonItem>
+    </Row>
   )
 }

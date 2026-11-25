@@ -1,5 +1,5 @@
-import { IonItem, IonLabel, IonList, IonListHeader, IonNote } from '@ionic/react'
 import { useState } from 'react'
+import { List, ListHeader, Note, Row, RowLabel } from '@/components/ui/list'
 import { useParams } from 'react-router-dom'
 import { listCorrections } from '../api/admin'
 import { listHistory, listItems, listLocations, retireItem, type Item } from '../api/material'
@@ -79,49 +79,43 @@ export default function ItemPage() {
                   </AppButton>
                 )}
               </div>
-              <IonList>
-                <IonListHeader>
-                  <IonLabel>Fälligkeiten</IonLabel>
-                </IonListHeader>
+              <List>
+                <ListHeader>Fälligkeiten</ListHeader>
                 {item.dues.map((d) => (
-                  <IonItem key={`${d.kind}-${d.checkTypeId}`}>
-                    <IonLabel>
+                  <Row key={`${d.kind}-${d.checkTypeId}`}>
+                    <RowLabel>
                       <h3>{d.label}</h3>
                       <p>{d.date}</p>
-                    </IonLabel>
+                    </RowLabel>
                     <DueStateBadge state={d.state} />
-                  </IonItem>
+                  </Row>
                 ))}
-              </IonList>
-              <IonList>
-                <IonListHeader>
-                  <IonLabel>Verlauf</IonLabel>
-                </IonListHeader>
+              </List>
+              <List>
+                <ListHeader>Verlauf</ListHeader>
                 {history.map((h, index) => (
-                  <IonItem key={index} routerLink={holds('corrections') ? paths.correction(item.id, h.kind, h.id) : undefined} detail={holds('corrections')}>
-                    <IonLabel>
+                  <Row key={index} to={holds('corrections') ? paths.correction(item.id, h.kind, h.id) : undefined} detail={holds('corrections')}>
+                    <RowLabel>
                       <h3>{h.title}</h3>
                       <p>{h.detail}</p>
-                    </IonLabel>
-                    <IonNote slot="end">{h.date}</IonNote>
-                  </IonItem>
+                    </RowLabel>
+                    <Note slot="end">{h.date}</Note>
+                  </Row>
                 ))}
-              </IonList>
+              </List>
               {corrections.length > 0 && (
-                <IonList>
-                  <IonListHeader>
-                    <IonLabel>Korrekturen</IonLabel>
-                  </IonListHeader>
+                <List>
+                  <ListHeader>Korrekturen</ListHeader>
                   {corrections.map((c) => (
-                    <IonItem key={c.id}>
-                      <IonLabel>
+                    <Row key={c.id}>
+                      <RowLabel>
                         Korrigiert von {c.adminName}
                         <p>{c.action === 'delete' ? 'Eintrag gelöscht' : 'Eintrag geändert'}</p>
-                      </IonLabel>
-                      <IonNote slot="end">{c.date}</IonNote>
-                    </IonItem>
+                      </RowLabel>
+                      <Note slot="end">{c.date}</Note>
+                    </Row>
                   ))}
-                </IonList>
+                </List>
               )}
               {active && (
                 // The two main actions, one above the other and equally prominent; the check in its own green, the use in the red of the app.

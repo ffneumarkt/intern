@@ -24,7 +24,7 @@ test('creates a member, shows the setup link, and deactivates the member', async
   await expect(page.getByTestId('setup-link')).toContainText('/einrichtung#')
   await page.getByRole('button', { name: 'Fertig' }).click()
 
-  await page.locator('ion-item', { hasText: name }).filter({ visible: true }).click()
+  await page.locator('[data-slot="row"]', { hasText: name }).filter({ visible: true }).click()
   await page.getByRole('button', { name: 'Deaktivieren' }).click()
   await alertButton(page, 'Deaktivieren').click()
   await expect(page.getByRole('button', { name: 'Wieder aktivieren' })).toBeVisible()
@@ -36,10 +36,10 @@ test('creates, renames and deletes a category', async ({ page }) => {
   await page.getByRole('link', { name: 'Neue Kategorie' }).click()
   await field(page, 'Name').fill(name)
   await page.getByRole('button', { name: 'Kategorie anlegen' }).click()
-  await page.locator('ion-item', { hasText: name }).filter({ visible: true }).click()
+  await page.locator('[data-slot="row"]', { hasText: name }).filter({ visible: true }).click()
   await page.getByRole('button', { name: 'Kategorie löschen' }).click()
   await alertButton(page, 'Löschen').click()
-  await expect(page.locator('ion-item', { hasText: name }).filter({ visible: true })).toHaveCount(0)
+  await expect(page.locator('[data-slot="row"]', { hasText: name }).filter({ visible: true })).toHaveCount(0)
 })
 
 async function createMaskWithUse(request: APIRequestContext, name: string): Promise<string> {
@@ -66,11 +66,11 @@ test('corrects a use from the history of its item and lists the correction', asy
   const id = await createMaskWithUse(request, name)
   try {
     await page.goto(`/material/geraete/${id}`)
-    await page.locator('ion-item', { hasText: 'Falscher Text' }).filter({ visible: true }).click()
+    await page.locator('[data-slot="row"]', { hasText: 'Falscher Text' }).filter({ visible: true }).click()
     // With a value in it the label of the textarea includes the value, so it is found by its start.
     await page.getByLabel(/^Notiz/).filter({ visible: true }).fill('Richtiger Text')
     await page.getByRole('button', { name: 'Speichern' }).click()
-    await expect(page.locator('ion-item', { hasText: 'Richtiger Text' }).filter({ visible: true })).toBeVisible()
+    await expect(page.locator('[data-slot="row"]', { hasText: 'Richtiger Text' }).filter({ visible: true })).toBeVisible()
     await expect(page.getByText('Eintrag geändert')).toBeVisible()
   } finally {
     await removeItemWithHistory(request, id)

@@ -39,7 +39,7 @@
 }
 
 /* Lists are surfaces too: rows sit on the card, the header is its title. */
-.ui-page ion-list {
+.ui-page [data-slot='list'] {
   margin: 0 0 16px;
   padding: 0;
   overflow: hidden;
@@ -48,13 +48,7 @@
   box-shadow: var(--ui-shadow);
 }
 
-.ui-page ion-list ion-item {
-  --background: transparent;
-  --min-height: 56px;
-  --inner-padding-end: 14px;
-}
-
-.ui-page ion-list ion-list-header {
+.ui-page [data-slot='list-header'] {
   min-height: 0;
   padding: 16px 18px 6px;
   font-size: 1.0625rem;
@@ -62,25 +56,9 @@
   color: var(--ion-text-color);
 }
 
-.ui-page ion-list ion-list-header ion-label {
-  margin: 0;
-  font-size: inherit;
-  font-weight: inherit;
-  color: inherit;
-}
-
 /* A group of lists the page lays out itself (Einstellungen) keeps Ionic's inset look. */
-.ui-page--flat ion-list {
+.ui-page--flat [data-slot='list'] {
   margin-inline: 16px;
-}
-
-ion-item h2,
-ion-item h3 {
-  font-weight: 600;
-}
-
-ion-item ion-label p {
-  color: var(--ui-muted);
 }
 
 /* A pill: a short status or fact. */
@@ -136,7 +114,7 @@ ion-item ion-label p {
   display: none;
 }
 
-.ui-chips ion-chip {
+.ui-chips [data-slot='chip'] {
   flex: none;
   min-height: 36px;
   margin: 0;
@@ -145,26 +123,6 @@ ion-item ion-label p {
 }
 
 /* What went wrong, in place of bare red text. */
-ion-content ion-text.ion-color-danger,
-ion-content ion-text.ion-color-warning {
-  display: block;
-  margin: 0 0 16px;
-  padding: 12px 14px;
-  font-size: 0.9375rem;
-  line-height: 1.35;
-  border-radius: 14px;
-}
-
-ion-content ion-text.ion-color-danger {
-  color: var(--ion-color-danger-shade);
-  background: rgba(var(--ion-color-danger-rgb), 0.1);
-}
-
-ion-content ion-text.ion-color-warning {
-  color: #8a5200;
-  background: rgba(179, 107, 0, 0.12);
-}
-
 .ui-problems {
   display: flex;
   gap: 10px;
@@ -205,30 +163,25 @@ ion-content ion-text.ion-color-warning {
   background: linear-gradient(to bottom, rgba(var(--ion-color-light-rgb), 0), var(--ion-color-light) 30%);
 }
 
-.ui-actions ion-button,
+.ui-actions [data-slot='button'],
 .ui-button {
-  --border-radius: 14px;
-  margin: 0;
+  border-radius: 14px;
   min-height: 52px;
   font-size: 1.0625rem;
   font-weight: 700;
-  letter-spacing: 0;
-  text-transform: none;
 }
 
-.ui-actions ion-button + ion-button {
+.ui-actions [data-slot='button'] + [data-slot='button'] {
   margin-top: 8px;
 }
 
-.ui-page ion-button {
-  --border-radius: 12px;
-  letter-spacing: 0;
-  text-transform: none;
+.ui-page [data-slot='button'] {
+  border-radius: 12px;
   font-weight: 600;
 }
 
-.ui-page ion-button[size='small'] {
-  --border-radius: 10px;
+.ui-page [data-slot='button'][data-size='sm'] {
+  border-radius: 10px;
 }
 
 /* A line of text under or between surfaces. */
@@ -253,7 +206,6 @@ ion-content ion-text.ion-color-warning {
 
 /* An item in a list: a coloured edge shows its state before the pill is read. */
 .item-row {
-  --inner-padding-end: 12px;
   box-shadow: inset 4px 0 0 transparent;
 }
 
@@ -274,11 +226,11 @@ ion-content ion-text.ion-color-warning {
   box-shadow: inset 4px 0 0 var(--ui-line);
 }
 
-.item-row ion-label h2 {
+.item-row [data-slot='row-label'] h2 {
   font-size: 1.0625rem;
 }
 
-.item-row ion-label p {
+.item-row [data-slot='row-label'] p {
   margin-top: 2px;
   font-size: 0.875rem;
 }
@@ -291,12 +243,12 @@ ion-content ion-text.ion-color-warning {
   margin: 0 0 16px;
 }
 
-.ui-actionrow ion-button {
+.ui-actionrow [data-slot='button'] {
   margin: 0;
 }
 
 /* The group headers of the due list carry the colour of their state. */
-section[data-state] ion-list-header ion-label::before {
+section[data-state] [data-slot='list-header']::before {
   content: '';
   display: inline-block;
   width: 10px;
@@ -306,12 +258,12 @@ section[data-state] ion-list-header ion-label::before {
   background: var(--ui-line);
 }
 
-section[data-state='overdue'] ion-list-header ion-label::before {
+section[data-state='overdue'] [data-slot='list-header']::before {
   background: var(--ion-color-danger);
 }
 
-section[data-state='dueToday'] ion-list-header ion-label::before,
-section[data-state='dueSoon'] ion-list-header ion-label::before {
+section[data-state='dueToday'] [data-slot='list-header']::before,
+section[data-state='dueSoon'] [data-slot='list-header']::before {
   background: var(--ui-warn);
 }
 
@@ -321,8 +273,11 @@ ion-fab-button {
 }
 
 /* A tile on the start page. */
-ion-card.tile {
+a.tile {
+  display: block;
   margin: 0 0 16px;
+  color: inherit;
+  text-decoration: none;
   background: var(--ui-surface);
   border-radius: var(--ui-radius);
   box-shadow: var(--ui-shadow);
@@ -412,26 +367,13 @@ ion-card.tile {
 }
 
 /* Other cards (the manual code field, notices) follow the same surface. */
-.ui-page ion-card:not(.tile) {
-  margin: 0 0 16px;
-  background: var(--ui-surface);
-  border-radius: var(--ui-radius);
-  box-shadow: var(--ui-shadow);
-}
-
-.ui-page ion-card[color='warning'] {
-  background: rgba(179, 107, 0, 0.12);
-  --color: #8a5200;
-  box-shadow: none;
-}
-
 /* An empty list would be an empty white box. */
-.ui-page ion-list:empty {
+.ui-page [data-slot='list']:empty {
   display: none;
 }
 
 /* The suggestions sit inside a card already. */
-.ui-page ion-list.suggestions {
+.ui-page [data-slot='list'].suggestions {
   margin: 8px 0 0;
   border: 1px solid var(--ui-line);
   border-radius: 12px;
@@ -444,74 +386,14 @@ ion-card.tile {
 }
 
 /* No line under the last row of a card. */
-.ui-page ion-list > ion-item:last-child,
-.ui-page ion-list > ion-item:last-of-type {
-  --border-width: 0;
-}
-
 /* Form fields: a bordered box under a stacked label, with room between them. Ionic's own
    fill="outline" is not drawn inside list items, and for textareas it would move the label out of
    reach of assistive tech and tests, so the boxes are drawn here. */
-.ui-page ion-list ion-item:has(ion-input, ion-textarea, ion-select) {
-  /* The fields draw their own box (and a red one when invalid), so Ionic's underline would double it. */
-  --highlight-height: 0;
-  --padding-top: 6px;
-  --padding-bottom: 6px;
-  --padding-start: 14px;
-  --padding-end: 14px;
-  --inner-padding-end: 0;
-  --border-width: 0;
-  --inner-border-width: 0;
-}
-
-.ui-page ion-input .native-wrapper,
-.ui-page ion-textarea .native-wrapper {
-  margin-top: 6px;
-  padding: 0 12px;
-  border: 1px solid var(--ui-line);
-  border-radius: 12px;
-}
-
-.ui-page ion-textarea .native-wrapper {
-  padding-block: 10px;
-}
-
-.ui-page ion-input.has-focus .native-wrapper,
-.ui-page ion-textarea.has-focus .native-wrapper {
-  border-color: var(--ion-color-primary);
-  box-shadow: 0 0 0 1px var(--ion-color-primary);
-}
-
-.ui-page ion-select::part(container) {
-  margin: 6px 0 0;
-  padding: 0 12px;
-  border: 1px solid var(--ui-line);
-  border-radius: 12px;
-}
-
-.ui-page ion-select.has-focus::part(container),
-.ui-page ion-select.select-expanded::part(container) {
-  border-color: var(--ion-color-primary);
-}
-
-.ui-page ion-segment {
+.ui-page [data-slot='segment'] {
   margin-bottom: 16px;
 }
 
 /* An item inside a card (the manual code field) needs neither its own indent nor a line. */
-.ui-page ion-card ion-item {
-  --padding-start: 0;
-  --inner-padding-end: 0;
-  --inner-border-width: 0;
-  --border-width: 0;
-  --background: transparent;
-}
-
-.ui-page ion-select::part(icon) {
-  margin-inline-end: 10px;
-  background: transparent;
-}
-
 /* Legal pages: running text on cards. */
 .legal p {
   margin: 10px 0 0;
@@ -563,15 +445,11 @@ ion-card.tile {
 }
 
 /* The camera picker: a small pill under the preview instead of a full-width field. The border is the
-   select's own container (see the ion-select rules above), so only that is restyled. */
+   select itself, so a compact pill. */
 .scanner-camera {
   width: fit-content;
   max-width: 100%;
-}
-
-.ui-page .scanner-camera::part(container) {
-  margin: 0;
-  min-height: 36px;
+  height: 36px;
   padding: 0 14px;
   border-radius: 999px;
   background: #fff;
@@ -592,7 +470,7 @@ ion-card.tile {
   gap: 8px;
 }
 
-.ui-countdown-buttons ion-button {
+.ui-countdown-buttons [data-slot='button'] {
   margin: 0;
 }
 
@@ -611,36 +489,29 @@ ion-card.tile {
 
 /* A line of explanation or verdict inside a list (components/ListNote.tsx): same left edge as the list
    header (18px), muted, wrapping. */
-.ui-page ion-list ion-item.ui-list-note {
-  --padding-start: 18px;
-  --padding-end: 18px;
-  --inner-padding-end: 0;
-  --min-height: 0;
-  --background: transparent;
-  --border-width: 0;
-  --inner-border-width: 0;
+.ui-page [data-slot='row'].ui-list-note {
+  min-height: 0;
+  padding: 4px 18px;
+  border-bottom: 0;
+  background: transparent;
   font-size: 0.875rem;
   line-height: 1.45;
   color: var(--ui-muted);
 }
 
-.ui-page ion-list ion-item.ui-list-note ion-label {
-  margin: 4px 0;
-}
-
-.ui-page ion-list ion-item.ui-list-note[data-tone='ok'] {
+.ui-page [data-slot='row'].ui-list-note[data-tone='ok'] {
   color: var(--ui-ok);
   font-weight: 500;
 }
 
-.ui-page ion-list ion-item.ui-list-note[data-tone='bad'] {
+.ui-page [data-slot='row'].ui-list-note[data-tone='bad'] {
   color: var(--ion-color-danger);
   font-weight: 500;
 }
 
 /* „Prüfen“ on a row of the due list: its own line under the text, a full-size tap target. */
-.item-row ion-button.item-row-check {
-  --border-radius: 10px;
+.item-row .item-row-check {
+  border-radius: 10px;
   margin: 8px 0 4px;
   min-height: 40px;
   font-weight: 600;

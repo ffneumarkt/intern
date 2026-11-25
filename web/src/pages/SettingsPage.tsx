@@ -1,5 +1,5 @@
-import { IonItem, IonLabel, IonList, IonNote } from '@ionic/react'
 import { CircleUser, KeyRound, Plus, ShieldCheck } from 'lucide-react'
+import { List, Note, Row, RowLabel } from '@/components/ui/list'
 import { useState } from 'react'
 import { PasskeyCancelledError, PasskeyExistsError, TooManyAttemptsError, tooManyAttemptsMessage, WrongPasswordError } from '../api/errors'
 import {
@@ -99,37 +99,37 @@ export default function SettingsPage() {
 
   return (
     <Page title="Einstellungen" grouped>
-      <IonList inset>
-        <IonItem>
+      <List inset>
+        <Row>
           <CircleUser aria-hidden="true" />
-          <IonLabel>
+          <RowLabel>
             <h3>{user?.name}</h3>
             <p>{user?.email}</p>
-          </IonLabel>
-        </IonItem>
-      </IonList>
+          </RowLabel>
+        </Row>
+      </List>
       {areas.length > 0 && (
-        <IonList inset>
-          <IonItem routerLink={paths.admin} detail>
+        <List inset>
+          <Row to={paths.admin} detail>
             <ShieldCheck aria-hidden="true" />
-            <IonLabel>Verwaltung</IonLabel>
-          </IonItem>
-        </IonList>
+            <RowLabel>Verwaltung</RowLabel>
+          </Row>
+        </List>
       )}
       <NotificationSettings />
       <SettingsHeader>Passkeys</SettingsHeader>
-      <IonList inset>
+      <List inset>
         <Loaded resource={resource}>
           {(keys) =>
             keys.length === 0 ? (
-              <IonItem>
-                <IonLabel>Noch kein Passkey angelegt.</IonLabel>
-              </IonItem>
+              <Row>
+                <RowLabel>Noch kein Passkey angelegt.</RowLabel>
+              </Row>
             ) : (
               keys.map((key) => (
-                <IonItem key={key.id}>
+                <Row key={key.id}>
                   <KeyRound aria-hidden="true" />
-                  <IonLabel>
+                  <RowLabel>
                     {key.name}
                     <p>angelegt am {key.created}</p>
                     <AppButton fill="clear" size="small" onClick={() => rename(key)}>
@@ -138,8 +138,8 @@ export default function SettingsPage() {
                     <AppButton fill="clear" size="small" color="danger" onClick={() => remove(key)}>
                       Entfernen
                     </AppButton>
-                  </IonLabel>
-                </IonItem>
+                  </RowLabel>
+                </Row>
               ))
             )
           }
@@ -148,7 +148,7 @@ export default function SettingsPage() {
         {canAdd && !hasPasskeys && (
           <Field label="Passwort" type="password" autoComplete="current-password" value={password} onChange={setPassword} />
         )}
-      </IonList>
+      </List>
       <SettingsFooter message={error ? { text: error, role: 'alert' } : null} />
       <div className="ion-padding-horizontal">
         {canAdd && (
@@ -163,16 +163,16 @@ export default function SettingsPage() {
               <KeyRound aria-hidden="true" />
               Mit Passkey bestätigen
             </BlockButton>
-            <IonNote className="ion-text-center ion-margin-vertical" style={{ display: 'block' }}>
+            <Note className="my-4 block text-center">
               Kein Zugriff auf den Passkey? Nach dem Entfernen genügt das Passwort.
-            </IonNote>
+            </Note>
           </>
         )}
       </div>
       <SettingsHeader>Rechtliches</SettingsHeader>
-      <IonList inset>
+      <List inset>
         <LegalItems />
-      </IonList>
+      </List>
       <div className="ion-padding-horizontal">
         <BlockButton fill="clear" color="danger" onClick={logout}>
           Abmelden

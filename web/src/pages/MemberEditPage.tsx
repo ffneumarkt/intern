@@ -1,5 +1,5 @@
-import { IonList, IonListHeader, IonLabel } from '@ionic/react'
 import { useState } from 'react'
+import { List, ListHeader } from '@/components/ui/list'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   allAreas,
@@ -90,10 +90,10 @@ function useIdentity(member: Member | undefined, save: (name: string, email: str
     })
   const fields = (
     <>
-      <IonList>
+      <List>
         <Field label="Name" value={name} onChange={setName} required error={tried && !name.trim() ? requiredMessage : undefined} />
         <Field label="E-Mail" type="email" autoComplete="off" autoCapitalize="off" value={email} onChange={setEmail} required error={tried && !email.trim() ? requiredMessage : undefined} />
-      </IonList>
+      </List>
       <ErrorText>{error}</ErrorText>
     </>
   )
@@ -167,10 +167,8 @@ function MemberDetails({ member, data, onChange, onIssued }: DetailsProps) {
         Speichern
       </BlockButton>
       <ErrorText>{error}</ErrorText>
-      <IonList>
-        <IonListHeader>
-          <IonLabel>Berechtigungen</IonLabel>
-        </IonListHeader>
+      <List>
+        <ListHeader>Berechtigungen</ListHeader>
         {data.categories.map((c) => (
           <SelectField
             key={c.id}
@@ -187,11 +185,9 @@ function MemberDetails({ member, data, onChange, onIssued }: DetailsProps) {
             ))}
           </SelectField>
         ))}
-      </IonList>
-      <IonList>
-        <IonListHeader>
-          <IonLabel>Verwaltung in der App</IonLabel>
-        </IonListHeader>
+      </List>
+      <List>
+        <ListHeader>Verwaltung in der App</ListHeader>
         {allAreas.map((area) => (
           <CheckboxField
             key={area}
@@ -207,7 +203,7 @@ function MemberDetails({ member, data, onChange, onIssued }: DetailsProps) {
             }}
           />
         ))}
-      </IonList>
+      </List>
       <Hint>Wer Mitglieder verwalten darf, kann sich selbst jedes Recht geben.</Hint>
       <BlockButton fill="outline" onClick={link}>
         Neuer Einrichtungslink

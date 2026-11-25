@@ -38,7 +38,7 @@ test.describe('as pruefung', () => {
     const id = await createMask(request, name)
     try {
       await page.goto('/material')
-      const row = page.locator('ion-item').filter({ visible: true, hasText: name })
+      const row = page.locator('[data-slot="row"]').filter({ visible: true, hasText: name })
       await expect(row).toBeVisible()
       await row.getByRole('button', { name: 'Prüfen' }).click()
 
@@ -64,7 +64,7 @@ test.describe('as pruefung', () => {
     const id = await createMask(request, name)
     try {
       await page.goto('/material')
-      await page.locator('ion-item').filter({ visible: true, hasText: name }).getByText(name, { exact: true }).click()
+      await page.locator('[data-slot="row"]').filter({ visible: true, hasText: name }).getByText(name, { exact: true }).click()
       // The item page's own title (the list row behind it has an h2, not the page heading).
       await expect(page.locator('h1.page-heading').filter({ hasText: name })).toBeVisible()
       await expect(page).toHaveURL(new RegExp(`/material/geraete/${id}$`))

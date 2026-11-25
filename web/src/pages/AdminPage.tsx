@@ -1,5 +1,5 @@
-import { IonItem, IonLabel, IonList } from '@ionic/react'
 import { FileText, FolderOpen, Users } from 'lucide-react'
+import { List, Row, RowLabel } from '@/components/ui/list'
 import Page from '../components/Page'
 import { Hint } from '../components/ui'
 import { paths } from '../routes'
@@ -13,35 +13,35 @@ export default function AdminPage() {
       {areas.length === 0 ? (
         <p>Keine Berechtigung.</p>
       ) : (
-        <IonList>
+        <List>
           {holds('members') && (
-            <IonItem routerLink={paths.adminMembers} detail>
+            <Row to={paths.adminMembers} detail>
               <Users aria-hidden="true" />
-              <IonLabel>
+              <RowLabel>
                 Mitglieder
                 <p>Konten, Berechtigungen und Einrichtungslinks</p>
-              </IonLabel>
-            </IonItem>
+              </RowLabel>
+            </Row>
           )}
           {holds('categories') && (
-            <IonItem routerLink={paths.adminCategories} detail>
+            <Row to={paths.adminCategories} detail>
               <FolderOpen aria-hidden="true" />
-              <IonLabel>
+              <RowLabel>
                 Kategorien
                 <p>Anlegen, umbenennen, löschen</p>
-              </IonLabel>
-            </IonItem>
+              </RowLabel>
+            </Row>
           )}
           {holds('transport') && (
-            <IonItem routerLink={paths.adminTransport} detail>
+            <Row to={paths.adminTransport} detail>
               <FileText aria-hidden="true" />
-              <IonLabel>
+              <RowLabel>
                 Beförderungspapier
                 <p>Station, Flasche, Abfüllstation, Checkliste</p>
-              </IonLabel>
-            </IonItem>
+              </RowLabel>
+            </Row>
           )}
-        </IonList>
+        </List>
       )}
       {holds('corrections') && <Hint>Korrekturen: im Verlauf eines Geräts auf einen Eintrag tippen.</Hint>}
     </Page>

@@ -64,9 +64,9 @@ test.describe('as pruefung', () => {
       await page.getByText('Atemschutzmasken', { exact: true }).last().click()
       await expect(page.locator('h1.page-heading').filter({ hasText: 'Atemschutzmasken' })).toBeVisible()
       await chip(page, 'Atemschutzmasken', 'RLF').click()
-      await expect(page.locator('ion-item.item-row').filter({ visible: true, hasText: name })).toBeVisible()
+      await expect(page.locator('.item-row').filter({ visible: true, hasText: name })).toBeVisible()
       await chip(page, 'Atemschutzmasken', 'LAST').click()
-      await expect(page.locator('ion-item.item-row').filter({ visible: true, hasText: name })).toHaveCount(0)
+      await expect(page.locator('.item-row').filter({ visible: true, hasText: name })).toHaveCount(0)
     } finally {
       await removeItemWithHistory(request, id)
     }

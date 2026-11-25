@@ -130,7 +130,7 @@ test.describe('verwaltung', () => {
     try {
       await page.goto(`/material/verwalten?kategorie=${category}`)
       await page.getByRole('tab', { name: 'Prüfarten' }).click()
-      await page.locator('ion-item', { hasText: name }).first().click()
+      await page.locator('[data-slot="row"]', { hasText: name }).first().click()
       await page.getByRole('button', { name: 'Prüfart löschen' }).click()
       await expect(alert(page).getByText(`${name} löschen?`)).toBeVisible()
 
@@ -180,7 +180,7 @@ test.describe('passkey', () => {
     await visible('Passwort').fill(password)
     await page.getByRole('button', { name: 'Passkey hinzufügen' }).click()
     await expect(page.getByText(/angelegt am/)).toBeVisible()
-    await expect(page.locator('ion-label', { hasText: 'E2E-Gerät' })).toBeVisible()
+    await expect(page.locator('[data-slot="row-label"]', { hasText: 'E2E-Gerät' })).toBeVisible()
 
     await page.getByRole('button', { name: 'Umbenennen' }).click()
     await expect(alert(page).getByText('Passkey umbenennen')).toBeVisible()
@@ -188,13 +188,13 @@ test.describe('passkey', () => {
     await expect(input).toHaveValue('E2E-Gerät')
     await input.fill('Diensthandy')
     await alertButton(page, 'Speichern').click()
-    await expect(page.locator('ion-label', { hasText: 'Diensthandy' })).toBeVisible()
+    await expect(page.locator('[data-slot="row-label"]', { hasText: 'Diensthandy' })).toBeVisible()
 
     await page.getByRole('button', { name: 'Entfernen' }).click()
     await expect(alert(page).getByText('Passkey „Diensthandy“ entfernen?')).toBeVisible()
     await alertButton(page, 'Abbrechen').click()
     await expect(alert(page)).toHaveCount(0)
-    await expect(page.locator('ion-label', { hasText: 'Diensthandy' })).toBeVisible()
+    await expect(page.locator('[data-slot="row-label"]', { hasText: 'Diensthandy' })).toBeVisible()
 
     await page.getByRole('button', { name: 'Entfernen' }).click()
     await alertButton(page, 'Entfernen').click()

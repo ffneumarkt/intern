@@ -1,5 +1,5 @@
-import { IonItem, IonLabel, IonList } from '@ionic/react'
 import { Plus } from 'lucide-react'
+import { List, Row, RowLabel } from '@/components/ui/list'
 import { listMembers } from '../api/admin'
 import Loaded from '../components/Loaded'
 import Page from '../components/Page'
@@ -19,21 +19,21 @@ export default function MembersPage() {
         <Loaded resource={resource}>
           {(members) => (
             <>
-              <IonList>
+              <List>
                 {members.map((m) => (
-                  <IonItem key={m.id} routerLink={paths.adminMember(m.id)} detail>
-                    <IonLabel>
+                  <Row key={m.id} to={paths.adminMember(m.id)} detail>
+                    <RowLabel>
                       {m.name}
                       <p>{m.email}</p>
-                    </IonLabel>
+                    </RowLabel>
                     {m.deactivated && (
                       <span className="ui-pill" data-tone="muted" slot="end">
                         Deaktiviert
                       </span>
                     )}
-                  </IonItem>
+                  </Row>
                 ))}
-              </IonList>
+              </List>
               <ActionBar>
                 <BlockButton routerLink={paths.adminMemberNew}>
                   <Plus aria-hidden="true" />

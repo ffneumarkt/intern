@@ -1,4 +1,5 @@
-import { IonItem, IonLabel, IonList, IonText, useIonViewWillEnter } from '@ionic/react'
+import { useIonViewWillEnter } from '@ionic/react'
+import { List, Row, RowLabel } from '@/components/ui/list'
 import { CircleX } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -133,16 +134,16 @@ export default function RecordUsePage() {
               </Card>
               {unknown && (
                 <Card tone="warning">
-                  <IonText>Nicht gefunden: {unknown}</IonText>
+                  <p>Nicht gefunden: {unknown}</p>
                   {canAnywhere('manage') && (
                     <AssignCode code={unknown} items={items} onAssigned={(item) => { add(item); setUnknown(null) }} />
                   )}
                 </Card>
               )}
-              <IonList aria-label="Gescannte Geräte">
+              <List role="list" aria-label="Gescannte Geräte">
                 {scanned.map((i) => (
-                  <IonItem key={i.id} role="listitem">
-                    <IonLabel>{i.name}</IonLabel>
+                  <Row key={i.id} role="listitem">
+                    <RowLabel>{i.name}</RowLabel>
                     <AppButton
                       fill="clear"
                       slot="end"
@@ -151,9 +152,9 @@ export default function RecordUsePage() {
                     >
                       <CircleX aria-hidden="true" />
                     </AppButton>
-                  </IonItem>
+                  </Row>
                 ))}
-              </IonList>
+              </List>
               {scanned.length > 0 && <Hint>Weiteres Gerät scannen?</Hint>}
               <ActionBar>
                 <BlockButton disabled={scanned.length === 0} onClick={() => setStep('form')}>
@@ -167,7 +168,7 @@ export default function RecordUsePage() {
               <BlockButton fill="outline" onClick={() => setStep('scan')}>
                 Weiteres Gerät hinzufügen
               </BlockButton>
-              <IonList>
+              <List>
                 <Field label="Datum" type="date" max={today()} value={date} onChange={setDate} />
                 <SelectField label="Art" value={kind} onChange={(value) => setKind(value as UseInput['kind'])}>
                   <option value="operation">Einsatz</option>
@@ -176,7 +177,7 @@ export default function RecordUsePage() {
                 </SelectField>
                 <Field label="Erfasst von" value={recordedBy} onChange={setRecordedBy} />
                 <TextAreaField label="Notiz" value={note} onChange={setNote} />
-              </IonList>
+              </List>
               {error && <ErrorText>{error}</ErrorText>}
               <ActionBar>
                 <BlockButton disabled={busy} onClick={() => once(save)}>
@@ -194,15 +195,15 @@ export default function RecordUsePage() {
 function Suggestions({ suggestions, onPick }: { suggestions: Item[]; onPick(item: Item): void }) {
   if (suggestions.length === 0) return null
   return (
-    <IonList aria-label="Vorschläge" className="suggestions">
+    <List role="list" aria-label="Vorschläge" className="suggestions">
       {suggestions.map((i) => (
-        <IonItem key={i.id} role="listitem" button detail={false} onClick={() => onPick(i)}>
-          <IonLabel>
+        <Row key={i.id} role="listitem" detail={false} onClick={() => onPick(i)}>
+          <RowLabel>
             {i.name}
             <p>{i.barcode}</p>
-          </IonLabel>
-        </IonItem>
+          </RowLabel>
+        </Row>
       ))}
-    </IonList>
+    </List>
   )
 }
