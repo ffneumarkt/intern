@@ -11,6 +11,7 @@ func Register(app core.App) {
 	app.OnRecordDelete("admin_rights").BindFunc(keepLastMembersHolder)
 	app.OnRecordUpdate("users").BindFunc(keepLastActiveMembersHolder)
 	app.OnRecordDelete("categories").BindFunc(guardCategoryDelete)
+	bindAudit(app)
 }
 
 // otherActiveHolders counts the active holders of the members right other than the row except.
