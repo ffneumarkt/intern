@@ -1,5 +1,5 @@
-import { IonIcon, IonItem, IonLabel, IonList, IonText, useIonViewWillEnter } from '@ionic/react'
-import { closeCircleOutline } from 'ionicons/icons'
+import { IonItem, IonLabel, IonList, IonText, useIonViewWillEnter } from '@ionic/react'
+import { CircleX } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { listItems, recordUse, type Item, type UseInput } from '../api/material'
@@ -149,7 +149,7 @@ export default function RecordUsePage() {
                       aria-label={`${i.name} entfernen`}
                       onClick={() => setScanned((list) => list.filter((x) => x.id !== i.id))}
                     >
-                      <IonIcon icon={closeCircleOutline} aria-hidden />
+                      <CircleX aria-hidden="true" />
                     </AppButton>
                   </IonItem>
                 ))}

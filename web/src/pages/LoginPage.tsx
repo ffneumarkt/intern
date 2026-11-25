@@ -1,5 +1,5 @@
-import { IonIcon, IonList } from '@ionic/react'
-import { keyOutline } from 'ionicons/icons'
+import { IonList } from '@ionic/react'
+import { KeyRound } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PasskeyCancelledError, TooManyAttemptsError, tooManyAttemptsMessage } from '../api/errors'
@@ -62,7 +62,7 @@ export default function LoginPage() {
       {passkeysSupported() && (
         <>
           <BlockButton className="ui-button" disabled={busy} onClick={() => once(signInWithPasskey)}>
-            <IonIcon slot="start" icon={keyOutline} aria-hidden />
+            <KeyRound aria-hidden="true" />
             Mit Passkey anmelden
           </BlockButton>
           {passkeyFailed && <ErrorText>Anmeldung mit Passkey fehlgeschlagen.</ErrorText>}

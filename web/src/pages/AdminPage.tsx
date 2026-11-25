@@ -1,5 +1,5 @@
-import { IonIcon, IonItem, IonLabel, IonList } from '@ionic/react'
-import { documentTextOutline, folderOpenOutline, peopleOutline } from 'ionicons/icons'
+import { IonItem, IonLabel, IonList } from '@ionic/react'
+import { FileText, FolderOpen, Users } from 'lucide-react'
 import Page from '../components/Page'
 import { Hint } from '../components/ui'
 import { paths } from '../routes'
@@ -16,7 +16,7 @@ export default function AdminPage() {
         <IonList>
           {holds('members') && (
             <IonItem routerLink={paths.adminMembers} detail>
-              <IonIcon slot="start" icon={peopleOutline} aria-hidden />
+              <Users aria-hidden="true" />
               <IonLabel>
                 Mitglieder
                 <p>Konten, Berechtigungen und Einrichtungslinks</p>
@@ -25,7 +25,7 @@ export default function AdminPage() {
           )}
           {holds('categories') && (
             <IonItem routerLink={paths.adminCategories} detail>
-              <IonIcon slot="start" icon={folderOpenOutline} aria-hidden />
+              <FolderOpen aria-hidden="true" />
               <IonLabel>
                 Kategorien
                 <p>Anlegen, umbenennen, löschen</p>
@@ -34,7 +34,7 @@ export default function AdminPage() {
           )}
           {holds('transport') && (
             <IonItem routerLink={paths.adminTransport} detail>
-              <IonIcon slot="start" icon={documentTextOutline} aria-hidden />
+              <FileText aria-hidden="true" />
               <IonLabel>
                 Beförderungspapier
                 <p>Station, Flasche, Abfüllstation, Checkliste</p>

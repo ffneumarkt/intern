@@ -1,5 +1,5 @@
-import { IonIcon, IonItem, IonLabel, IonList } from '@ionic/react'
-import { addOutline } from 'ionicons/icons'
+import { IonItem, IonLabel, IonList } from '@ionic/react'
+import { Plus } from 'lucide-react'
 import { listMembers } from '../api/admin'
 import Loaded from '../components/Loaded'
 import Page from '../components/Page'
@@ -36,7 +36,7 @@ export default function MembersPage() {
               </IonList>
               <ActionBar>
                 <BlockButton routerLink={paths.adminMemberNew}>
-                  <IonIcon slot="start" icon={addOutline} aria-hidden />
+                  <Plus aria-hidden="true" />
                   Neues Mitglied
                 </BlockButton>
               </ActionBar>

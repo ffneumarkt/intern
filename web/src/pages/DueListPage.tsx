@@ -1,4 +1,5 @@
 import { IonFab, IonFabButton, IonIcon, IonItem, IonLabel, IonList, IonListHeader } from '@ionic/react'
+import { ScanBarcode } from 'lucide-react'
 import { Chip } from '@/components/ui/chip'
 import { Segment, SegmentButton } from '@/components/ui/segment'
 import { barcodeOutline } from 'ionicons/icons'
@@ -97,7 +98,7 @@ export default function DueListPage() {
                     <strong>Nichts fällig.</strong>
                   </Hint>
                   <BlockButton size="large" routerLink={paths.recordUse}>
-                    <IonIcon slot="start" icon={barcodeOutline} aria-hidden />
+                    <ScanBarcode aria-hidden="true" />
                     Verwendung erfassen
                   </BlockButton>
                 </Card>
