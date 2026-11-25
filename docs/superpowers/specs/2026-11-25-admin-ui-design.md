@@ -30,12 +30,14 @@ New collections (one migration, in the style of `1793380001_rules.go`):
 |---|---|---|
 | `admin_rights` | user → users, area (`members` \| `categories` \| `transport` \| `corrections`) | unique on (user, area); a user reads their own rows, `members` holders read all and create or delete; no update |
 | `setup_links` | user → users, token_hash, expires, used | no API rules; only the Go routes |
+| `admin_audit` | admin → users, action, collection, record id, summary (JSON), created | read for `members` holders; written only by hooks and routes; one row for every change to `admin_rights`, `permissions`, members and categories made through the API |
 | `corrections` | admin → users, action (`edit` \| `delete`), collection, record id, before (JSON), after (JSON), created | read for `corrections` holders; written only by the Go route |
 
 Changed rules:
 
-- `users`: `members` holders create users and write `name`, `email`, `deactivated` (existing deactivation hook
-  applies). Nobody writes their own `deactivated`.
+- `users`: the collection rules stay as they are (own record only, no create, no delete). Members are created
+  and edited only through the Go routes below, which accept `name`, `email` and `deactivated` and nothing else
+  (a rule cannot whitelist fields; a blacklist would miss `emailVisibility`, `passwordConfirm` and the like).
 - `permissions`: create, update, delete for `members` holders; read as today.
 - `categories`: write for `categories` holders; delete only without items (hook).
 - `transport_document_settings`: write for `transport` holders; read stays public.
@@ -49,20 +51,34 @@ be deactivated.
 Package `internal/admin`, registered next to `internal/material`. Every route needs a logged-in, non-deactivated
 user and checks its area in Go.
 
+- `GET /api/admin/members` (`members`): the member list with emails (PocketBase hides them from other users).
 - `POST /api/admin/members` (`members`): name, email; creates the user with an unusable random password and
   returns a setup link once.
+- `PATCH /api/admin/members/:id` (`members`): `name`, `email`, `deactivated` only.
 - `POST /api/admin/members/:id/setup-link` (`members`): new link (new member or forgotten password); replaces
-  an open link.
-- `GET /api/setup/:token` (public): valid or not, and the member's name.
-- `POST /api/setup/:token` (public): sets the password and marks the link used; used, expired and unknown
-  links give the same error; rate-limited like password login.
+  an open link. Refused for a member who holds an admin right while active, so a `members` holder cannot take
+  over another admin's account; deactivate first.
+- `POST /api/setup/check` and `POST /api/setup/complete` (public): the token travels in the request body, never
+  in a path or query. `check` says whether it is valid and returns the member's name; `complete` sets the
+  password and marks the link used. Used, expired and unknown links give the same error. Rate-limited per IP
+  and per link.
 - `PATCH`/`DELETE /api/admin/uses/:id` and `/api/admin/checks/:id` (`corrections`): `PATCH` takes only the
   editable fields (use: date, kind, recorded name, note; check: date, result, note). Writes the `corrections`
   row in the same transaction and re-runs the status hooks. `DELETE` is refused when it would remove the only
   check that justifies the item's current status.
 
-Setup links: 32 random bytes, base64url, only the SHA-256 hash is stored, valid 72 hours, single use. After
-choosing the password the member is offered a passkey through the existing flow.
+Setup links: 32 random bytes, base64url, only the SHA-256 hash is stored (compared in constant time), valid 24
+hours, single use. The link is `/einrichtung#<token>`: the fragment is not sent to servers, proxies or logs, and
+the page posts it in the body. Responses carry `Referrer-Policy: no-referrer`. After choosing the password the
+member is offered a passkey through the existing flow.
+
+Admin API shield: PocketBase's superuser login and schema routes live under `/api`, not only under `/_/`, and
+the superuser login is what guards the database. A middleware answers 404 to `/_/`,
+`/api/collections/_superusers/*`, `/api/settings*`, `/api/backups*`, `/api/logs*`, `/api/crons*` and the
+collection schema routes (`/api/collections`, `/api/collections/{name}` without a further segment,
+`/api/collections/{name}/truncate`, `/api/collections/import`, `/api/collections/meta/*`) unless the request is
+from a loopback address and carries no forwarding header (`X-Forwarded-For`, `Forwarded`, `Cf-Connecting-Ip`),
+or the environment sets `ADMIN_API_ALLOW=true`. Blocking at the tunnel is an additional layer, not the only one.
 
 CLI: `intern admin grant EMAIL AREA...`, `intern admin revoke EMAIL AREA...`, `intern admin list`. Unknown
 users are refused. Logging through `internal/logging`; user id and action only, never passwords or tokens.
@@ -81,7 +97,7 @@ and check their own right („Keine Berechtigung.“ otherwise).
 - Beförderungspapier-Einstellungen: one form with all fields.
 - Korrekturen: „Bearbeiten“ and „Löschen“ on history rows of the item page for `corrections` holders; delete
   asks through `useDialogs`; corrections show as „Korrigiert von … am …“ below the history.
-- `/einrichtung/:token` (public, outside the tab bar): name, new password, then the passkey offer; an invalid
+- `/einrichtung` (public, outside the tab bar; the token is in the URL fragment): name, new password, then the passkey offer; an invalid
   link shows one neutral message.
 
 Conventions: `Field` with `required`, `error` and the `tried` flag, shared `ui.tsx` pieces, `useResource`, no
@@ -89,7 +105,8 @@ Conventions: `Field` with `required`, `error` and the `tried` flag, shared `ui.t
 
 ## Testing
 
-TDD. Go: rules tests per collection and area (right holder, other area, plain member, anonymous), last-holder
+TDD. Go: the admin API shield (blocked paths, allowed app paths, loopback, forwarding headers, the override), audit rows,
+rules tests per collection and area (right holder, other area, plain member, anonymous), last-holder
 guard, category delete, setup link (valid, expired, used, unknown, replaced, rate limit), corrections (edit,
 delete, audit row, status hooks, refused delete), CLI. Tests using `internal/testenv` are in external `_test`
 packages. Web: vitest per screen, rights gating, one-time link display, setup page and error states. E2E
@@ -100,7 +117,8 @@ corrects a use; passkey after setup stays out of e2e. `make test`, `govulncheck`
 
 1. Deploy with the migration; `/_/` is still reachable.
 2. `intern admin grant <email> members categories transport corrections` on the VPS.
-3. Check each area in the app, then block `/_/` at the tunnel or proxy.
+3. Check each area in the app. The shield already answers 404 for `/_/` and the admin API from the internet;
+   also block them at the tunnel or proxy.
 4. The superuser stays for PocketBase settings and backups (SSH tunnel or local).
 
 Docs to update with the implementation: spec §4 and §10, `CLAUDE.md`, `README.md`, `deploy/README.md`,
@@ -108,7 +126,7 @@ Docs to update with the implementation: spec §4 and §10, `CLAUDE.md`, `README.
 
 ## Delivery
 
-Three PRs: (1) rights, rules, guard, CLI and tests; (2) setup links and the new-member flow; (3) screens and
+Three PRs: (1) rights, rules, guards, audit, admin API shield, CLI and tests; (2) setup links and the new-member flow; (3) screens and
 corrections.
 
 ## Not in scope
