@@ -1,5 +1,6 @@
 import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import type { Plugin } from 'vite'
@@ -18,6 +19,7 @@ const keepDist: Plugin = {
 export default defineConfig({
   plugins: [
     react(),
+    tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
@@ -55,6 +57,7 @@ export default defineConfig({
     }),
     keepDist,
   ],
+  resolve: { alias: { '@': resolve(import.meta.dirname, 'src') } },
   build: {
     outDir,
     emptyOutDir: true,
