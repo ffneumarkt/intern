@@ -1,5 +1,30 @@
 # Deploy to the VPS
 
+## Which files do I need?
+
+To run the app you need only two files in one folder (for example `/opt/ff`): `compose.yaml` (repo root) and `.env` (a
+filled copy of `env.example`). Everything else here is optional:
+
+| File | What for | Needed? |
+|---|---|---|
+| `../compose.yaml` | the app and its Cloudflare tunnel | **yes** |
+| `env.example` → `.env` | settings and secrets (every variable is explained inside) | **yes** |
+| `Makefile` | short commands on the server: `make update`, `make first-user ADMIN_EMAIL=...`, `make logs` (copy it next to `compose.yaml`) | convenience |
+| `bootstrap-staging.sh` | does the whole first setup in one script: folder, `.env` with new keys, default setup, first admin, start | convenience, for a new environment |
+| `intern-update.service`, `intern-update.timer` | systemd timer that pulls and restarts every 5 minutes (automatic updates) | optional |
+| `intern-backup`, `intern-backup.sudoers`, `backup_authorized_keys.example` | nightly database backup pulled by a NAS over SSH | optional, recommended |
+| `restore-test.sh` | checks a backup file by starting the image on it | optional |
+
+Typical commands with the Makefile (run in the folder with `compose.yaml`):
+
+```sh
+make update                                              # pull the newest image and restart what changed
+make first-user ADMIN_EMAIL=you@example.com ADMIN_NAME="Your Name"   # first admin, password printed once
+make logs                                                # follow the logs
+```
+
+---
+
 Files for `intern.ffneumarkt.at` (design: spec §10). The VPS runs Docker Compose in `/srv/intern`
 with the app and its own `cloudflared`; the container publishes no port, so `CF-Connecting-IP` (used
 by the rate limits) can only come from the tunnel.
