@@ -1,32 +1,26 @@
-import { IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonSegment, IonSegmentButton, IonSelectOption, IonText } from '@ionic/react'
+import { IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonSegment, IonSegmentButton, IonSelectOption } from '@ionic/react'
 import { addOutline } from 'ionicons/icons'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { CheckTypeInUseError, ItemPartlySavedError, LocationInUseError, LocationNameTakenError } from '../api/errors'
+import { LocationInUseError, LocationNameTakenError } from '../api/errors'
 import {
-  createCheckType,
-  createItem,
   createLocation,
-  deleteCheckType,
   deleteLocation,
   listCategories,
   listCheckTypes,
   listItems,
   listLocations,
-  updateCheckType,
   updateLocation,
   type CheckType,
   type Item,
-  type ItemInput,
   type Location,
 } from '../api/material'
-import { CheckboxField, Field, SelectField } from '../components/Field'
+import { Field, SelectField } from '../components/Field'
 import { showFirstInvalid, requiredMessage } from '../components/required'
-import ItemForm from '../components/ItemForm'
 import Loaded from '../components/Loaded'
 import Page from '../components/Page'
 import { useDialogs } from '../components/useDialogs'
-import { paths } from '../routes'
+import { manageTabParam, paths, type ManageTab } from '../routes'
 import { useSession } from '../session'
 import { useBusy } from '../useBusy'
 import { useResource } from '../useResource'
@@ -39,9 +33,11 @@ const load = async () => {
 
 export default function ManagePage() {
   const { can } = useSession()
-  const preset = new URLSearchParams(useLocation().search).get('kategorie')
-  const [chosen, setChosen] = useState<string | null>(null)
-  const [tab, setTab] = useState<'items' | 'checkTypes' | 'locations'>('items')
+  const navigate = useNavigate()
+  // Category and tab live in the address, so coming back from an edit page lands on the same list.
+  const query = new URLSearchParams(useLocation().search)
+  const preset = query.get('kategorie')
+  const tab = (Object.keys(manageTabParam) as ManageTab[]).find((t) => manageTabParam[t] === query.get('tab')) ?? 'items'
   const resource = useResource(load)
   return (
     <Page title="Verwalten" back={paths.dueList}>
@@ -49,14 +45,15 @@ export default function ManagePage() {
         {({ categories, items, checkTypes, locations }) => {
           const manageable = categories.filter((c) => can(c.id, 'manage'))
           if (manageable.length === 0) return <p>Keine Berechtigung.</p>
-          const categoryId = [chosen, preset].find((id) => manageable.some((c) => c.id === id)) ?? manageable[0].id
+          const categoryId = manageable.find((c) => c.id === preset)?.id ?? manageable[0].id
           const types = checkTypes.filter((t) => t.categoryId === categoryId)
+          const show = (category: string, next: ManageTab) => navigate(paths.manageCategory(category, next), { replace: true })
           return (
             <>
               {/* The locations belong to no category. */}
               {tab !== 'locations' && (
                 <IonList>
-                  <SelectField label="Kategorie" value={categoryId} onChange={setChosen}>
+                  <SelectField label="Kategorie" value={categoryId} onChange={(id) => show(id, tab)}>
                     {manageable.map((c) => (
                       <IonSelectOption key={c.id} value={c.id}>
                         {c.name}
@@ -66,27 +63,20 @@ export default function ManagePage() {
                 </IonList>
               )}
               <IonSegment value={tab}>
-                <IonSegmentButton value="items" onClick={() => setTab('items')}>
+                <IonSegmentButton value="items" onClick={() => show(categoryId, 'items')}>
                   <IonLabel>Geräte</IonLabel>
                 </IonSegmentButton>
-                <IonSegmentButton value="checkTypes" onClick={() => setTab('checkTypes')}>
+                <IonSegmentButton value="checkTypes" onClick={() => show(categoryId, 'checkTypes')}>
                   <IonLabel>Prüfarten</IonLabel>
                 </IonSegmentButton>
-                <IonSegmentButton value="locations" onClick={() => setTab('locations')}>
+                <IonSegmentButton value="locations" onClick={() => show(categoryId, 'locations')}>
                   <IonLabel>Standorte</IonLabel>
                 </IonSegmentButton>
               </IonSegment>
               {tab === 'items' ? (
-                <ItemsTab
-                  key={categoryId}
-                  categoryId={categoryId}
-                  items={items.filter((i) => i.categoryId === categoryId)}
-                  checkTypes={types}
-                  locations={locations}
-                  onChange={resource.reload}
-                />
+                <ItemsTab categoryId={categoryId} items={items.filter((i) => i.categoryId === categoryId)} />
               ) : tab === 'checkTypes' ? (
-                <CheckTypesTab key={categoryId} categoryId={categoryId} checkTypes={types} onChange={resource.reload} />
+                <CheckTypesTab categoryId={categoryId} checkTypes={types} />
               ) : (
                 <LocationsTab locations={locations} onChange={resource.reload} />
               )}
@@ -98,62 +88,28 @@ export default function ManagePage() {
   )
 }
 
-interface ItemsTabProps {
-  categoryId: string
-  items: Item[]
-  checkTypes: CheckType[]
-  locations: Location[]
-  onChange(): void
-}
-
-function ItemsTab({ categoryId, items, checkTypes, locations, onChange }: ItemsTabProps) {
-  const navigate = useNavigate()
-  const [formKey, setFormKey] = useState(0)
-  const [partlySaved, setPartlySaved] = useState(false)
-
-  const save = async (input: Omit<ItemInput, 'categoryId'>, lastChecked: Record<string, string>) => {
-    setPartlySaved(false)
-    try {
-      const id = await createItem({ ...input, categoryId }, lastChecked)
-      setFormKey((key) => key + 1)
-      navigate(paths.item(id))
-    } catch (err) {
-      if (!(err instanceof ItemPartlySavedError)) throw err
-      // The item exists: a second attempt would fail on its barcode, so the form is cleared.
-      setFormKey((key) => key + 1)
-      setPartlySaved(true)
-      onChange()
-    }
-  }
-
+// A list; a click opens the edit page, the button the page for a new entry.
+function ItemsTab({ categoryId, items }: { categoryId: string; items: Item[] }) {
   return (
     <>
       <IonList>
         {items.map((i) => (
-          <IonItem key={i.id} routerLink={paths.item(i.id)}>
+          <IonItem key={i.id} routerLink={paths.itemEdit(i.id)}>
             <IonLabel>{i.name}</IonLabel>
           </IonItem>
         ))}
       </IonList>
-      <IonListHeader>
-        <IonLabel>Neues Gerät</IonLabel>
-      </IonListHeader>
-      {partlySaved && <IonText color="warning">Gerät angelegt, aber nicht alle Prüfungen gespeichert.</IonText>}
-      <ItemForm key={formKey} locations={locations} checkTypes={checkTypes} submitLabel="Gerät anlegen" onSave={save} />
+      <ActionBar>
+        <BlockButton routerLink={paths.itemNew(categoryId)}>
+          <IonIcon slot="start" icon={addOutline} aria-hidden />
+          Neues Gerät
+        </BlockButton>
+      </ActionBar>
     </>
   )
 }
 
-interface CheckTypesTabProps {
-  categoryId: string
-  checkTypes: CheckType[]
-  onChange(): void
-}
-
-function CheckTypesTab({ categoryId, checkTypes, onChange }: CheckTypesTabProps) {
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const editing = checkTypes.find((t) => t.id === editingId)
-
+function CheckTypesTab({ categoryId, checkTypes }: { categoryId: string; checkTypes: CheckType[] }) {
   const describe = (t: CheckType) =>
     [
       t.isDefault && 'Standard',
@@ -165,16 +121,11 @@ function CheckTypesTab({ categoryId, checkTypes, onChange }: CheckTypesTabProps)
       .filter(Boolean)
       .join(' · ')
 
-  const done = () => {
-    setEditingId(null)
-    onChange()
-  }
-
   return (
     <>
       <IonList>
         {checkTypes.map((t) => (
-          <IonItem key={t.id} button detail={false} onClick={() => setEditingId(t.id)}>
+          <IonItem key={t.id} routerLink={paths.checkTypeEdit(t.id)} detail={false}>
             <IonLabel>
               {t.name}
               <p>{describe(t)}</p>
@@ -182,102 +133,11 @@ function CheckTypesTab({ categoryId, checkTypes, onChange }: CheckTypesTabProps)
           </IonItem>
         ))}
       </IonList>
-      <CheckTypeForm key={editingId ?? 'new'} categoryId={categoryId} checkType={editing} others={checkTypes} onDone={done} />
-    </>
-  )
-}
-
-interface CheckTypeFormProps {
-  categoryId: string
-  checkType?: CheckType
-  others: CheckType[]
-  onDone(): void
-}
-
-function CheckTypeForm({ categoryId, checkType, others, onDone }: CheckTypeFormProps) {
-  const [name, setName] = useState(checkType?.name ?? '')
-  const [months, setMonths] = useState(checkType?.intervalMonths ? String(checkType.intervalMonths) : '')
-  const [afterUse, setAfterUse] = useState(checkType?.afterUse ?? false)
-  const [isDefault, setIsDefault] = useState(checkType?.isDefault ?? false)
-  const [measurements, setMeasurements] = useState(checkType?.measurements ?? false)
-  const [alsoSatisfies, setAlsoSatisfies] = useState(checkType?.alsoSatisfies ?? [])
-  const [error, setError] = useState<string | null>(null)
-  const [tried, setTried] = useState(false)
-  const { busy, once } = useBusy()
-  const { confirm } = useDialogs()
-
-  const save = async () => {
-    if (!name.trim()) {
-      setTried(true)
-      showFirstInvalid()
-      return
-    }
-    const intervalMonths = Number(months) || 0
-    if (!intervalMonths && !afterUse) {
-      setError('Intervall oder „nach Verwendung“ angeben.')
-      return
-    }
-    setError(null)
-    const input = { name, intervalMonths, afterUse, isDefault, measurements, alsoSatisfies }
-    try {
-      if (checkType) await updateCheckType(checkType.id, input)
-      else await createCheckType({ ...input, categoryId })
-      onDone()
-    } catch {
-      setError('Speichern fehlgeschlagen.')
-    }
-  }
-
-  const remove = async (target: CheckType) => {
-    if (!(await confirm({ message: `${target.name} löschen?`, confirmText: 'Löschen', destructive: true }))) return
-    setError(null)
-    try {
-      await deleteCheckType(target.id)
-      onDone()
-    } catch (err) {
-      setError(
-        err instanceof CheckTypeInUseError
-          ? 'Prüfart wird noch verwendet und kann nicht gelöscht werden.'
-          : 'Löschen fehlgeschlagen.',
-      )
-    }
-  }
-
-  return (
-    <>
-      <IonList>
-        <IonListHeader>
-          <IonLabel>{checkType ? 'Prüfart bearbeiten' : 'Neue Prüfart'}</IonLabel>
-        </IonListHeader>
-        <Field label="Name" value={name} onChange={setName} required error={tried && !name.trim() ? requiredMessage : undefined} />
-        <Field label="Intervall in Monaten" type="number" value={months} onChange={setMonths} />
-        <CheckboxField label="nach Verwendung" checked={afterUse} onChange={setAfterUse} />
-        <CheckboxField label="Standardprüfung" checked={isDefault} onChange={setIsDefault} />
-        <CheckboxField label="Messwerte erfassen" checked={measurements} onChange={setMeasurements} />
-        {others
-          .filter((t) => t.id !== checkType?.id)
-          .map((t) => (
-            <CheckboxField
-              key={t.id}
-              label={`gilt auch als ${t.name}`}
-              checked={alsoSatisfies.includes(t.id)}
-              onChange={(checked) =>
-                setAlsoSatisfies((ids) => (checked ? [...ids, t.id] : ids.filter((id) => id !== t.id)))
-              }
-            />
-          ))}
-      </IonList>
-      {error && <ErrorText>{error}</ErrorText>}
       <ActionBar>
-        <BlockButton disabled={busy} onClick={() => once(save)}>
-          {!checkType && <IonIcon slot="start" icon={addOutline} aria-hidden />}
-          {checkType ? 'Speichern' : 'Prüfart anlegen'}
+        <BlockButton routerLink={paths.checkTypeNew(categoryId)}>
+          <IonIcon slot="start" icon={addOutline} aria-hidden />
+          Neue Prüfart
         </BlockButton>
-        {checkType && (
-          <BlockButton color="danger" fill="clear" onClick={() => remove(checkType)}>
-            Prüfart löschen
-          </BlockButton>
-        )}
       </ActionBar>
     </>
   )

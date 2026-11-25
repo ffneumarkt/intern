@@ -11,6 +11,7 @@ import CorrectionPage from './pages/CorrectionPage'
 import DueListPage from './pages/DueListPage'
 import ImprintPage from './pages/ImprintPage'
 import InfoPage from './pages/InfoPage'
+import CheckTypeEditPage from './pages/CheckTypeEditPage'
 import ItemEditPage from './pages/ItemEditPage'
 import ItemPage from './pages/ItemPage'
 import LoginPage from './pages/LoginPage'
@@ -66,6 +67,9 @@ function Tabs() {
         {material(paths.category(), <CategoryPage />)}
         {material(paths.item(), <ItemPage />)}
         {material(paths.itemEdit(), <ItemEditPage />)}
+        {material(paths.itemNew(), <ItemEditPage />)}
+        {material(paths.checkTypeEdit(), <CheckTypeEditPage />)}
+        {material(paths.checkTypeNew(), <CheckTypeEditPage />)}
         {material(paths.recordUse, <RecordUsePage />)}
         {material(paths.recordCheck(), <RecordCheckPage />)}
         {material(paths.manage, <ManagePage />)}

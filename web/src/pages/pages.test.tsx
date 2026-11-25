@@ -905,21 +905,21 @@ describe('required fields', () => {
 
   describe('item form', () => {
     it('marks Bezeichnung as required and the optional fields as not', async () => {
-      renderAt(paths.manage, 'manage')
+      renderAt(paths.itemNew('masken'), 'manage')
       await screen.findByLabelText('Bezeichnung')
       expect(field('Bezeichnung')).toHaveClass('ui-required')
       expect(field('Seriennummer')).not.toHaveClass('ui-required')
     })
 
     it('shows no error before Speichern is pressed, and the button can be pressed', async () => {
-      renderAt(paths.manage, 'manage')
+      renderAt(paths.itemNew('masken'), 'manage')
       await screen.findByLabelText('Bezeichnung')
       expect(screen.queryByText(message)).toBeNull()
       expect(ionButton('Gerät anlegen')).toHaveProperty('disabled', false)
     })
 
     it('marks the empty Bezeichnung with a message and saves nothing', async () => {
-      renderAt(paths.manage, 'manage')
+      renderAt(paths.itemNew('masken'), 'manage')
       await screen.findByLabelText('Bezeichnung')
       fireEvent.click(ionButton('Gerät anlegen')!)
       await waitFor(() => expect(field('Bezeichnung')).toHaveClass('ion-invalid', 'ion-touched'))
@@ -928,7 +928,7 @@ describe('required fields', () => {
     })
 
     it('treats a name of only spaces as empty', async () => {
-      renderAt(paths.manage, 'manage')
+      renderAt(paths.itemNew('masken'), 'manage')
       await screen.findByLabelText('Bezeichnung')
       set('Bezeichnung', '   ')
       fireEvent.click(ionButton('Gerät anlegen')!)
@@ -937,7 +937,7 @@ describe('required fields', () => {
     })
 
     it('takes the error away once a name is typed, and then saves', async () => {
-      renderAt(paths.manage, 'manage')
+      renderAt(paths.itemNew('masken'), 'manage')
       await screen.findByLabelText('Bezeichnung')
       fireEvent.click(ionButton('Gerät anlegen')!)
       await waitFor(() => expect(field('Bezeichnung')).toHaveClass('ion-invalid'))
@@ -959,8 +959,7 @@ describe('required fields', () => {
 
   describe('check type form', () => {
     const open = async () => {
-      renderAt(paths.manage, 'manage')
-      fireEvent.click(await screen.findByText('Prüfarten'))
+      renderAt(paths.checkTypeNew('masken'), 'manage')
       await findIon(() => ionButton('Prüfart anlegen'))
     }
 
@@ -1057,14 +1056,14 @@ describe('locations in the forms', () => {
 
   describe('item form', () => {
     it('offers the locations, the workshop preselected for a new item', async () => {
-      renderAt(paths.manage, 'manage')
+      renderAt(paths.itemNew('masken'), 'manage')
       await findIon(() => ionSelect('Standort'))
       expect(optionTexts('Standort')).toEqual(['AS-Werkstatt', 'LAST', 'RLF'])
       expect(ionSelect('Standort')).toHaveValue('werkstatt')
     })
 
     it('saves a new item in the chosen location', async () => {
-      renderAt(paths.manage, 'manage')
+      renderAt(paths.itemNew('masken'), 'manage')
       await findIon(() => ionSelect('Standort'))
       set('Bezeichnung', 'Maske 07')
       choose(ionSelect('Standort')!, 'rlf')
@@ -1074,7 +1073,7 @@ describe('locations in the forms', () => {
     })
 
     it('puts a new item in the workshop unless told otherwise', async () => {
-      renderAt(paths.manage, 'manage')
+      renderAt(paths.itemNew('masken'), 'manage')
       await findIon(() => ionSelect('Standort'))
       set('Bezeichnung', 'Maske 07')
       fireEvent.click(ionButton('Gerät anlegen')!)
@@ -1223,8 +1222,13 @@ describe('manage', () => {
 
   const lastChecked = (type: string) => screen.findByLabelText(`Zuletzt geprüft am (${type})`)
   const set = (label: string, value: string) => typeInto(screen.getByLabelText(label), value)
+  // The check types of a category as a list; clicking one opens its edit page.
   const openCheckTypes = async () => {
-    fireEvent.click(await screen.findByText('Prüfarten'))
+    renderAt(paths.manageCategory('masken', 'checkTypes'), 'manage')
+    await findIon(() => ionItem('Maskenprüfung'))
+  }
+  const openNewCheckType = async () => {
+    renderAt(paths.checkTypeNew('masken'), 'manage')
     await findIon(() => ionButton('Prüfart anlegen'))
   }
 
@@ -1238,7 +1242,8 @@ describe('manage', () => {
   it('preselects the category from the link', async () => {
     renderAt(paths.manageCategory('lungenautomaten'), 'manage')
     expect(await findIon(() => ionSelect('Kategorie'))).toHaveValue('lungenautomaten')
-    expect(await lastChecked('Jahresprüfung')).toBeInTheDocument()
+    expect(await findIon(() => ionItem('LA 01'))).toBeInTheDocument()
+    expect(ionItem('Maske 01')).toBeNull()
   })
 
   it('refuses a user without manage anywhere', async () => {
@@ -1247,7 +1252,7 @@ describe('manage', () => {
   })
 
   it('creates an item with last checked dates of the selected category', async () => {
-    renderAt(paths.manage, 'manage')
+    renderAt(paths.itemNew('masken'), 'manage')
     typeInto(await lastChecked('Maskenprüfung'), '2026-01-15')
     expect(screen.queryByLabelText('Zuletzt geprüft am (Jahresprüfung)')).not.toBeInTheDocument()
     set('Bezeichnung', 'Maske 07')
@@ -1265,7 +1270,7 @@ describe('manage', () => {
   })
 
   it('creates one item on a double tap', async () => {
-    renderAt(paths.manage, 'manage')
+    renderAt(paths.itemNew('masken'), 'manage')
     await lastChecked('Maskenprüfung')
     set('Bezeichnung', 'Maske 07')
     fireEvent.click(ionButton('Gerät anlegen')!)
@@ -1275,7 +1280,7 @@ describe('manage', () => {
   })
 
   it('refuses a future last checked date', async () => {
-    renderAt(paths.manage, 'manage')
+    renderAt(paths.itemNew('masken'), 'manage')
     typeInto(await lastChecked('Maskenprüfung'), '2062-01-01')
     set('Bezeichnung', 'Maske 07')
     fireEvent.click(ionButton('Gerät anlegen')!)
@@ -1285,7 +1290,7 @@ describe('manage', () => {
 
   it('explains a duplicate code and keeps the form', async () => {
     failing.barcode = true
-    renderAt(paths.manage, 'manage')
+    renderAt(paths.itemNew('masken'), 'manage')
     await lastChecked('Maskenprüfung')
     set('Bezeichnung', 'Maske 07')
     fireEvent.click(ionButton('Gerät anlegen')!)
@@ -1295,7 +1300,7 @@ describe('manage', () => {
 
   it('clears the form when the item exists but a check failed, so a retry cannot duplicate it', async () => {
     failing.initialChecks = true
-    renderAt(paths.manage, 'manage')
+    renderAt(paths.itemNew('masken'), 'manage')
     await lastChecked('Maskenprüfung')
     set('Bezeichnung', 'Maske 07')
     fireEvent.click(ionButton('Gerät anlegen')!)
@@ -1387,8 +1392,7 @@ describe('manage', () => {
   })
 
   it('requires a trigger for a check type', async () => {
-    renderAt(paths.manage, 'manage')
-    await openCheckTypes()
+    await openNewCheckType()
     set('Name', 'Sichtprüfung')
     fireEvent.click(ionButton('Prüfart anlegen')!)
     expect(await screen.findByText('Intervall oder „nach Verwendung“ angeben.')).toBeInTheDocument()
@@ -1396,8 +1400,7 @@ describe('manage', () => {
   })
 
   it('creates one check type on a double tap', async () => {
-    renderAt(paths.manage, 'manage')
-    await openCheckTypes()
+    await openNewCheckType()
     set('Name', 'Sichtprüfung')
     set('Intervall in Monaten', '6')
     fireEvent.click(ionButton('Prüfart anlegen')!)
@@ -1408,8 +1411,7 @@ describe('manage', () => {
   })
 
   it('creates a check type', async () => {
-    renderAt(paths.manage, 'manage')
-    await openCheckTypes()
+    await openNewCheckType()
     set('Name', 'Sichtprüfung')
     set('Intervall in Monaten', '6')
     fireEvent.click(screen.getByLabelText('nach Verwendung'))
@@ -1429,8 +1431,7 @@ describe('manage', () => {
   })
 
   it('creates a check type that asks for measurements', async () => {
-    renderAt(paths.manage, 'manage')
-    await openCheckTypes()
+    await openNewCheckType()
     set('Name', 'Dichtheitsprüfung')
     set('Intervall in Monaten', '12')
     fireEvent.click(screen.getByLabelText('Messwerte erfassen'))
@@ -1441,7 +1442,6 @@ describe('manage', () => {
 
   it('shows the measurements switch of an existing check type and saves a change', async () => {
     data.checkTypes[0].measurements = true
-    renderAt(paths.manage, 'manage')
     await openCheckTypes()
     fireEvent.click(await findIon(() => ionItem('Maskenprüfung')))
     const toggle = await screen.findByLabelText('Messwerte erfassen')
@@ -1453,7 +1453,6 @@ describe('manage', () => {
   })
 
   it('edits a check type, offering only others of its category', async () => {
-    renderAt(paths.manage, 'manage')
     await openCheckTypes()
     fireEvent.click(screen.getByText('Maskenprüfung'))
     expect(await screen.findByLabelText('Name')).toHaveValue('Maskenprüfung')
@@ -1468,7 +1467,6 @@ describe('manage', () => {
 
   it('shows and changes the default of a check type', async () => {
     data.checkTypes = data.checkTypes.map((t) => ({ ...t, isDefault: t.id === 'maskenpruefung' }))
-    renderAt(paths.manage, 'manage')
     await openCheckTypes()
     expect(screen.getByText('Standard · alle 12 Monate · nach Verwendung')).toBeInTheDocument()
     fireEvent.click(screen.getByText('Maskenprüfung'))
@@ -1482,7 +1480,6 @@ describe('manage', () => {
 
   it('explains why a used check type cannot be deleted', async () => {
     failing.deleteCheckType = true
-    renderAt(paths.manage, 'manage')
     await openCheckTypes()
     fireEvent.click(screen.getByText('Maskenprüfung'))
     fireEvent.click(await findIon(() => ionButton('Prüfart löschen')))
@@ -1876,5 +1873,69 @@ describe('notification settings', () => {
     await open()
     fireEvent.click(await findIon(() => ionItem('Testnachricht senden')))
     expect(await announced('alert')).toHaveTextContent('Zu viele Versuche. Bitte eine Minute warten.')
+  })
+})
+
+describe('Verwalten: lists and the pages behind them', () => {
+  const set = (label: string, value: string) => typeInto(screen.getByLabelText(label), value)
+
+  it('shows the devices as a list with a button for a new one, not the form', async () => {
+    renderAt(paths.manage, 'manage')
+    await findIon(() => ionItem('Maske 01'))
+    expect(screen.queryByLabelText('Bezeichnung')).not.toBeInTheDocument()
+    fireEvent.click(ionButton('Neues Gerät')!)
+    expect(await screen.findByLabelText('Bezeichnung')).toHaveValue('')
+    expect(ionButton('Gerät anlegen')).not.toBeNull()
+  })
+
+  it('opens the edit page of a device from the list', async () => {
+    renderAt(paths.manage, 'manage')
+    fireEvent.click(await findIon(() => ionItem('Maske 01')))
+    expect(await screen.findByLabelText('Bezeichnung')).toHaveValue('Maske 01')
+    expect(ionButton('Speichern')).not.toBeNull()
+  })
+
+  it('takes the category of the list to the new device page', async () => {
+    renderAt(paths.manageCategory('lungenautomaten'), 'manage')
+    await findIon(() => ionItem('LA 01'))
+    fireEvent.click(ionButton('Neues Gerät')!)
+    expect(await screen.findByLabelText('Zuletzt geprüft am (Jahresprüfung)')).toBeInTheDocument()
+  })
+
+  it('offers no new device page in a category below manage', async () => {
+    signInAs('use', { masken: 'manage', lungenautomaten: 'use' })
+    render(<App initialPath={paths.itemNew('lungenautomaten')} />)
+    expect(await screen.findByText('Keine Berechtigung.')).toBeInTheDocument()
+  })
+
+  it('shows the check types as a list with a button for a new one', async () => {
+    renderAt(paths.manageCategory('masken', 'checkTypes'), 'manage')
+    await findIon(() => ionItem('Maskenprüfung'))
+    expect(screen.queryByLabelText('Intervall in Monaten')).not.toBeInTheDocument()
+    fireEvent.click(ionButton('Neue Prüfart')!)
+    expect(await screen.findByLabelText('Name')).toHaveValue('')
+    expect(ionButton('Prüfart anlegen')).not.toBeNull()
+  })
+
+  it('opens the edit page of a check type from the list', async () => {
+    renderAt(paths.manageCategory('masken', 'checkTypes'), 'manage')
+    fireEvent.click(await findIon(() => ionItem('Maskenprüfung')))
+    expect(await screen.findByLabelText('Name')).toHaveValue('Maskenprüfung')
+    expect(ionButton('Prüfart löschen')).not.toBeNull()
+  })
+
+  it('returns to the check type list of the category after saving a new one', async () => {
+    renderAt(paths.checkTypeNew('masken'), 'manage')
+    await findIon(() => ionButton('Prüfart anlegen'))
+    set('Name', 'Sichtprüfung')
+    set('Intervall in Monaten', '6')
+    fireEvent.click(ionButton('Prüfart anlegen')!)
+    expect(await findIon(() => ionButton('Neue Prüfart'))).toBeInTheDocument()
+    expect(calls.createdCheckTypes).toHaveLength(1)
+  })
+
+  it('offers no check type page below manage', async () => {
+    renderAt(paths.checkTypeNew('masken'), 'check')
+    expect(await screen.findByText('Keine Berechtigung.')).toBeInTheDocument()
   })
 })
