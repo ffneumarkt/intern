@@ -1,6 +1,8 @@
 export const paths = {
   start: '/',
   login: '/login',
+  // Opened with the setup link; the token is in the fragment (#token), which never reaches a server.
+  setup: '/einrichtung',
   transportDocument: '/befoerderungspapier',
   dueList: '/material',
   dueListOf: (ids: string[]) => `/material?geraete=${ids.join(',')}`,

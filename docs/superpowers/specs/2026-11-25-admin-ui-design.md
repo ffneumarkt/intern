@@ -71,7 +71,8 @@ user and checks its area in Go.
 Setup links: 32 random bytes, base64url, only the SHA-256 hash is stored (compared in constant time), valid 24
 hours, single use. The link is `/einrichtung#<token>`: the fragment is not sent to servers, proxies or logs, and
 the page posts it in the body. Responses carry `Referrer-Policy: no-referrer`. After choosing the password the
-member is offered a passkey through the existing flow.
+member logs in and can add a passkey under Einstellungen (an offer on the setup page itself is left out: the
+passkey flow needs a login).
 
 Admin API shield: PocketBase's superuser login and schema routes live under `/api`, not only under `/_/`, and
 the superuser login is what guards the database. A middleware answers 404 to `/_/`,
@@ -98,7 +99,7 @@ and check their own right („Keine Berechtigung.“ otherwise).
 - Beförderungspapier-Einstellungen: one form with all fields.
 - Korrekturen: „Bearbeiten“ and „Löschen“ on history rows of the item page for `corrections` holders; delete
   asks through `useDialogs`; corrections show as „Korrigiert von … am …“ below the history.
-- `/einrichtung` (public, outside the tab bar; the token is in the URL fragment): name, new password, then the passkey offer; an invalid
+- `/einrichtung` (public, outside the tab bar; the token is in the URL fragment): name and new password (no passkey offer: that flow needs a login); an invalid
   link shows one neutral message.
 
 Conventions: `Field` with `required`, `error` and the `tried` flag, shared `ui.tsx` pieces, `useResource`, no

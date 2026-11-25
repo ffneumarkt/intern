@@ -17,6 +17,10 @@ func RegisterFrontend(se *core.ServeEvent, fsys fs.FS) {
 		if strings.HasPrefix(p, "/api/") || strings.HasPrefix(p, "/_/") {
 			return e.NotFoundError("", nil)
 		}
+		// The setup link is in the address of this page; no request from it may carry the address along.
+		if p == "/einrichtung" {
+			e.Response.Header().Set("Referrer-Policy", "no-referrer")
+		}
 		return static(e)
 	})
 }

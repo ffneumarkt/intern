@@ -56,3 +56,25 @@ func TestHealthStillWorks(t *testing.T) {
 	s.ExpectedContent = []string{`"code":200`}
 	s.Test(t)
 }
+
+func TestSetupPageSendsNoReferrer(t *testing.T) {
+	s := frontendScenario("setup page", "/einrichtung", 200)
+	s.ExpectedContent = []string{"app shell"}
+	s.AfterTestFunc = func(t testing.TB, app *tests.TestApp, res *http.Response) {
+		if got := res.Header.Get("Referrer-Policy"); got != "no-referrer" {
+			t.Errorf("Referrer-Policy = %q", got)
+		}
+	}
+	s.Test(t)
+}
+
+func TestOtherPagesKeepTheDefaultReferrerPolicy(t *testing.T) {
+	s := frontendScenario("index", "/", 200)
+	s.ExpectedContent = []string{"app shell"}
+	s.AfterTestFunc = func(t testing.TB, app *tests.TestApp, res *http.Response) {
+		if got := res.Header.Get("Referrer-Policy"); got != "" {
+			t.Errorf("Referrer-Policy = %q, want none", got)
+		}
+	}
+	s.Test(t)
+}
