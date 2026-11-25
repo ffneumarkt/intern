@@ -89,17 +89,15 @@
 }
 
 .td-step {
-  --padding-start: 0;
-  --padding-end: 0;
-  --border-radius: 50%;
   width: 56px;
   height: 56px;
-  margin: 0;
-  --background: rgba(var(--ion-color-primary-rgb), 0.1);
-  --background-activated: rgba(var(--ion-color-primary-rgb), 0.22);
-  --background-hover: rgba(var(--ion-color-primary-rgb), 0.16);
-  --color: var(--ion-color-primary);
-  --box-shadow: none;
+  padding: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--ion-color-primary) 10%, transparent);
+}
+
+.td-step:hover {
+  background: color-mix(in srgb, var(--ion-color-primary) 16%, transparent);
 }
 
 .td-step ion-icon {

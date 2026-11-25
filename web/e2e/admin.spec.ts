@@ -9,7 +9,7 @@ test.use({ storageState: authState('verwaltung') })
 
 const unique = () => randomBytes(3).toString('hex')
 const field = (page: Page, label: string) => page.getByLabel(label, { exact: true }).filter({ visible: true })
-const alertButton = (page: Page, name: string) => page.locator('ion-alert').getByRole('button', { name, exact: true })
+const alertButton = (page: Page, name: string) => page.locator('[role="alertdialog"]').getByRole('button', { name, exact: true })
 const headers = () => ({ Authorization: tokenOf('verwaltung') })
 
 test('creates a member, shows the setup link, and deactivates the member', async ({ page }) => {

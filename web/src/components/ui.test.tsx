@@ -1,4 +1,5 @@
 import { fireEvent, render } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import { ActionBar, BlockButton, Card, ErrorText, Hint } from './ui'
 
@@ -65,24 +66,43 @@ describe('Card', () => {
 })
 
 describe('BlockButton', () => {
-  it('is a full-width Ionic button that passes its props on', () => {
-    const onClick = vi.fn()
-    const { container } = render(
-      <BlockButton fill="outline" disabled onClick={onClick}>
+  it('is a full-width button that passes its props on', () => {
+    const { getByRole } = render(
+      <BlockButton fill="outline" disabled>
         Fertig
       </BlockButton>,
     )
-    const button = container.querySelector('ion-button')!
-    expect(button).toHaveTextContent('Fertig')
-    expect(button).toHaveAttribute('expand', 'block')
-    expect(button).toHaveAttribute('fill', 'outline')
-    expect(button).toHaveProperty('disabled', true)
+    const button = getByRole('button', { name: 'Fertig' })
+    expect(button).toHaveClass('w-full')
+    expect(button).toHaveAttribute('data-variant', 'outline')
+    expect(button).toBeDisabled()
   })
 
-  it('reacts to a click', () => {
+  it('reacts to a click and is not a submit button unless asked to be', () => {
     const onClick = vi.fn()
-    const { container } = render(<BlockButton onClick={onClick}>Speichern</BlockButton>)
-    fireEvent.click(container.querySelector('ion-button')!)
+    const { getByRole } = render(<BlockButton onClick={onClick}>Speichern</BlockButton>)
+    const button = getByRole('button', { name: 'Speichern' })
+    expect(button).toHaveAttribute('type', 'button')
+    fireEvent.click(button)
     expect(onClick).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([
+    [{ color: 'check' as const }, 'check'],
+    [{ color: 'danger' as const }, 'destructive'],
+    [{ fill: 'clear' as const }, 'ghost'],
+    [{}, 'default'],
+  ])('maps %j to the %s variant', (props, variant) => {
+    const { getByRole } = render(<BlockButton {...props}>Los</BlockButton>)
+    expect(getByRole('button', { name: 'Los' })).toHaveAttribute('data-variant', variant)
+  })
+
+  it('becomes a link with a routerLink', () => {
+    const { getByRole } = render(
+      <MemoryRouter>
+        <BlockButton routerLink="/material">Zur Liste</BlockButton>
+      </MemoryRouter>,
+    )
+    expect(getByRole('link', { name: 'Zur Liste' })).toHaveAttribute('href', '/material')
   })
 })

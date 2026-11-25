@@ -1,4 +1,6 @@
-import { IonChip, IonFab, IonFabButton, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonSegment, IonSegmentButton } from '@ionic/react'
+import { IonFab, IonFabButton, IonIcon, IonItem, IonLabel, IonList, IonListHeader } from '@ionic/react'
+import { Chip } from '@/components/ui/chip'
+import { Segment, SegmentButton } from '@/components/ui/segment'
 import { barcodeOutline } from 'ionicons/icons'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -59,30 +61,30 @@ export default function DueListPage() {
           return (
             <>
               {!only && (
-                <IonSegment value={view}>
-                  <IonSegmentButton value="due" onClick={() => setView('due')}>
-                    <IonLabel>Fällig</IonLabel>
-                  </IonSegmentButton>
-                  <IonSegmentButton value="timeline" onClick={() => setView('timeline')}>
-                    <IonLabel>Zeitplan</IonLabel>
-                  </IonSegmentButton>
-                </IonSegment>
+                <Segment value={view}>
+                  <SegmentButton value="due" onClick={() => setView('due')}>
+                    Fällig
+                  </SegmentButton>
+                  <SegmentButton value="timeline" onClick={() => setView('timeline')}>
+                    Zeitplan
+                  </SegmentButton>
+                </Segment>
               )}
               {!timeline && (
                 <div className="ui-chips">
-                  <IonChip outline={category !== null} onClick={() => setCategory(null)}>
+                  <Chip outline={category !== null} onClick={() => setCategory(null)}>
                     Alle
-                  </IonChip>
+                  </Chip>
                   {categories.map((c) => (
-                    <IonChip key={c.id} outline={category !== c.id} onClick={() => setCategory(c.id)}>
+                    <Chip key={c.id} outline={category !== c.id} onClick={() => setCategory(c.id)}>
                       {c.name}
-                    </IonChip>
+                    </Chip>
                   ))}
                 </div>
               )}
               {only && (
                 <div className="ui-chips">
-                  <IonChip onClick={() => navigate(paths.dueList, { replace: true })}>Alle anzeigen</IonChip>
+                  <Chip onClick={() => navigate(paths.dueList, { replace: true })}>Alle anzeigen</Chip>
                 </div>
               )}
               {only && upcoming.length === 0 && !visible.some((i) => groups.includes(i.dueState)) && (

@@ -136,9 +136,7 @@ describe('CheckboxField', () => {
   it('is a labelled toggle whose checked state follows its prop, and a click reports the new state', async () => {
     const onChange = vi.fn()
     const { rerender } = render(<CheckboxField label="nach Verwendung" checked={false} onChange={onChange} />)
-    const toggle = await screen.findByLabelText('nach Verwendung')
-    expect(toggle.tagName).toBe('ION-TOGGLE')
-    expect(toggle).toHaveTextContent('nach Verwendung')
+    const toggle = await screen.findByRole('switch', { name: 'nach Verwendung' })
     expect(toggle).not.toBeChecked()
     rerender(<CheckboxField label="nach Verwendung" checked onChange={onChange} />)
     await waitFor(() => expect(toggle).toBeChecked())

@@ -1,4 +1,5 @@
-import { IonButton, IonLabel, IonList, IonListHeader } from '@ionic/react'
+import { IonLabel, IonList, IonListHeader } from '@ionic/react'
+import { AppButton } from './ui'
 import { useEffect, useRef, useState } from 'react'
 import {
   formatMbar,
@@ -69,17 +70,17 @@ export default function Measurements({ onChange, showErrors }: { onChange(readin
           {countdown.done && <ListNote>Zeit abgelaufen: Druck jetzt ablesen.</ListNote>}
           {countdown.running || countdown.done ? (
             <div className="ui-countdown-buttons">
-              <IonButton expand="block" fill="outline" onClick={countdown.start}>
+              <AppButton expand="block" fill="outline" onClick={countdown.start}>
                 Neu starten
-              </IonButton>
-              <IonButton expand="block" fill="outline" color="medium" onClick={countdown.reset}>
+              </AppButton>
+              <AppButton expand="block" fill="outline" color="medium" onClick={countdown.reset}>
                 Beenden
-              </IonButton>
+              </AppButton>
             </div>
           ) : (
-            <IonButton expand="block" disabled={start === null} onClick={countdown.start}>
+            <AppButton expand="block" disabled={start === null} onClick={countdown.start}>
               {leakSeconds} s starten
-            </IonButton>
+            </AppButton>
           )}
         </div>
         <Field label={`Druck nach ${leakSeconds} s (mbar)`} value={endText} autoComplete="off" autoCapitalize="off" onChange={setEndText} required error={problem(endText, end) ?? impossible ?? undefined} />

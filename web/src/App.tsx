@@ -26,6 +26,7 @@ import SetupPage from './pages/SetupPage'
 import StartPage from './pages/StartPage'
 import TransportSettingsPage from './pages/TransportSettingsPage'
 import TransportDocumentPage from './pages/TransportDocumentPage'
+import { DialogProvider } from './components/useDialogs'
 import { paths, requiresLogin } from './routes'
 import { SessionProvider, useSession } from './session'
 
@@ -125,10 +126,12 @@ export default function App({ initialPath }: { initialPath?: string }) {
   return (
     <IonApp>
       <SessionProvider>
-        <Router initialPath={initialPath}>
-          <LoginRedirect />
-          <Tabs />
-        </Router>
+        <DialogProvider>
+          <Router initialPath={initialPath}>
+            <LoginRedirect />
+            <Tabs />
+          </Router>
+        </DialogProvider>
       </SessionProvider>
     </IonApp>
   )

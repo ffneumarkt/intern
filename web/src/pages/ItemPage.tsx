@@ -1,4 +1,4 @@
-import { IonButton, IonItem, IonLabel, IonList, IonListHeader, IonNote } from '@ionic/react'
+import { IonItem, IonLabel, IonList, IonListHeader, IonNote } from '@ionic/react'
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { listCorrections } from '../api/admin'
@@ -11,7 +11,7 @@ import { locationName } from '../material/locations'
 import { paths } from '../routes'
 import { useSession } from '../session'
 import { useResource } from '../useResource'
-import { ActionBar, BlockButton, ErrorText } from '../components/ui'
+import { ActionBar, AppButton, BlockButton, ErrorText } from '../components/ui'
 
 const statusLabel = { active: 'Aktiv', defective: 'Mangel', retired: 'Ausgeschieden' }
 
@@ -69,14 +69,14 @@ export default function ItemPage() {
               {failed && <ErrorText>Speichern fehlgeschlagen.</ErrorText>}
               <div className="ui-actionrow">
                 {can(item.categoryId, 'manage') && (
-                  <IonButton fill="outline" routerLink={paths.itemEdit(item.id)}>
+                  <AppButton fill="outline" routerLink={paths.itemEdit(item.id)}>
                     Bearbeiten
-                  </IonButton>
+                  </AppButton>
                 )}
                 {active && can(item.categoryId, 'check') && (
-                  <IonButton color="medium" fill="outline" onClick={() => retire(item)}>
+                  <AppButton color="medium" fill="outline" onClick={() => retire(item)}>
                     Ausscheiden
-                  </IonButton>
+                  </AppButton>
                 )}
               </div>
               <IonList>
