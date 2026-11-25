@@ -50,6 +50,8 @@ func TestDeactivatedMembersHolderTokenStops(t *testing.T) {
 	e := newRulesEnv(t)
 	w := e.w
 	h := newHolders(t, e)
+	// The guard keeps the last members holder active, so a second one has to exist.
+	testenv.Admin(t, e.app, testenv.User(t, e.app, "m2@example.com", "M2"), admin.Members)
 	old := testenv.Token(t, h.members)
 	h.members.Set("deactivated", true)
 	if err := e.app.Save(h.members); err != nil {
