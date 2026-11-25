@@ -10,6 +10,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
 
+	"github.com/ffneumarkt/intern/backend/internal/admin"
 	"github.com/ffneumarkt/intern/backend/internal/devseed"
 	"github.com/ffneumarkt/intern/backend/internal/material"
 	"github.com/ffneumarkt/intern/backend/internal/testenv"
@@ -126,5 +127,19 @@ func TestSeedRunsOnce(t *testing.T) {
 	after, err := app.CountRecords("items")
 	if err != nil || after != before {
 		t.Errorf("items %d → %d, err %v", before, after, err)
+	}
+}
+
+func TestSeedMakesTheManagerAnAdmin(t *testing.T) {
+	app := testenv.New(t)
+	if err := devseed.Seed(app, today); err != nil {
+		t.Fatal(err)
+	}
+	holders, err := admin.List(app)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(holders) != 1 || holders[0].Email != "verwaltung@ffneumarkt.local" || len(holders[0].Areas) != len(admin.Areas) {
+		t.Fatalf("want verwaltung with every area, got %+v", holders)
 	}
 }

@@ -5,6 +5,7 @@ package devseed
 import (
 	"errors"
 	"fmt"
+	"github.com/ffneumarkt/intern/backend/internal/admin"
 	"time"
 
 	"github.com/pocketbase/pocketbase/core"
@@ -50,6 +51,10 @@ func (s *seeder) run() {
 	s.user("verwendung", "Stationsrechner", "use", masks, regulators)
 	s.user("pruefung", "Prüfer", "check", masks, regulators)
 	s.checker = s.user("verwaltung", "Verwalter", "manage", masks, regulators)
+	// The dev manager administers the app, so the admin screens can be tried with make seed.
+	for _, area := range admin.Areas {
+		s.create("admin_rights", map[string]any{"user": s.id(s.checker), "area": area})
+	}
 
 	maskCheck := s.create("check_types", map[string]any{"category": s.id(masks), "name": "Maskenprüfung",
 		"interval_months": 12, "after_use": true, "is_default": true, "measurements": true})

@@ -24,7 +24,8 @@ CLI or an SSH tunnel. The dashboard stays in the binary; it is blocked at the tu
 
 ## Data model and rules
 
-New collections (one migration, in the style of `1793380001_rules.go`):
+New collections, each created by the PR that uses it (`admin_rights` and `admin_audit` in PR 1, `setup_links`
+in PR 2, `corrections` in PR 3), in the style of `1793380001_rules.go`:
 
 | Collection | Fields | Rules |
 |---|---|---|
