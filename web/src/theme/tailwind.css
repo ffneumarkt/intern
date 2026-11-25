@@ -1,7 +1,7 @@
-/* Tailwind 4 without its preflight (reset): Ionic's own reset still styles the app until the shell moves over.
-   The tokens are the identity of ffneumarkt.at, the same colours as theme/variables.css. */
+/* Tailwind 4 with its preflight (the reset). The tokens are the identity of ffneumarkt.at, the same colours as theme/variables.css. */
 @layer theme, base, components, utilities;
 @import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/preflight.css' layer(base);
 @import 'tailwindcss/utilities.css' layer(utilities);
 
 @theme {

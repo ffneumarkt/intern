@@ -32,7 +32,7 @@ test('opens the due list again after logging out and back in', async ({ page }) 
   await logIn(page, 'verwendung')
   await expect(heading(page, 'Fällig')).toBeVisible()
 
-  await page.getByRole('tab', { name: 'Einstellungen' }).click()
+  await page.getByRole('link', { name: 'Einstellungen' }).click()
   await page.getByRole('button', { name: 'Abmelden' }).click()
   await expect(heading(page, 'Anmelden')).toBeVisible()
 
@@ -76,7 +76,7 @@ test.describe('passkey', () => {
     await logIn(page, user)
     await expect(heading(page, 'Fällig')).toBeVisible()
 
-    await page.getByRole('tab', { name: 'Einstellungen' }).click()
+    await page.getByRole('link', { name: 'Einstellungen' }).click()
     await field(page, 'Name des Geräts').fill('E2E-Gerät')
     await field(page, 'Passwort').fill(password)
     await page.getByRole('button', { name: 'Passkey hinzufügen' }).click()

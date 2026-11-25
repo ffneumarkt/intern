@@ -225,7 +225,7 @@ export default function TransportDocumentForm({ settings }: { settings: Transpor
               <Field label="Anzahl Flaschen zurück" type="number" inputMode="numeric" autoComplete="off" value={state.returnCount} onChange={setReturnCountOverride} />
             </List>
             <p className="td-return-total">{returnSummary(parseCount(state.returnCount), config)}</p>
-            <p className="td-hint ion-color-medium">Die Rückfahrt übernimmt die Anzahl der Hinfahrt, bis sie geändert wird. 0, wenn keine Flaschen zurückkommen.</p>
+            <p className="td-hint text-muted-foreground">Die Rückfahrt übernimmt die Anzahl der Hinfahrt, bis sie geändert wird. 0, wenn keine Flaschen zurückkommen.</p>
         </div>
       </details>
 

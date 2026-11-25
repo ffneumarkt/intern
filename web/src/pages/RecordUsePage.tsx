@@ -1,4 +1,3 @@
-import { useIonViewWillEnter } from '@ionic/react'
 import { List, Row, RowLabel } from '@/components/ui/list'
 import { CircleX } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
@@ -49,8 +48,6 @@ export default function RecordUsePage() {
   // What the user typed; until then the name remembered for this account, else the account's own name.
   const [typedRecordedBy, setRecordedBy] = useState<string | null>(null)
   const recordedBy = typedRecordedBy ?? readRecordedBy(user?.id) ?? user?.name ?? ''
-  // Ionic keeps the page mounted across logins.
-  useEffect(() => setRecordedBy(null), [user?.id])
   const [note, setNote] = useState('')
   const [error, setError] = useState<string | null>(null)
   const { busy, once } = useBusy()
@@ -58,9 +55,6 @@ export default function RecordUsePage() {
   const items = resource.data
 
   const add = (item: Item) => setScanned((list) => (list.some((i) => i.id === item.id) ? list : [...list, item]))
-
-  // Ionic keeps the page mounted, possibly past midnight.
-  useIonViewWillEnter(() => setDate(today()))
 
   // Opened from an item's detail page: that item is the one to record, so skip the scan step.
   useEffect(() => {

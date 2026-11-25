@@ -1,11 +1,9 @@
-import { IonFab, IonFabButton, IonIcon } from '@ionic/react'
 import { List, ListHeader, Row, RowLabel } from '@/components/ui/list'
 import { ScanBarcode } from 'lucide-react'
 import { Chip } from '@/components/ui/chip'
 import { Segment, SegmentButton } from '@/components/ui/segment'
-import { barcodeOutline } from 'ionicons/icons'
 import { useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { listCategories, listItems, listLocations, type Item } from '../api/material'
 import DueStateBadge, { dueStateLabel, type DueState } from '../components/DueStateBadge'
 import ItemRow from '../components/ItemRow'
@@ -42,11 +40,9 @@ export default function DueListPage() {
     <Page
       title="Fällig"
       fab={
-        <IonFab slot="fixed" vertical="bottom" horizontal="end">
-          <IonFabButton routerLink={paths.recordUse} title="Verwendung erfassen">
-            <IonIcon icon={barcodeOutline} aria-hidden />
-          </IonFabButton>
-        </IonFab>
+        <Link to={paths.recordUse} className="app-fab" title="Verwendung erfassen" aria-label="Verwendung erfassen">
+          <ScanBarcode aria-hidden="true" />
+        </Link>
       }
     >
       <Loaded resource={resource}>

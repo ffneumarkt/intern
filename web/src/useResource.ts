@@ -1,4 +1,3 @@
-import { useIonViewWillEnter } from '@ionic/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSession } from './session'
 
@@ -8,7 +7,7 @@ export interface Resource<T> {
   reload(): void
 }
 
-// Loads whenever the page is entered, because Ionic keeps pages mounted, and when the connection
+// Loads when the page is entered (it mounts then) and when the connection
 // returns. Permissions reload along with the data, so a failed load at start does not stick.
 export function useResource<T>(load: () => Promise<T>): Resource<T> {
   const { reloadLevels } = useSession()
@@ -30,9 +29,8 @@ export function useResource<T>(load: () => Promise<T>): Resource<T> {
     )
   }, [reloadLevels])
 
-  useIonViewWillEnter(reload)
-
   useEffect(() => {
+    reload()
     window.addEventListener('online', reload)
     return () => window.removeEventListener('online', reload)
   }, [reload])

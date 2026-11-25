@@ -1,7 +1,7 @@
 /* Shared look of all pages, modelled on the Beförderungspapier: a grey page with white rounded surfaces,
    slate text, Roboto, one red accent. Colours come from variables.css and Ionic's tokens. */
 :root {
-  --ui-surface: var(--ion-item-background, #fff);
+  --ui-surface: #fff;
   /* The site's slate, a little darker than its muted grey so small text keeps AA contrast on the grey page. */
   --ui-muted: #5f6b7a;
   --ui-line: #dfe5ec;
@@ -53,7 +53,7 @@
   padding: 16px 18px 6px;
   font-size: 1.0625rem;
   font-weight: 700;
-  color: var(--ion-text-color);
+  color: var(--app-text);
 }
 
 /* A group of lists the page lays out itself (Einstellungen) keeps Ionic's inset look. */
@@ -70,8 +70,8 @@
   font-size: 0.8125rem;
   font-weight: 600;
   white-space: nowrap;
-  color: var(--ion-color-primary);
-  background: rgba(var(--ion-color-primary-rgb), 0.1);
+  color: var(--app-primary);
+  background: rgba(var(--app-primary-rgb), 0.1);
   border-radius: 999px;
 }
 
@@ -81,8 +81,8 @@
 }
 
 .ui-pill[data-tone='danger'] {
-  color: var(--ion-color-danger-shade);
-  background: rgba(var(--ion-color-danger-rgb), 0.12);
+  color: var(--app-danger-shade);
+  background: rgba(var(--app-danger-rgb), 0.12);
 }
 
 .ui-pill[data-tone='warn'] {
@@ -131,8 +131,8 @@
   padding: 12px 14px;
   font-size: 0.9375rem;
   line-height: 1.35;
-  color: var(--ion-color-danger-shade);
-  background: rgba(var(--ion-color-danger-rgb), 0.1);
+  color: var(--app-danger-shade);
+  background: rgba(var(--app-danger-rgb), 0.1);
   border-radius: 14px;
 }
 
@@ -160,7 +160,7 @@
   z-index: 2;
   margin: 0 -16px;
   padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(to bottom, rgba(var(--ion-color-light-rgb), 0), var(--ion-color-light) 30%);
+  background: linear-gradient(to bottom, rgba(var(--app-light-rgb), 0), var(--app-light) 30%);
 }
 
 .ui-actions [data-slot='button'],
@@ -210,7 +210,7 @@
 }
 
 .item-row[data-state='overdue'] {
-  box-shadow: inset 4px 0 0 var(--ion-color-danger);
+  box-shadow: inset 4px 0 0 var(--app-danger);
 }
 
 .item-row[data-state='dueToday'],
@@ -259,7 +259,7 @@ section[data-state] [data-slot='list-header']::before {
 }
 
 section[data-state='overdue'] [data-slot='list-header']::before {
-  background: var(--ion-color-danger);
+  background: var(--app-danger);
 }
 
 section[data-state='dueToday'] [data-slot='list-header']::before,
@@ -267,9 +267,24 @@ section[data-state='dueSoon'] [data-slot='list-header']::before {
   background: var(--ui-warn);
 }
 
-ion-fab-button {
-  --background: var(--ion-color-primary);
-  --box-shadow: 0 6px 18px -4px rgba(var(--ion-color-primary-rgb), 0.55);
+.app-fab {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: calc(var(--tabs-height) + 16px + env(safe-area-inset-bottom));
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  color: #fff;
+  background: var(--app-primary);
+  border-radius: 50%;
+  box-shadow: 0 6px 18px -4px rgba(var(--app-primary-rgb), 0.55);
+}
+
+.app-fab svg {
+  width: 26px;
+  height: 26px;
 }
 
 /* A tile on the start page. */
@@ -297,8 +312,8 @@ a.tile {
   place-items: center;
   width: 52px;
   height: 52px;
-  color: var(--ion-color-primary);
-  background: rgba(var(--ion-color-primary-rgb), 0.1);
+  color: var(--app-primary);
+  background: rgba(var(--app-primary-rgb), 0.1);
   border-radius: 16px;
 }
 
@@ -318,7 +333,7 @@ a.tile {
 .tile-text strong {
   font-size: 1.1875rem;
   font-weight: 700;
-  color: var(--ion-text-color);
+  color: var(--app-text);
 }
 
 .tile-text span {
@@ -407,7 +422,7 @@ a.tile {
 .legal a,
 .legal-intro a,
 .legal-note a {
-  color: var(--ion-color-primary);
+  color: var(--app-primary);
 }
 
 .legal-note {
@@ -480,7 +495,7 @@ a.tile {
   line-height: 1;
   text-align: center;
   font-variant-numeric: tabular-nums;
-  color: var(--ion-color-primary);
+  color: var(--app-primary);
 }
 
 .ui-countdown-time[data-done='true'] {
@@ -505,7 +520,7 @@ a.tile {
 }
 
 .ui-page [data-slot='row'].ui-list-note[data-tone='bad'] {
-  color: var(--ion-color-danger);
+  color: var(--app-danger);
   font-weight: 500;
 }
 
@@ -517,3 +532,110 @@ a.tile {
   font-weight: 600;
 }
 
+
+/* The shell: the page area scrolls, the tab bar stays at the bottom. */
+:root {
+  --tabs-height: 56px;
+  --header-height: 56px;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--app-font);
+  color: var(--app-text);
+  background: var(--app-light);
+  -webkit-text-size-adjust: 100%;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+}
+
+.app-view {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: var(--header-height);
+  padding: env(safe-area-inset-top) max(8px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left));
+  color: var(--app-primary-contrast);
+  background: var(--app-primary);
+}
+
+.app-title {
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.app-back {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-inline-start: -12px;
+  color: inherit;
+  background: none;
+  border: 0;
+  border-radius: 50%;
+}
+
+.app-back svg {
+  width: 26px;
+  height: 26px;
+}
+
+.app-tabs {
+  display: flex;
+  flex: none;
+  min-height: var(--tabs-height);
+  padding-bottom: env(safe-area-inset-bottom);
+  background: #fff;
+  border-top: 1px solid var(--ui-line);
+}
+
+.app-tabs a {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 4px 2px;
+  font-size: 0.6875rem;
+  color: var(--ui-muted);
+  text-decoration: none;
+}
+
+.app-tabs a svg {
+  width: 24px;
+  height: 24px;
+}
+
+.app-tabs a span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-tabs a[aria-current='page'] {
+  color: var(--app-primary);
+}

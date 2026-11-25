@@ -1,8 +1,6 @@
-import { IonApp, IonIcon, IonLabel, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs, useIonRouter } from '@ionic/react'
-import { IonReactMemoryRouter, IonReactRouter } from '@ionic/react-router'
-import { constructOutline, documentTextOutline, homeOutline, informationCircleOutline, settingsOutline } from 'ionicons/icons'
-import { useEffect, type ReactElement, type ReactNode } from 'react'
-import { Route, useLocation } from 'react-router-dom'
+import { FileText, Home, Info, Settings, Wrench, type LucideIcon } from 'lucide-react'
+import { useEffect, useRef, type ReactElement, type ReactNode } from 'react'
+import { BrowserRouter, Link, MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import AdminPage from './pages/AdminPage'
 import CategoriesPage from './pages/CategoriesPage'
 import CategoryEditPage from './pages/CategoryEditPage'
@@ -30,8 +28,7 @@ import { DialogProvider } from './components/useDialogs'
 import { paths, requiresLogin } from './routes'
 import { SessionProvider, useSession } from './session'
 
-// Ionic keeps visited pages mounted. If each of them redirected on logout, the stack would see
-// several replace navigations at once and the next login could leave the login page visible.
+// Pages render nothing without a login; the redirect itself happens once, in LoginRedirect.
 function RequireLogin({ children }: { children: ReactElement }) {
   const { user } = useSession()
   return user ? children : null
@@ -40,99 +37,104 @@ function RequireLogin({ children }: { children: ReactElement }) {
 // The single redirect for a logged-out user on a page that needs a login.
 function LoginRedirect() {
   const { user } = useSession()
-  const router = useIonRouter()
+  const navigate = useNavigate()
   const { pathname } = useLocation()
   useEffect(() => {
-    if (!user && requiresLogin(pathname)) router.push(paths.login, 'root', 'replace')
-  }, [user, pathname, router])
+    if (!user && requiresLogin(pathname)) navigate(paths.login, { replace: true })
+  }, [user, pathname, navigate])
   return null
 }
 
-function Tabs() {
+interface Tab {
+  name: string
+  to: string
+  icon: LucideIcon
+  // Whether the tab covers the page at this address.
+  covers(pathname: string): boolean
+}
+
+const startTab: Tab = { name: 'Start', to: paths.start, icon: Home, covers: (p) => p === paths.start || p === paths.login || p === paths.setup }
+const documentTab: Tab = { name: 'Beförderungspapier', to: paths.transportDocument, icon: FileText, covers: (p) => p === paths.transportDocument }
+const infoTab: Tab = { name: 'Info', to: paths.info, icon: Info, covers: (p) => p === paths.info || p.startsWith(`${paths.info}/`) }
+const materialTab: Tab = { name: 'Material', to: paths.dueList, icon: Wrench, covers: (p) => p === paths.dueList || p.startsWith(`${paths.dueList}/`) }
+const settingsTab: Tab = { name: 'Einstellungen', to: paths.settings, icon: Settings, covers: (p) => p === paths.settings || p === paths.admin || p.startsWith(`${paths.admin}/`) }
+
+function TabBar() {
   const { user } = useSession()
-  const loggedIn = user !== null
-  const material = (path: string, element: ReactElement) => (
-    <Route path={path} element={<RequireLogin>{element}</RequireLogin>} />
-  )
+  const { pathname } = useLocation()
+  const tabs = user ? [startTab, documentTab, materialTab, settingsTab] : [startTab, documentTab, infoTab]
   return (
-    <IonTabs>
-      <IonRouterOutlet>
-        <Route path={paths.start} element={<StartPage />} />
-        <Route path={paths.login} element={<LoginPage />} />
-        <Route path={paths.setup} element={<SetupPage />} />
-        <Route path={paths.transportDocument} element={<TransportDocumentPage />} />
-        <Route path={paths.info} element={<InfoPage />} />
-        <Route path={paths.imprint} element={<ImprintPage />} />
-        <Route path={paths.privacy} element={<PrivacyPage />} />
-        {material(paths.dueList, <DueListPage />)}
-        {material(paths.category(), <CategoryPage />)}
-        {material(paths.item(), <ItemPage />)}
-        {material(paths.itemEdit(), <ItemEditPage />)}
-        {material(paths.itemNew(), <ItemEditPage />)}
-        {material(paths.checkTypeEdit(), <CheckTypeEditPage />)}
-        {material(paths.checkTypeNew(), <CheckTypeEditPage />)}
-        {material(paths.recordUse, <RecordUsePage />)}
-        {material(paths.recordCheck(), <RecordCheckPage />)}
-        {material(paths.manage, <ManagePage />)}
-        {material(paths.settings, <SettingsPage />)}
-        {material(paths.correction(), <CorrectionPage />)}
-        {material(paths.admin, <AdminPage />)}
-        {material(paths.adminMembers, <MembersPage />)}
-        {material(paths.adminMemberNew, <MemberEditPage />)}
-        {material(paths.adminMember(), <MemberEditPage />)}
-        {material(paths.adminCategories, <CategoriesPage />)}
-        {material(paths.adminCategoryNew, <CategoryEditPage />)}
-        {material(paths.adminCategory(), <CategoryEditPage />)}
-        {material(paths.adminTransport, <TransportSettingsPage />)}
-      </IonRouterOutlet>
-      <IonTabBar slot="bottom">
-        <IonTabButton tab="start" href={paths.start} aria-label="Start">
-          <IonIcon icon={homeOutline} aria-hidden />
-          <IonLabel>Start</IonLabel>
-        </IonTabButton>
-        <IonTabButton tab="befoerderungspapier" href={paths.transportDocument} aria-label="Beförderungspapier">
-          <IonIcon icon={documentTextOutline} aria-hidden />
-          <IonLabel>Beförderungspapier</IonLabel>
-        </IonTabButton>
-        {!loggedIn && (
-          <IonTabButton tab="info" href={paths.info} aria-label="Info">
-            <IonIcon icon={informationCircleOutline} aria-hidden />
-            <IonLabel>Info</IonLabel>
-          </IonTabButton>
-        )}
-        {loggedIn && (
-          <IonTabButton tab="material" href={paths.dueList} aria-label="Material">
-            <IonIcon icon={constructOutline} aria-hidden />
-            <IonLabel>Material</IonLabel>
-          </IonTabButton>
-        )}
-        {loggedIn && (
-          <IonTabButton tab="einstellungen" href={paths.settings} aria-label="Einstellungen">
-            <IonIcon icon={settingsOutline} aria-hidden />
-            <IonLabel>Einstellungen</IonLabel>
-          </IonTabButton>
-        )}
-      </IonTabBar>
-    </IonTabs>
+    <nav className="app-tabs" aria-label="Hauptmenü">
+      {tabs.map(({ name, to, icon: Icon, covers }) => (
+        <Link key={to} to={to} data-slot="tab" aria-label={name} aria-current={covers(pathname) ? 'page' : undefined}>
+          <Icon aria-hidden="true" />
+          <span>{name}</span>
+        </Link>
+      ))}
+    </nav>
+  )
+}
+
+function Shell() {
+  const material = (path: string, element: ReactElement) => <Route path={path} element={<RequireLogin>{element}</RequireLogin>} />
+  const view = useRef<HTMLDivElement>(null)
+  const { pathname } = useLocation()
+  // A page change starts at the top, as a new page does.
+  useEffect(() => {
+    if (view.current) view.current.scrollTop = 0
+  }, [pathname])
+  return (
+    <div className="app-shell">
+      <div className="app-view" ref={view}>
+        <Routes>
+          <Route path={paths.start} element={<StartPage />} />
+          <Route path={paths.login} element={<LoginPage />} />
+          <Route path={paths.setup} element={<SetupPage />} />
+          <Route path={paths.transportDocument} element={<TransportDocumentPage />} />
+          <Route path={paths.info} element={<InfoPage />} />
+          <Route path={paths.imprint} element={<ImprintPage />} />
+          <Route path={paths.privacy} element={<PrivacyPage />} />
+          {material(paths.dueList, <DueListPage />)}
+          {material(paths.category(), <CategoryPage />)}
+          {material(paths.item(), <ItemPage />)}
+          {material(paths.itemEdit(), <ItemEditPage />)}
+          {material(paths.itemNew(), <ItemEditPage />)}
+          {material(paths.checkTypeEdit(), <CheckTypeEditPage />)}
+          {material(paths.checkTypeNew(), <CheckTypeEditPage />)}
+          {material(paths.recordUse, <RecordUsePage />)}
+          {material(paths.recordCheck(), <RecordCheckPage />)}
+          {material(paths.manage, <ManagePage />)}
+          {material(paths.settings, <SettingsPage />)}
+          {material(paths.correction(), <CorrectionPage />)}
+          {material(paths.admin, <AdminPage />)}
+          {material(paths.adminMembers, <MembersPage />)}
+          {material(paths.adminMemberNew, <MemberEditPage />)}
+          {material(paths.adminMember(), <MemberEditPage />)}
+          {material(paths.adminCategories, <CategoriesPage />)}
+          {material(paths.adminCategoryNew, <CategoryEditPage />)}
+          {material(paths.adminCategory(), <CategoryEditPage />)}
+          {material(paths.adminTransport, <TransportSettingsPage />)}
+        </Routes>
+      </div>
+      <TabBar />
+    </div>
   )
 }
 
 function Router({ initialPath, children }: { initialPath?: string; children: ReactNode }) {
-  if (initialPath) return <IonReactMemoryRouter initialEntries={[initialPath]}>{children}</IonReactMemoryRouter>
-  return <IonReactRouter>{children}</IonReactRouter>
+  if (initialPath) return <MemoryRouter initialEntries={[initialPath]}>{children}</MemoryRouter>
+  return <BrowserRouter>{children}</BrowserRouter>
 }
 
 export default function App({ initialPath }: { initialPath?: string }) {
   return (
-    <IonApp>
-      <SessionProvider>
-        <DialogProvider>
-          <Router initialPath={initialPath}>
-            <LoginRedirect />
-            <Tabs />
-          </Router>
-        </DialogProvider>
-      </SessionProvider>
-    </IonApp>
+    <SessionProvider>
+      <DialogProvider>
+        <Router initialPath={initialPath}>
+          <LoginRedirect />
+          <Shell />
+        </Router>
+      </DialogProvider>
+    </SessionProvider>
   )
 }
