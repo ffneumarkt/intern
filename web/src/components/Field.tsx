@@ -40,7 +40,7 @@ function FieldFrame({ label, required, error, stacked, children }: { label: stri
           <label
             htmlFor={id}
             className={cn(
-              stacked ? 'mb-1 block pt-2 text-[13px] text-muted-foreground' : 'w-[40%] shrink-0 py-2 text-[17px] leading-snug',
+              stacked ? 'mb-1 block pt-2 text-[13px] text-muted-foreground' : 'w-[44%] shrink-0 py-2 text-[17px] leading-snug',
               required && "after:ml-0.5 after:text-destructive after:content-['*']",
             )}
           >
@@ -79,7 +79,7 @@ export function Field({ label, value, onChange, type = 'text', autoComplete, req
         <Input
           {...control}
           type={type}
-          placeholder={type === 'date' ? undefined : boxed ? 'Eingeben' : required ? 'Erforderlich' : undefined}
+          placeholder={type === 'date' ? undefined : boxed ? 'Eingeben' : required ? 'Erforderlich' : 'Optional'}
           className={boxed ? 'border-border bg-muted' : control.className}
           value={value}
           autoComplete={autoComplete}

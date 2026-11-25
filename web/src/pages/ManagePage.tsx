@@ -25,7 +25,7 @@ import { manageTabParam, paths, type ManageTab } from '../routes'
 import { useSession } from '../session'
 import { useBusy } from '../useBusy'
 import { useResource } from '../useResource'
-import { ActionBar, BlockButton, ErrorText } from '../components/ui'
+import { ActionBar, BlockButton, ErrorText, NoAccess } from '../components/ui'
 
 const load = async () => {
   const [categories, items, checkTypes, locations] = await Promise.all([listCategories(), listItems(), listCheckTypes(), listLocations()])
@@ -45,7 +45,7 @@ export default function ManagePage() {
       <Loaded resource={resource}>
         {({ categories, items, checkTypes, locations }) => {
           const manageable = categories.filter((c) => can(c.id, 'manage'))
-          if (manageable.length === 0) return <p>Keine Berechtigung.</p>
+          if (manageable.length === 0) return <NoAccess />
           const categoryId = manageable.find((c) => c.id === preset)?.id ?? manageable[0].id
           const types = checkTypes.filter((t) => t.categoryId === categoryId)
           const show = (category: string, next: ManageTab) => navigate(paths.manageCategory(category, next), { replace: true })

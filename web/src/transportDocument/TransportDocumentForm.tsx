@@ -230,7 +230,7 @@ export default function TransportDocumentForm({ settings }: { settings: Transpor
       </details>
 
       {errors.length > 0 && (
-        <div className="ui-problems" aria-live="polite">
+        <div className="ui-problems" id="td-problems" aria-live="polite">
           <CircleAlert aria-hidden="true" />
           <ul>
             {errors.map((message) => (
@@ -264,7 +264,7 @@ export default function TransportDocumentForm({ settings }: { settings: Transpor
       </p>
 
       <div className="ui-actions">
-        <BlockButton type="submit" disabled={!result.valid || busy}>
+        <BlockButton type="submit" disabled={!result.valid || busy} aria-describedby={errors.length > 0 ? 'td-problems' : undefined}>
           <FileText aria-hidden="true" />
           {busy ? 'PDF wird erstellt …' : 'PDF öffnen'}
         </BlockButton>

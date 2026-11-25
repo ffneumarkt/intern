@@ -3,7 +3,7 @@ import { List, Row, RowLabel } from '@/components/ui/list'
 import { listMembers } from '../api/admin'
 import Loaded from '../components/Loaded'
 import Page from '../components/Page'
-import { ActionBar, BlockButton } from '../components/ui'
+import { ActionBar, BlockButton, NoAccess } from '../components/ui'
 import { paths } from '../routes'
 import { useSession } from '../session'
 import { useResource } from '../useResource'
@@ -14,7 +14,7 @@ export default function MembersPage() {
   return (
     <Page title="Mitglieder" back={paths.admin}>
       {!holds('members') ? (
-        <p>Keine Berechtigung.</p>
+        <NoAccess />
       ) : (
         <Loaded resource={resource}>
           {(members) => (

@@ -1,7 +1,7 @@
 import { FileText, FolderOpen, Users } from 'lucide-react'
 import { List, Row, RowLabel } from '@/components/ui/list'
 import Page from '../components/Page'
-import { Hint } from '../components/ui'
+import { Hint, NoAccess } from '../components/ui'
 import { paths } from '../routes'
 import { useSession } from '../session'
 
@@ -11,7 +11,7 @@ export default function AdminPage() {
   return (
     <Page title="Verwaltung" back={paths.settings}>
       {areas.length === 0 ? (
-        <p>Keine Berechtigung.</p>
+        <NoAccess />
       ) : (
         <List>
           {holds('members') && (

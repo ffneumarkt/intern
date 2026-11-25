@@ -1,3 +1,4 @@
+import { Lock } from 'lucide-react'
 import type { ComponentProps, CSSProperties, ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
@@ -28,6 +29,16 @@ export function Hint({ children, center, style }: { children: ReactNode; center?
     <p className={center ? 'ui-hint ui-hint--center' : 'ui-hint'} style={style}>
       {children}
     </p>
+  )
+}
+
+// The page of someone who may not see it, or who came without what it needs.
+export function NoAccess({ children = 'Keine Berechtigung.' }: { children?: ReactNode }) {
+  return (
+    <div className="ui-noaccess" role="status">
+      <Lock aria-hidden="true" />
+      <p>{children}</p>
+    </div>
   )
 }
 

@@ -1,5 +1,5 @@
 import { FileText, GearSix, House, Info, Wrench, type Icon as PhosphorIcon } from '@phosphor-icons/react'
-import { useEffect, useRef, type ReactElement, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactElement, type ReactNode } from 'react'
 import { BrowserRouter, Link, MemoryRouter, Route, Routes, useLocation, useNavigate, useNavigationType } from 'react-router-dom'
 import AdminPage from './pages/AdminPage'
 import CategoriesPage from './pages/CategoriesPage'
@@ -85,6 +85,29 @@ function TabBar() {
 function Shell() {
   const material = (path: string, element: ReactElement) => <Route path={path} element={<RequireLogin>{element}</RequireLogin>} />
   const view = useRef<HTMLDivElement>(null)
+  // While a field has the focus the keyboard covers half the screen: the tab bar steps aside.
+  const [typing, setTyping] = useState(false)
+  useEffect(() => {
+    const isField = (el: EventTarget | null) => el instanceof HTMLElement && el.matches('input:not([type=checkbox]):not([type=radio]), textarea, select')
+    // Showing the bar again on blur must wait: a tap on a button blurs the field first, and a bar that reappears at
+    // once would move the button from under the finger before the tap ends.
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const on = (e: FocusEvent) => {
+      clearTimeout(timer)
+      setTyping(isField(e.target))
+    }
+    const off = () => {
+      clearTimeout(timer)
+      timer = setTimeout(() => setTyping(false), 400)
+    }
+    document.addEventListener('focusin', on)
+    document.addEventListener('focusout', off)
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('focusin', on)
+      document.removeEventListener('focusout', off)
+    }
+  }, [])
   const { pathname, key } = useLocation()
   const navigate = useNavigate()
   const navigationType = useNavigationType()
@@ -97,7 +120,7 @@ function Shell() {
     if (view.current) view.current.scrollTop = 0
   }, [pathname])
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-typing={typing}>
       <div className="app-view" ref={view} data-motion={motion}>
         <Routes>
           <Route path={paths.start} element={<StartPage />} />

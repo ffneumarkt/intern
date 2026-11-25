@@ -112,6 +112,12 @@
   scrollbar-width: none;
 }
 
+.ui-chips {
+  /* A fade at the right edge says that the row scrolls on. */
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+}
+
 .ui-chips::-webkit-scrollbar {
   display: none;
 }
@@ -162,8 +168,8 @@
   bottom: 0;
   z-index: 2;
   margin: 16px -16px 0;
-  padding: 12px 16px 12px;
-  background: linear-gradient(to bottom, rgba(var(--app-light-rgb), 0), var(--app-light) 30%);
+  padding: 28px 16px 12px;
+  background: linear-gradient(to bottom, rgba(var(--app-light-rgb), 0), var(--app-light) 45%);
 }
 
 .ui-actions [data-slot='button'],
@@ -766,4 +772,141 @@ body {
 .app-page {
   background: var(--app-light);
   min-height: 100%;
+}
+
+/* A page without access, or without what it needs. */
+.ui-noaccess {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 48px 16px;
+  color: var(--ui-muted);
+  text-align: center;
+}
+
+.ui-noaccess svg {
+  width: 34px;
+  height: 34px;
+  opacity: 0.6;
+}
+
+.ui-noaccess p {
+  margin: 0;
+}
+
+/* Long titles break evenly instead of leaving one word on the second line. */
+.ui-page > .page-heading {
+  text-wrap: balance;
+}
+
+@media (max-width: 359px) {
+  .ui-page > .page-heading {
+    font-size: 1.75rem;
+  }
+}
+
+/* The tab bar steps aside while a field has the focus (the keyboard covers the screen). It only fades: its space stays,
+   so nothing moves when it comes back and a tap on a button is not missed. */
+.app-shell[data-typing='true'] .app-tabs {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.app-tabs {
+  transition: opacity 0.15s;
+}
+
+.app-view {
+  scrollbar-width: thin;
+}
+
+/* Pointer devices get hover states; touch devices only the press state. */
+@media (hover: hover) {
+  [data-slot='row']:is(a, button):hover {
+    background: rgba(60, 60, 67, 0.05);
+  }
+
+  [data-slot='chip']:not([data-outline='true']):hover,
+  [data-slot='button']:not(:disabled):hover {
+    opacity: 0.88;
+  }
+
+  [data-slot='chip'][data-outline='true']:hover {
+    background: rgba(118, 118, 128, 0.28);
+  }
+
+  .app-tabs a:not([aria-current='page']):hover {
+    background: rgba(60, 60, 67, 0.06);
+  }
+
+  .app-back:hover,
+  .app-fab:hover {
+    opacity: 0.7;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--app-primary);
+  outline-offset: 2px;
+}
+
+/* Wide windows: a sidebar instead of the floating bar, and the navigation bar over the same column as the content. */
+@media (min-width: 900px) {
+  :root {
+    --column: 720px;
+  }
+
+  .app-shell {
+    flex-direction: row-reverse;
+    --tabs-space: 0px;
+  }
+
+  .app-shell[data-typing='true'] .app-tabs {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .app-tabs {
+    position: static;
+    inset: auto;
+    flex: none;
+    flex-direction: column;
+    width: 220px;
+    max-width: none;
+    min-height: 0;
+    margin: 0;
+    padding: 24px 12px;
+    gap: 4px;
+    background: rgba(249, 249, 249, 0.92);
+    border: 0;
+    border-right: 0.5px solid rgba(60, 60, 67, 0.29);
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .app-tabs a {
+    flex: none;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 0.9375rem;
+    letter-spacing: 0;
+  }
+
+  .app-tabs a svg {
+    width: 24px;
+    height: 24px;
+    margin: 0;
+  }
+
+  .ui-page {
+    max-width: var(--column);
+  }
+
+  .app-header {
+    padding-inline: max(16px, calc((100% - var(--column)) / 2 + 8px));
+  }
 }
