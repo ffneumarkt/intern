@@ -1,11 +1,14 @@
-import { IonInput, IonItem, IonSelect, IonTextarea } from '@ionic/react'
-import type { ReactNode } from 'react'
+import { IonItem } from '@ionic/react'
+import { Children, isValidElement, useId, type ReactNode } from 'react'
+import { Input } from '@/components/ui/input'
+import { NativeSelect } from '@/components/ui/native-select'
 import { Switch } from '@/components/ui/switch'
+import { Textarea } from '@/components/ui/textarea'
+import { cn } from '@/lib/utils'
 
-// Form fields as Ionic controls. IonInput and IonTextarea render their native input in the light
-// DOM, so it stays inside the surrounding <form> (Enter submits) and password managers fill it.
-// Ionic turns capitalisation, autocorrect and spellcheck off by default; the fields restore the
-// browser defaults for plain text and keep them off for codes, credentials, dates and numbers.
+// Form fields as native controls with a label above and the error below. They stay inside the surrounding
+// <form> (Enter submits) and password managers fill them. Plain text keeps the browser's capitalisation,
+// autocorrect and spellcheck; codes, credentials, dates and numbers turn them off.
 interface FieldProps {
   label: string
   value: string
@@ -21,50 +24,65 @@ interface FieldProps {
   error?: string
 }
 
-// A required field gets a red star after its label (theme/ui.css); one with an error is drawn invalid.
-const fieldClass = (required?: boolean, error?: string) =>
-  [required && 'ui-required', error && 'ion-invalid ion-touched'].filter(Boolean).join(' ') || undefined
+// The label above, the control, and the error below. A required field gets a red star after its label; an invalid
+// control is marked with aria-invalid and described by its error.
+function FieldFrame({ label, required, error, children }: { label: string; required?: boolean; error?: string; children(props: ControlProps): ReactNode }) {
+  const id = useId()
+  const errorId = `${id}-error`
+  return (
+    <IonItem>
+      <div className="w-full py-2">
+        <label
+          htmlFor={id}
+          className={cn('mb-1 block text-sm font-medium text-muted-foreground', required && "after:ml-0.5 after:text-destructive after:content-['*']")}
+        >
+          {label}
+        </label>
+        {children({ id, required, 'aria-invalid': error ? true : undefined, 'aria-describedby': error ? errorId : undefined })}
+        {error && (
+          <p id={errorId} className="mt-1 text-sm text-destructive">
+            {error}
+          </p>
+        )}
+      </div>
+    </IonItem>
+  )
+}
+
+interface ControlProps {
+  id: string
+  required?: boolean
+  'aria-invalid'?: true
+  'aria-describedby'?: string
+}
 
 export function Field({ label, value, onChange, type = 'text', autoComplete, required, max, autoCapitalize, inputMode, error }: FieldProps) {
   const typingHelp = (autoCapitalize ?? (type === 'text' ? 'sentences' : 'off')) !== 'off'
   return (
-    <IonItem>
-      <IonInput
-        label={label}
-        labelPlacement="stacked"
-        type={type as HTMLIonInputElement['type']}
-        value={value}
-        autocomplete={autoComplete as HTMLIonInputElement['autocomplete']}
-        autocapitalize={typingHelp ? 'sentences' : 'off'}
-        autocorrect={typingHelp}
-        spellcheck={typingHelp}
-        required={required}
-        max={max}
-        inputmode={inputMode}
-        errorText={error}
-        className={fieldClass(required, error)}
-        onIonInput={(e) => onChange(e.detail.value ?? '')}
-      />
-    </IonItem>
+    <FieldFrame label={label} required={required} error={error}>
+      {(control) => (
+        <Input
+          {...control}
+          type={type}
+          value={value}
+          autoComplete={autoComplete}
+          autoCapitalize={typingHelp ? 'sentences' : 'off'}
+          autoCorrect={typingHelp ? 'on' : 'off'}
+          spellCheck={typingHelp}
+          max={max}
+          inputMode={inputMode}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      )}
+    </FieldFrame>
   )
 }
 
 export function TextAreaField({ label, value, onChange, required, error }: Pick<FieldProps, 'label' | 'value' | 'onChange' | 'required' | 'error'>) {
   return (
-    <IonItem>
-      <IonTextarea
-        label={label}
-        labelPlacement="stacked"
-        autoGrow
-        autocapitalize="sentences"
-        spellcheck
-        value={value}
-        required={required}
-        errorText={error}
-        className={fieldClass(required, error)}
-        onIonInput={(e) => onChange(e.detail.value ?? '')}
-      />
-    </IonItem>
+    <FieldFrame label={label} required={required} error={error}>
+      {(control) => <Textarea {...control} autoCapitalize="sentences" spellCheck value={value} onChange={(e) => onChange(e.target.value)} />}
+    </FieldFrame>
   )
 }
 
@@ -80,22 +98,17 @@ export function CheckboxField({ label, checked, onChange }: { label: string; che
   )
 }
 
-// Children are IonSelectOptions. A value that is not among them shows no selection. A popover takes
-// one tap, is anchored at the field and marks the current value.
+// Children are <option>s. A value that is not among them shows no selection (a blank option).
 export function SelectField({ label, value, onChange, required, error, children }: Pick<FieldProps, 'label' | 'value' | 'onChange' | 'required' | 'error'> & { children: ReactNode }) {
+  const known = Children.toArray(children).some((c) => isValidElement(c) && String((c.props as { value?: unknown }).value) === value)
   return (
-    <IonItem>
-      <IonSelect
-        label={label}
-        labelPlacement="stacked"
-        interface="popover"
-        value={value}
-        errorText={error}
-        className={fieldClass(required, error)}
-        onIonChange={(e) => onChange(e.detail.value ?? '')}
-      >
-        {children}
-      </IonSelect>
-    </IonItem>
+    <FieldFrame label={label} required={required} error={error}>
+      {(control) => (
+        <NativeSelect {...control} value={known ? value : ''} onChange={(e) => onChange(e.target.value)}>
+          <option value="" disabled hidden />
+          {children}
+        </NativeSelect>
+      )}
+    </FieldFrame>
   )
 }

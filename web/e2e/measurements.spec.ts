@@ -6,8 +6,8 @@ import { authState, expect, removeItemWithHistory, test, tokenOf } from './fixtu
 // Öffnungsdruck, entered as values with limits. The seeded Maskenprüfung asks for them.
 
 const field = (page: Page, label: string) => page.getByLabel(label, { exact: true }).filter({ visible: true })
-const select = (page: Page, label: string) =>
-  page.locator('ion-select').filter({ visible: true, has: page.getByText(label, { exact: true }) })
+// The native select of components/Field.tsx by its label (the page the user came from stays mounted, hence visible).
+const select = (page: Page, label: string) => page.getByLabel(label, { exact: true }).filter({ visible: true })
 const heading = (page: Page, name: string) => page.getByRole('heading', { name, exact: true })
 
 async function createMask(request: APIRequestContext, name: string): Promise<string> {
@@ -40,7 +40,7 @@ test.describe('as pruefung', () => {
     const id = await createMask(request, name)
     try {
       await page.goto(`/material/geraete/${id}/pruefung`)
-      await expect(select(page, 'Prüfart').locator('.select-text')).toHaveText('Maskenprüfung')
+      await expect(select(page, 'Prüfart').locator('option:checked')).toHaveText('Maskenprüfung')
       await expect(page.getByText('Dichtprüfung', { exact: true })).toBeVisible()
       await expect(field(page, 'Startdruck (mbar)')).toHaveValue('-10')
 
@@ -53,7 +53,7 @@ test.describe('as pruefung', () => {
       await field(page, 'Öffnungsdruck (mbar)').fill('5,1')
       await expect(page.getByText('Verlust 0,5 mbar ✓')).toBeVisible()
       await expect(page.getByText('Öffnungsdruck 5,1 mbar ✓')).toBeVisible()
-      await expect(select(page, 'Ergebnis').locator('.select-text')).toHaveText('Bestanden')
+      await expect(select(page, 'Ergebnis').locator('option:checked')).toHaveText('Bestanden')
 
       await page.getByRole('button', { name: 'Speichern' }).click()
       await expect(heading(page, name)).toBeVisible()
@@ -105,7 +105,7 @@ test.describe('as pruefung', () => {
       await field(page, 'Öffnungsdruck (mbar)').fill('6,5')
       await expect(page.getByText('Verlust 5 mbar: mehr als 1 mbar')).toBeVisible()
       await expect(page.getByText('Öffnungsdruck 6,5 mbar: zu hoch (höchstens 6,0 mbar)')).toBeVisible()
-      await expect(select(page, 'Ergebnis').locator('.select-text')).toHaveText('Mangel')
+      await expect(select(page, 'Ergebnis').locator('option:checked')).toHaveText('Mangel')
     } finally {
       await removeItemWithHistory(request, id)
     }

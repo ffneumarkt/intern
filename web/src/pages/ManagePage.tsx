@@ -1,4 +1,4 @@
-import { IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonSelectOption } from '@ionic/react'
+import { IonIcon, IonItem, IonLabel, IonList, IonListHeader } from '@ionic/react'
 import { Segment, SegmentButton } from '@/components/ui/segment'
 import { addOutline } from 'ionicons/icons'
 import { useState } from 'react'
@@ -56,9 +56,9 @@ export default function ManagePage() {
                 <IonList>
                   <SelectField label="Kategorie" value={categoryId} onChange={(id) => show(id, tab)}>
                     {manageable.map((c) => (
-                      <IonSelectOption key={c.id} value={c.id}>
+                      <option key={c.id} value={c.id}>
                         {c.name}
-                      </IonSelectOption>
+                      </option>
                     ))}
                   </SelectField>
                 </IonList>

@@ -5,8 +5,8 @@ import { authState, expect, removeItemWithHistory, test, tokenOf } from './fixtu
 // „Prüfen“ on a row of the due list opens the check form of that item directly, and saving returns to the list.
 
 const heading = (page: Page, name: string) => page.getByRole('heading', { name, exact: true })
-const select = (page: Page, label: string) =>
-  page.locator('ion-select').filter({ visible: true, has: page.getByText(label, { exact: true }) })
+// The native select of components/Field.tsx by its label (the page the user came from stays mounted, hence visible).
+const select = (page: Page, label: string) => page.getByLabel(label, { exact: true }).filter({ visible: true })
 
 async function createMask(request: APIRequestContext, name: string): Promise<string> {
   const headers = { Authorization: tokenOf('verwaltung') }
@@ -49,10 +49,7 @@ test.describe('as pruefung', () => {
       await expect(page).toHaveURL(new RegExp(`/material/geraete/${id}/pruefung`))
 
       // A check type without readings keeps the form short.
-      const type = select(page, 'Prüfart')
-      await type.click()
-      await page.locator('ion-popover').getByRole('radio', { name: '5-Jahres-Prüfung', exact: true }).click()
-      await expect(page.locator('ion-popover')).toHaveCount(0)
+      await select(page, 'Prüfart').selectOption({ label: '5-Jahres-Prüfung' })
       await page.getByRole('button', { name: 'Speichern' }).click()
 
       await expect(heading(page, 'Fällig')).toBeVisible()

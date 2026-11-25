@@ -11,16 +11,14 @@ import { authState, email, expect, password, removeItemWithHistory, test, tokenO
 const field = (page: Page, label: string) => page.getByLabel(label, { exact: true }).filter({ visible: true })
 const heading = (page: Page, name: string) => page.getByRole('heading', { name, exact: true })
 // An ion-select by its label, which lives in the select's shadow DOM (CSS and text locators pierce it).
-const select = (page: Page, label: string) =>
-  page.locator('ion-select').filter({ visible: true, has: page.getByText(label, { exact: true }) })
+// The native select of components/Field.tsx by its label (the page the user came from stays mounted, hence visible).
+const select = (page: Page, label: string) => page.getByLabel(label, { exact: true }).filter({ visible: true })
 const unique = () => randomBytes(3).toString('hex')
 
-// Picks an option in the select's popover: one tap on the option closes it.
+// Picks an option of a select by its text.
 async function choose(page: Page, label: string, option: string) {
-  await select(page, label).click()
-  await page.locator('ion-popover').getByRole('radio', { name: option, exact: true }).click()
-  await expect(page.locator('ion-popover')).toHaveCount(0)
-  await expect(select(page, label).locator('.select-text')).toHaveText(option)
+  await select(page, label).selectOption({ label: option })
+  await expect(select(page, label).locator('option:checked')).toHaveText(option)
 }
 
 const historyEntry = (page: Page, title: string) => page.locator('ion-item').filter({ visible: true, has: heading(page, title) })
@@ -86,15 +84,9 @@ test.describe('as verwaltung', () => {
     await expect(field(page, 'Erfasst von')).toHaveAttribute('spellcheck', 'true')
     await expect(field(page, 'Notiz')).toHaveAttribute('spellcheck', 'true')
     const kind = select(page, 'Art')
-    await expect(kind.locator('.select-text')).toHaveText('Einsatz')
-    await kind.click()
-    // The popover marks the current value.
-    const popover = page.locator('ion-popover')
-    await expect(popover.getByRole('radio', { name: 'Einsatz', exact: true })).toBeChecked()
-    await popover.getByRole('radio', { name: 'Übung', exact: true }).click()
-    await expect(popover).toHaveCount(0)
-    await expect(kind).toHaveJSProperty('value', 'exercise')
-    await expect(kind.locator('.select-text')).toHaveText('Übung')
+    await expect(kind.locator('option:checked')).toHaveText('Einsatz')
+    await choose(page, 'Art', 'Übung')
+    await expect(kind).toHaveValue('exercise')
   })
 
   test('switches a check type toggle', async ({ page }) => {
@@ -146,7 +138,7 @@ test.describe('as pruefung', () => {
     const id = await createMask(request, name)
     try {
       await page.goto(`/material/geraete/${id}/pruefung`)
-      await expect(select(page, 'Prüfart').locator('.select-text')).toHaveText('Maskenprüfung')
+      await expect(select(page, 'Prüfart').locator('option:checked')).toHaveText('Maskenprüfung')
       await expect(field(page, 'Datum')).toHaveValue(viennaToday())
       await choose(page, 'Prüfart', '5-Jahres-Prüfung')
       await choose(page, 'Ergebnis', 'Mangel')

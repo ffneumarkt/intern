@@ -37,16 +37,30 @@ export function typeInto(input: HTMLElement, value: string): void {
   fireEvent.input(input, { target: { value } })
 }
 
-// An ion-select keeps its label and the chosen option's text in its shadow DOM.
-export const ionSelect = (label: string) =>
-  [...document.querySelectorAll<HTMLElement>('ion-select')].find(
-    (el) => el.shadowRoot?.querySelector('.label-text')?.textContent?.trim() === label,
-  ) ?? null
+// A select is found by its label: the native <select> of components/Field.tsx, or an old ion-select.
+export const ionSelect = (label: string): HTMLElement | null => {
+  const wanted = [...document.querySelectorAll<HTMLLabelElement>('label')].find((l) => l.textContent?.trim() === label)
+  const native = wanted?.htmlFor ? document.getElementById(wanted.htmlFor) : null
+  if (native instanceof HTMLSelectElement) return native
+  return (
+    [...document.querySelectorAll<HTMLElement>('ion-select')].find(
+      (el) => el.shadowRoot?.querySelector('.label-text')?.textContent?.trim() === label,
+    ) ?? null
+  )
+}
 
-export const selectedText = (select: HTMLElement) => select.shadowRoot?.querySelector('.select-text')?.textContent ?? ''
+export const selectedText = (select: HTMLElement) =>
+  select instanceof HTMLSelectElement
+    ? (select.selectedOptions[0]?.textContent ?? '')
+    : (select.shadowRoot?.querySelector('.select-text')?.textContent ?? '')
 
-// Picks an option as the overlay would: ionChange with its value. Only existing options.
+// Picks an option as the user would. Only existing options.
 export function choose(select: HTMLElement, value: string): void {
+  if (select instanceof HTMLSelectElement) {
+    if (![...select.options].some((o) => o.value === value)) throw new Error(`no option ${value}`)
+    fireEvent.change(select, { target: { value } })
+    return
+  }
   const options = [...select.querySelectorAll<HTMLIonSelectOptionElement>('ion-select-option')]
   if (!options.some((o) => o.value === value)) throw new Error(`no option ${value}`)
   fireEvent(select, new CustomEvent('ionChange', { detail: { value } }))

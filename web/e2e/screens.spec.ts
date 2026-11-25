@@ -63,8 +63,8 @@ for (const user of ['verwendung', 'keine'] satisfies SeedUser[]) {
 
 // Ionic keeps visited pages mounted and hidden; only the visible field is meant.
 const field = (page: Page, label: string) => page.getByLabel(label, { exact: true }).filter({ visible: true })
-const select = (page: Page, label: string) =>
-  page.locator('ion-select').filter({ visible: true, has: page.getByText(label, { exact: true }) })
+// The native select of components/Field.tsx by its label (the page the user came from stays mounted, hence visible).
+const select = (page: Page, label: string) => page.getByLabel(label, { exact: true }).filter({ visible: true })
 
 test.describe('forms', () => {
   test('login with a failed attempt', async ({ page }, info) => {
@@ -93,8 +93,7 @@ test.describe('forms', () => {
       await page.getByRole('button', { name: 'Fertig' }).click()
       await expect(field(page, 'Erfasst von')).toBeVisible()
       await shoot(page, info.project.name, 'use-form')
-      await select(page, 'Art').click()
-      await expect(page.locator('ion-popover').getByRole('radio', { name: 'Übung', exact: true })).toBeVisible()
+      await expect(select(page, 'Art').locator('option', { hasText: 'Übung' })).toHaveCount(1)
       await shoot(page, info.project.name, 'use-select')
     })
   })
@@ -109,7 +108,7 @@ test.describe('forms', () => {
       })
       const { id } = (await list.json()).items[0]
       await page.goto(`/material/geraete/${id}/pruefung`)
-      await expect(select(page, 'Prüfart').locator('.select-text')).toHaveText('Maskenprüfung')
+      await expect(select(page, 'Prüfart').locator('option:checked')).toHaveText('Maskenprüfung')
       await shoot(page, info.project.name, 'check-form')
     })
   })

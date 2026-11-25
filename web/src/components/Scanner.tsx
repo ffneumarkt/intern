@@ -1,4 +1,4 @@
-import { IonSelect, IonSelectOption, useIonViewWillEnter, useIonViewWillLeave } from '@ionic/react'
+import { IonSelect, useIonViewWillEnter, useIonViewWillLeave } from '@ionic/react'
 import { useEffect, useRef, useState } from 'react'
 import { loadDetector } from '../scan/detector'
 import { useCamera } from '../scan/useCamera'
@@ -77,9 +77,9 @@ export default function Scanner({ onCode, active = true }: Props) {
           }}
         >
           {camera.devices.map((d, i) => (
-            <IonSelectOption key={d.deviceId} value={d.deviceId}>
+            <option key={d.deviceId} value={d.deviceId}>
               {d.label || `Kamera ${i + 1}`}
-            </IonSelectOption>
+            </option>
           ))}
         </IonSelect>
       )}

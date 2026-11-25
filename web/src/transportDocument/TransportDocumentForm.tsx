@@ -1,6 +1,7 @@
 import { BlockButton } from '../components/ui'
 import { Button } from '@/components/ui/button'
-import { IonAccordion, IonAccordionGroup, IonIcon, IonInput, IonItem, IonLabel, IonList, IonSelectOption } from '@ionic/react'
+import { Input } from '@/components/ui/input'
+import { IonAccordion, IonAccordionGroup, IonIcon, IonItem, IonLabel, IonList } from '@ionic/react'
 import { addOutline, alertCircleOutline, checkmarkCircle, documentTextOutline, removeOutline, repeatOutline } from 'ionicons/icons'
 import { useState } from 'react'
 import { Field, SelectField } from '../components/Field'
@@ -79,9 +80,9 @@ function PartyFields({ role, label, suffix, party, onChange, options, fieldError
     <>
       <SelectField label={label} value={party.choice} onChange={(choice) => onChange({ ...party, choice: choice as PartyChoice })}>
         {options.map((option) => (
-          <IonSelectOption key={option.value} value={option.value}>
+          <option key={option.value} value={option.value}>
             {option.label}
-          </IonSelectOption>
+          </option>
         ))}
       </SelectField>
       {party.choice === 'other' &&
@@ -195,16 +196,18 @@ export default function TransportDocumentForm({ settings }: { settings: Transpor
             <Button type="button" variant="ghost" className="td-step" aria-label="Eine Flasche weniger" disabled={(parseCount(outboundCount) ?? 0) === 0} onClick={() => step(-1)}>
               <IonIcon icon={removeOutline} aria-hidden="true" />
             </Button>
-            <IonInput
-              label={`Anzahl Flaschen à ${config.cylinder.label} l`}
-              labelPlacement="stacked"
-              type="number"
-              inputmode="numeric"
-              autocomplete="off"
-              placeholder="0"
-              value={outboundCount}
-              onIonInput={(e) => setOutboundCount(e.detail.value ?? '')}
-            />
+            <label className="td-count-field">
+              <span className="td-count-label">{`Anzahl Flaschen à ${config.cylinder.label} l`}</span>
+              <Input
+                className="td-count-input"
+                type="number"
+                inputMode="numeric"
+                autoComplete="off"
+                placeholder="0"
+                value={outboundCount}
+                onChange={(e) => setOutboundCount(e.target.value)}
+              />
+            </label>
             <Button type="button" variant="ghost" className="td-step" aria-label="Eine Flasche mehr" onClick={() => step(1)}>
               <IonIcon icon={addOutline} aria-hidden="true" />
             </Button>

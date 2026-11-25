@@ -18,7 +18,7 @@ const open = (token: string) => {
   render(<App initialPath={`${paths.setup}#${token}`} />)
 }
 const set = (label: string, value: string) => typeInto(screen.getByLabelText(label), value)
-const field = (label: string) => screen.getByLabelText(label).closest('ion-input')!
+const field = (label: string) => screen.getByLabelText(label)
 
 describe('setup page', () => {
   it('greets the member by name and asks for a password twice', async () => {
@@ -53,8 +53,8 @@ describe('setup page', () => {
     open('gueltig')
     await screen.findByLabelText('Passwort')
     fireEvent.click(await findIon(() => ionButton('Passwort setzen')))
-    await waitFor(() => expect(field('Passwort')).toHaveClass('ion-invalid'))
-    expect(field('Passwort')).toHaveClass('ui-required')
+    await waitFor(() => expect(field('Passwort')).toHaveAttribute('aria-invalid', 'true'))
+    expect(field('Passwort')).toBeRequired()
     expect(setupState.completed).toEqual([])
   })
 
