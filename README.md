@@ -5,6 +5,33 @@ material check intervals. Go + PocketBase backend with an embedded React fronten
 
 Design: `docs/superpowers/specs/2026-10-29-intern-platform-design.md` · Status and next steps: `docs/superpowers/STATUS.md`
 
+## Get started
+
+Pick what you need; every variable is explained in `deploy/env.example`.
+
+**A new server (staging or production)** with Docker:
+
+```sh
+ADMIN_EMAIL=chef@example.com TUNNEL_TOKEN=... deploy/bootstrap-staging.sh
+```
+
+It writes `.env` with new push keys, runs the migrations, adds the default categories, check types and locations,
+creates the first admin (password printed once) and starts the app; without `TUNNEL_TOKEN` the app listens on
+`127.0.0.1:8090` instead of a Cloudflare tunnel. The manual steps, backup and restore are in `deploy/README.md`.
+
+**On your machine** (Go and Node):
+
+```sh
+make seed      # sample data and users, password intern-dev-1234 (see Development)
+make dev-api   # backend on :8090
+make dev-web   # frontend on :5173, open http://localhost:5173
+```
+
+**What you get and what is still yours to do:** a fresh install has the workshop location and the Beförderungspapier
+settings (migrations). The default categories, check types and the locations RLF and LAST come from
+`intern bootstrap` or from `APPLY_DEFAULTS=true` on the first start. Members (each gets a one-time setup link),
+their permissions per category and the items are added in the app under Einstellungen → Verwaltung.
+
 ## Development
 
 ```sh
