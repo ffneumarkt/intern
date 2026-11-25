@@ -11,6 +11,7 @@ import (
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 	"github.com/spf13/cobra"
 
+	"github.com/ffneumarkt/intern/backend/internal/admin"
 	"github.com/ffneumarkt/intern/backend/internal/due"
 	"github.com/ffneumarkt/intern/backend/internal/logging"
 	"github.com/ffneumarkt/intern/backend/internal/material"
@@ -29,6 +30,7 @@ func main() {
 	app := pocketbase.New()
 
 	material.Register(app)
+	admin.Register(app)
 
 	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
 		TemplateLang: migratecmd.TemplateLangGo,

@@ -8,6 +8,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
 
+	"github.com/ffneumarkt/intern/backend/internal/admin"
 	"github.com/ffneumarkt/intern/backend/internal/material"
 	_ "github.com/ffneumarkt/intern/backend/migrations"
 )
@@ -33,6 +34,7 @@ func New(t testing.TB) *tests.TestApp {
 	}
 	t.Cleanup(app.Cleanup)
 	material.Register(app)
+	admin.Register(app)
 	return app
 }
 
