@@ -1,3 +1,4 @@
+import { Lock } from 'lucide-react'
 import type { ComponentProps, CSSProperties, ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
@@ -31,13 +32,23 @@ export function Hint({ children, center, style }: { children: ReactNode; center?
   )
 }
 
+// The page of someone who may not see it, or who came without what it needs.
+export function NoAccess({ children = 'Keine Berechtigung.' }: { children?: ReactNode }) {
+  return (
+    <div className="ui-noaccess" role="status">
+      <Lock aria-hidden="true" />
+      <p>{children}</p>
+    </div>
+  )
+}
+
 // A white card around some content; `tone` colours it as a warning.
 export function Card({ children, tone }: { children: ReactNode; tone?: 'warning' }) {
   return (
     <div
       className={cn(
         'mb-4 rounded-xl p-4',
-        tone === 'warning' ? 'border border-amber-300 bg-amber-100 text-amber-950' : 'bg-background text-foreground',
+        tone === 'warning' ? 'border border-amber-300 bg-amber-100 text-amber-950 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-100' : 'bg-background text-foreground',
       )}
     >
       {children}

@@ -9,13 +9,13 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         // A disabled button is solid grey, not see-through: it sits over the content in the sticky action bar.
-        default: 'bg-primary text-primary-foreground disabled:bg-[#d1d1d6] disabled:text-[#8e8e93]',
+        default: 'bg-primary-fill text-primary-foreground disabled:bg-disabled disabled:text-disabled-foreground',
         // Prüfung erfassen: the green of the OK badges, next to the red use action.
-        check: 'bg-check text-check-foreground disabled:bg-[#d1d1d6] disabled:text-[#8e8e93]',
-        destructive: 'bg-destructive text-primary-foreground disabled:bg-[#d1d1d6] disabled:text-[#8e8e93]',
+        check: 'bg-check text-check-foreground disabled:bg-disabled disabled:text-disabled-foreground',
+        destructive: 'bg-destructive text-primary-foreground disabled:bg-disabled disabled:text-disabled-foreground',
         // iOS "tinted" button: the tint at low opacity behind the text.
-        outline: 'bg-primary/10 text-primary disabled:bg-[#ececf0] disabled:text-[#aeaeb2]',
-        ghost: 'bg-transparent text-primary disabled:text-[#aeaeb2]',
+        outline: 'bg-primary/10 text-primary disabled:bg-fill disabled:text-disabled-foreground',
+        ghost: 'bg-transparent text-primary disabled:text-disabled-foreground',
       },
       size: {
         default: 'h-11 px-4',

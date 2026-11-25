@@ -45,6 +45,18 @@ describe('App shell', () => {
     expect(tab('Einstellungen')).toBeInTheDocument()
   })
 
+  it('hides the tab bar while a field is being edited, as the keyboard needs the room', async () => {
+    renderAt(paths.login, null)
+    const email = await screen.findByLabelText('E-Mail')
+    expect(screen.getByRole('navigation', { name: 'Hauptmenü' })).toBeVisible()
+    fireEvent.focusIn(email)
+    expect(document.querySelector('.app-shell')).toHaveAttribute('data-typing', 'true')
+    fireEvent.focusOut(email)
+    // Not at once: a tap on a button blurs the field before it ends, and the layout must not move under it.
+    expect(document.querySelector('.app-shell')).toHaveAttribute('data-typing', 'true')
+    await waitFor(() => expect(document.querySelector('.app-shell')).not.toHaveAttribute('data-typing', 'true'))
+  })
+
   it('redirects material to login when logged out', async () => {
     renderAt(paths.dueList, null)
     expect(await screen.findByRole('heading', { name: 'Anmelden' })).toBeInTheDocument()

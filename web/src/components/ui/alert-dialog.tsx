@@ -11,7 +11,7 @@ export function AlertDialogContent({ className, children, ...props }: ComponentP
       <AlertDialogPrimitive.Content
         data-slot="alert-content"
         className={cn(
-          'fixed top-1/2 left-1/2 z-50 grid w-[270px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[14px] bg-white/90 pt-5 text-foreground shadow-2xl backdrop-blur-xl',
+          'fixed top-1/2 left-1/2 z-50 grid w-[270px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[14px] bg-background/90 pt-5 text-foreground shadow-2xl backdrop-blur-xl',
           className,
         )}
         {...props}

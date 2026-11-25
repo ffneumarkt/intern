@@ -1,3 +1,4 @@
+import { NoAccess } from '../components/ui'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import { listCheckTypes } from '../api/material'
 import CheckTypeForm from '../components/CheckTypeForm'
@@ -20,7 +21,7 @@ export default function CheckTypeEditPage() {
         {(checkTypes) => {
           const checkType = checkTypes.find((t) => t.id === checkTypeId)
           const categoryId = checkType?.categoryId ?? presetCategory ?? ''
-          if ((checkTypeId && !checkType) || !categoryId || !can(categoryId, 'manage')) return <p>Keine Berechtigung.</p>
+          if ((checkTypeId && !checkType) || !categoryId || !can(categoryId, 'manage')) return <NoAccess />
           return (
             <CheckTypeForm
               key={checkType?.id ?? 'new'}

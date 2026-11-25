@@ -37,13 +37,13 @@ export function Row({ to, onClick, disabled, detail, lines, className, children,
   const classes = cn(
     'relative flex min-h-[44px] w-full items-center gap-3 bg-background px-4 py-2 text-left after:absolute after:right-0 after:bottom-0 after:left-4 after:h-px after:bg-border/70 after:content-[""] text-foreground no-underline [&>[slot=end]]:ml-auto [&>[slot=start]]:order-first',
     lines === 'none' && 'after:hidden',
-    (to || onClick) && 'outline-offset-[-2px] transition-colors focus-visible:outline-2 focus-visible:outline-primary active:bg-[#d1d1d6]/60',
+    (to || onClick) && 'outline-offset-[-2px] transition-colors focus-visible:outline-2 focus-visible:outline-primary active:bg-press',
     className,
   )
   const content = (
     <>
       {children}
-      {detail && <ChevronRight className="size-[18px] shrink-0 text-[#c4c4c7]" aria-hidden="true" />}
+      {detail && <ChevronRight className="size-[18px] shrink-0 text-placeholder" aria-hidden="true" />}
     </>
   )
   if (to) {

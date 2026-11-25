@@ -9,7 +9,7 @@ import { useDialogs } from '../components/useDialogs'
 import { paths } from '../routes'
 import { useSession } from '../session'
 import { useResource } from '../useResource'
-import { BlockButton, ErrorText, Hint } from '../components/ui'
+import { BlockButton, ErrorText, Hint, NoAccess } from '../components/ui'
 
 const historyNotice = 'Gerät hat einen Verlauf und kann nicht gelöscht, nur ausgeschieden werden.'
 
@@ -54,7 +54,8 @@ export default function ItemEditPage() {
         {({ items, locations, checkTypes, hasHistory }) => {
           const item = items.find((i) => i.id === itemId)
           if (!itemId) {
-            if (!presetCategory || !can(presetCategory, 'manage')) return <p>Keine Berechtigung.</p>
+            if (!presetCategory) return <NoAccess>Keine Kategorie gewählt.</NoAccess>
+            if (!can(presetCategory, 'manage')) return <NoAccess />
             const save = async (input: Omit<ItemInput, 'categoryId'>, lastChecked: Record<string, string>) => {
               setPartlySaved(false)
               try {
@@ -80,7 +81,7 @@ export default function ItemEditPage() {
               </>
             )
           }
-          if (!item || !can(item.categoryId, 'manage')) return <p>Keine Berechtigung.</p>
+          if (!item || !can(item.categoryId, 'manage')) return <NoAccess />
           return (
             <>
               <ItemForm

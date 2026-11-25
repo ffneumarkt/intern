@@ -3,7 +3,7 @@ import { List, Row, RowLabel } from '@/components/ui/list'
 import { listCategories } from '../api/material'
 import Loaded from '../components/Loaded'
 import Page from '../components/Page'
-import { ActionBar, BlockButton } from '../components/ui'
+import { ActionBar, BlockButton, NoAccess } from '../components/ui'
 import { paths } from '../routes'
 import { useSession } from '../session'
 import { useResource } from '../useResource'
@@ -14,7 +14,7 @@ export default function CategoriesPage() {
   return (
     <Page title="Kategorien" back={paths.admin}>
       {!holds('categories') ? (
-        <p>Keine Berechtigung.</p>
+        <NoAccess />
       ) : (
         <Loaded resource={resource}>
           {(categories) => (

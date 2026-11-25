@@ -6,6 +6,16 @@
   --ui-muted: #636366;
   --ui-line: #d9d9de;
   --ui-ok: #1f7a4a;
+  --ui-ok-rgb: 31, 122, 74;
+  --ui-ok-text: #14532d;
+  --ui-accent: #8e8e93;
+  --ui-warn-text: #a85a00;
+  --ui-fill: rgba(95, 107, 122, 0.12);
+  --ui-bar-bg: rgba(249, 249, 249, 0.8);
+  --ui-bar-bg-strong: rgba(249, 249, 249, 0.9);
+  --ui-bar-line: rgba(60, 60, 67, 0.29);
+  --ui-tint: rgba(60, 60, 67, 0.1);
+  --ui-hover: rgba(60, 60, 67, 0.05);
   /* iOS system orange: clearly a warning, stronger than the muted amber before. */
   --ui-warn: #ff9500;
   --ui-radius: 12px;
@@ -88,18 +98,18 @@
 }
 
 .ui-pill[data-tone='warn'] {
-  color: #a85a00;
+  color: var(--ui-warn-text);
   background: rgba(255, 149, 0, 0.2);
 }
 
 .ui-pill[data-tone='ok'] {
   color: var(--ui-ok);
-  background: rgba(31, 122, 74, 0.12);
+  background: rgba(var(--ui-ok-rgb), 0.14);
 }
 
 .ui-pill[data-tone='muted'] {
   color: var(--ui-muted);
-  background: rgba(95, 107, 122, 0.12);
+  background: var(--ui-fill);
 }
 
 /* Filters and the like: one scrolling row. */
@@ -110,6 +120,12 @@
   padding: 0 16px 4px;
   overflow-x: auto;
   scrollbar-width: none;
+}
+
+.ui-chips {
+  /* A fade at the right edge says that the row scrolls on. */
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
 }
 
 .ui-chips::-webkit-scrollbar {
@@ -162,8 +178,8 @@
   bottom: 0;
   z-index: 2;
   margin: 16px -16px 0;
-  padding: 12px 16px 12px;
-  background: linear-gradient(to bottom, rgba(var(--app-light-rgb), 0), var(--app-light) 30%);
+  padding: 28px 16px 12px;
+  background: linear-gradient(to bottom, rgba(var(--app-light-rgb), 0), var(--app-light) 45%);
 }
 
 .ui-actions [data-slot='button'],
@@ -412,8 +428,8 @@ a.tile {
   margin: 0 0 16px;
   padding: 14px 16px;
   line-height: 1.5;
-  color: #14532d;
-  background: rgba(31, 122, 74, 0.12);
+  color: var(--ui-ok-text);
+  background: rgba(var(--ui-ok-rgb), 0.14);
   border-radius: 14px;
 }
 
@@ -450,7 +466,7 @@ a.tile {
   height: 36px;
   padding: 0 14px;
   border-radius: 999px;
-  background: #fff;
+  background: var(--ui-surface);
   font-size: 0.875rem;
 }
 
@@ -585,8 +601,8 @@ body {
 }
 
 .app-header[data-collapsed='true'] {
-  background: rgba(249, 249, 249, 0.86);
-  border-bottom-color: rgba(60, 60, 67, 0.29);
+  background: var(--ui-bar-bg-strong);
+  border-bottom-color: var(--ui-bar-line);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   backdrop-filter: saturate(180%) blur(20px);
 }
@@ -675,8 +691,8 @@ body {
   min-height: var(--tabs-height);
   margin-inline: auto;
   padding: 4px;
-  background: rgba(249, 249, 249, 0.8);
-  border: 0.5px solid rgba(60, 60, 67, 0.18);
+  background: var(--ui-bar-bg);
+  border: 0.5px solid var(--ui-bar-line);
   border-radius: 999px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.16), 0 1px 3px rgba(0, 0, 0, 0.08);
   -webkit-backdrop-filter: saturate(180%) blur(24px);
@@ -696,7 +712,7 @@ body {
   font-size: 0.625rem;
   font-weight: 500;
   letter-spacing: -0.01em;
-  color: #8e8e93;
+  color: var(--ui-accent);
   text-decoration: none;
 }
 
@@ -714,7 +730,7 @@ body {
 /* The selected tab has its own capsule behind it. */
 .app-tabs a[aria-current='page'] {
   color: var(--app-primary);
-  background: rgba(60, 60, 67, 0.1);
+  background: var(--ui-tint);
 }
 
 /* Page changes: deeper slides in from the right, back from the left (a little, as iOS does). */
@@ -766,4 +782,162 @@ body {
 .app-page {
   background: var(--app-light);
   min-height: 100%;
+}
+
+/* A page without access, or without what it needs. */
+.ui-noaccess {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 48px 16px;
+  color: var(--ui-muted);
+  text-align: center;
+}
+
+.ui-noaccess svg {
+  width: 34px;
+  height: 34px;
+  opacity: 0.6;
+}
+
+.ui-noaccess p {
+  margin: 0;
+}
+
+/* Long titles break evenly instead of leaving one word on the second line. */
+.ui-page > .page-heading {
+  text-wrap: balance;
+}
+
+@media (max-width: 359px) {
+  .ui-page > .page-heading {
+    font-size: 1.75rem;
+  }
+}
+
+/* The tab bar steps aside while a field has the focus (the keyboard covers the screen). It only fades: its space stays,
+   so nothing moves when it comes back and a tap on a button is not missed. */
+.app-shell[data-typing='true'] .app-tabs {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.app-tabs {
+  transition: opacity 0.15s;
+}
+
+.app-view {
+  scrollbar-width: thin;
+}
+
+/* Pointer devices get hover states; touch devices only the press state. */
+@media (hover: hover) {
+  [data-slot='row']:is(a, button):hover {
+    background: var(--ui-hover);
+  }
+
+  [data-slot='chip']:not([data-outline='true']):hover,
+  [data-slot='button']:not(:disabled):hover {
+    opacity: 0.88;
+  }
+
+  [data-slot='chip'][data-outline='true']:hover {
+    background: var(--color-fill-strong);
+  }
+
+  .app-tabs a:not([aria-current='page']):hover {
+    background: var(--ui-hover);
+  }
+
+  .app-back:hover,
+  .app-fab:hover {
+    opacity: 0.7;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--app-primary);
+  outline-offset: 2px;
+}
+
+/* Wide windows: a sidebar instead of the floating bar, and the navigation bar over the same column as the content. */
+@media (min-width: 900px) {
+  :root {
+    --column: 720px;
+  }
+
+  .app-shell {
+    flex-direction: row-reverse;
+    --tabs-space: 0px;
+  }
+
+  .app-shell[data-typing='true'] .app-tabs {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .app-tabs {
+    position: static;
+    inset: auto;
+    flex: none;
+    flex-direction: column;
+    width: 220px;
+    max-width: none;
+    min-height: 0;
+    margin: 0;
+    padding: 24px 12px;
+    gap: 4px;
+    background: var(--ui-bar-bg-strong);
+    border: 0;
+    border-right: 0.5px solid var(--ui-bar-line);
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .app-tabs a {
+    flex: none;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 0.9375rem;
+    letter-spacing: 0;
+  }
+
+  .app-tabs a svg {
+    width: 24px;
+    height: 24px;
+    margin: 0;
+  }
+
+  .ui-page {
+    max-width: var(--column);
+  }
+
+  .app-header {
+    padding-inline: max(16px, calc((100% - var(--column)) / 2 + 8px));
+  }
+}
+
+/* The same neutrals for dark mode; after the light values above so they win. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ui-surface: #1e1e1e;
+    --ui-muted: #b0b0b0;
+    --ui-line: #444444;
+    --ui-accent: #888888;
+    --ui-ok: #30d158;
+    --ui-ok-rgb: 48, 209, 88;
+    --ui-ok-text: #8ee0a8;
+    --ui-warn: #ff9f0a;
+    --ui-warn-text: #ffb340;
+    --ui-fill: rgba(255, 255, 255, 0.12);
+    --ui-bar-bg: rgba(30, 30, 30, 0.8);
+    --ui-bar-bg-strong: rgba(30, 30, 30, 0.9);
+    --ui-bar-line: rgba(255, 255, 255, 0.14);
+    --ui-tint: rgba(255, 255, 255, 0.1);
+    --ui-hover: rgba(255, 255, 255, 0.06);
+  }
 }

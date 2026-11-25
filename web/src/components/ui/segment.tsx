@@ -7,7 +7,7 @@ const SegmentContext = createContext<string | undefined>(undefined)
 export function Segment({ value, className, ...props }: ComponentProps<'div'> & { value: string }) {
   return (
     <SegmentContext.Provider value={value}>
-      <div role="tablist" data-slot="segment" className={cn('flex gap-1 rounded-[9px] bg-[#7676801f] p-0.5', className)} {...props} />
+      <div role="tablist" data-slot="segment" className={cn('flex gap-1 rounded-[9px] bg-fill p-0.5', className)} {...props} />
     </SegmentContext.Provider>
   )
 }
@@ -22,7 +22,7 @@ export function SegmentButton({ value, className, ...props }: ComponentProps<'bu
       data-slot="segment-button"
       className={cn(
         'h-8 flex-1 rounded-[7px] text-[13px] font-medium outline-offset-2 transition-all focus-visible:outline-2 focus-visible:outline-primary',
-        selected ? 'bg-background font-semibold text-foreground shadow-[0_3px_8px_rgba(0,0,0,0.12),0_3px_1px_rgba(0,0,0,0.04)]' : 'text-foreground',
+        selected ? 'bg-muted font-semibold text-foreground shadow-[0_3px_8px_rgba(0,0,0,0.12),0_3px_1px_rgba(0,0,0,0.04)] dark:bg-[#636366]' : 'text-foreground',
         className,
       )}
       {...props}

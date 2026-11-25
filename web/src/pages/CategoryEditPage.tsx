@@ -9,7 +9,7 @@ import Loaded from '../components/Loaded'
 import Page from '../components/Page'
 import { requiredMessage, showFirstInvalid } from '../components/required'
 import { useDialogs } from '../components/useDialogs'
-import { ActionBar, BlockButton, ErrorText } from '../components/ui'
+import { ActionBar, BlockButton, ErrorText, NoAccess } from '../components/ui'
 import { paths } from '../routes'
 import { useSession } from '../session'
 import { useBusy } from '../useBusy'
@@ -23,7 +23,7 @@ export default function CategoryEditPage() {
   return (
     <Page title={categoryId ? 'Kategorie bearbeiten' : 'Neue Kategorie'} back={paths.adminCategories}>
       {!holds('categories') ? (
-        <p>Keine Berechtigung.</p>
+        <NoAccess />
       ) : (
         <Loaded resource={resource}>
           {(categories) => {

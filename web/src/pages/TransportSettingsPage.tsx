@@ -5,7 +5,7 @@ import { Field, TextAreaField } from '../components/Field'
 import Loaded from '../components/Loaded'
 import Page from '../components/Page'
 import { requiredMessage, showFirstInvalid } from '../components/required'
-import { ActionBar, BlockButton, ErrorText, Hint } from '../components/ui'
+import { ActionBar, BlockButton, ErrorText, Hint, NoAccess } from '../components/ui'
 import { paths } from '../routes'
 import { useSession } from '../session'
 import { useBusy } from '../useBusy'
@@ -17,7 +17,7 @@ export default function TransportSettingsPage() {
   return (
     <Page title="Beförderungspapier" back={paths.admin}>
       {!holds('transport') ? (
-        <p>Keine Berechtigung.</p>
+        <NoAccess />
       ) : (
         <Loaded resource={resource}>{(settings) => <SettingsForm key={JSON.stringify(settings)} settings={settings} />}</Loaded>
       )}
