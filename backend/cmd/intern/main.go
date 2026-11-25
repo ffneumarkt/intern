@@ -40,6 +40,7 @@ func main() {
 	app.RootCmd.AddCommand(vapidCommand())
 	app.RootCmd.AddCommand(snapshotCommand(app))
 	app.RootCmd.AddCommand(adminCommand(app))
+	app.RootCmd.AddCommand(bootstrapCommand(app))
 
 	keys, pushEnabled := push.KeysFromEnv()
 

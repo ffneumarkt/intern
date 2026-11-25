@@ -29,9 +29,10 @@ is also an admin in every area.
 
 Members, their permissions, categories, the transport document settings and corrections of uses and checks are
 managed in the app under Einstellungen → Verwaltung. What a user may do there is a set of admin areas
-(`members`, `categories`, `transport`, `corrections`). The first admin is made on the command line:
+(`members`, `categories`, `transport`, `corrections`). The first admin and the default setup (categories, check types, locations) come from one command:
 
 ```sh
+intern bootstrap --admin-email EMAIL --admin-name NAME             # idempotent; see deploy/README.md for a whole staging setup
 intern admin grant EMAIL members categories transport corrections   # also: admin revoke, admin list
 ```
 

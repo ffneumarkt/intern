@@ -1,0 +1,19 @@
+{
+  "categories": [
+    {
+      "name": "Atemschutzmasken",
+      "maxServiceLifeYears": 15,
+      "checkTypes": [
+        { "name": "Maskenprüfung", "intervalMonths": 12, "afterUse": true, "isDefault": true, "measurements": true },
+        { "name": "5-Jahres-Prüfung", "intervalMonths": 60, "alsoSatisfies": ["Maskenprüfung"] }
+      ]
+    },
+    {
+      "name": "Lungenautomaten",
+      "checkTypes": [
+        { "name": "Jahresprüfung", "intervalMonths": 12, "afterUse": true }
+      ]
+    }
+  ],
+  "locations": ["RLF", "LAST"]
+}

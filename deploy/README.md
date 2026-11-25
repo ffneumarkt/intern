@@ -14,6 +14,24 @@ by the rate limits) can only come from the tunnel.
 | `backup_authorized_keys.example` | `~backup/.ssh/authorized_keys` with the NAS key |
 | `restore-test.sh` | run anywhere with docker, from a copy of a backup |
 
+## Staging (or any new environment) in one script
+
+```sh
+ADMIN_EMAIL=chef@example.com TUNNEL_TOKEN=... deploy/bootstrap-staging.sh
+```
+
+It creates `/srv/intern-staging` (`STAGING_DIR`), writes `.env` with new VAPID keys, runs the migrations, adds the
+default setup, creates the first admin (all admin areas, manage on every category; the password is printed once, or
+set `ADMIN_PASSWORD`) and starts the app. Without `TUNNEL_TOKEN` there is no tunnel: the app is published on
+`127.0.0.1:8090` (`STAGING_PORT`) instead. Running it again keeps `.env` and the data and only adds what is missing.
+The same step without Docker or the admin: `intern bootstrap [--admin-email EMAIL --admin-name NAME]`.
+
+The default setup is `backend/internal/defaults/defaults.json` (edit it to change the station's setup):
+Atemschutzmasken (15 years; Maskenprüfung every 12 months, after a use, default, with measurements; 5-Jahres-Prüfung
+every 60 months, also counts as a Maskenprüfung), Lungenautomaten (Jahresprüfung every 12 months, after a use) and the
+locations RLF and LAST. The migrations already add the workshop location and the Beförderungspapier settings
+(FF Neumarkt, 6,8 l bottles, 1000 points, Abfüllstation FF Grünbach, the checklist). No items or other members.
+
 ## First setup
 
 1. Docker and the compose plugin on the VPS; `mkdir -p /srv/intern/data`.
@@ -23,7 +41,8 @@ by the rate limits) can only come from the tunnel.
    - VAPID keys: `docker run --rm ghcr.io/ffneumarkt/intern vapid`; `VAPID_SUBJECT` by hand.
 3. `cd /srv/intern && docker compose up -d`. The image is public, no login is needed.
 4. Create the first superuser: `docker compose exec intern /intern superuser upsert EMAIL PASSWORD`,
-   Make the first admin: `docker compose exec intern /intern admin grant EMAIL members categories transport corrections`
+   make the first admin and the default setup: `docker compose exec intern /intern bootstrap --admin-email EMAIL --admin-name NAME`
+   (or, for a user that already exists, `admin grant EMAIL members categories transport corrections`)
    (`admin list` and `admin revoke` also exist; the last `members` holder cannot be revoked or deactivated).
    From then on members, permissions, categories, the transport settings and corrections are managed in the app
    (Einstellungen → Verwaltung); a new member gets a one-time setup link to pass on. The dashboard is not needed.
