@@ -121,7 +121,7 @@ export default function RecordUsePage() {
                 {/* The field stays above the camera preview: on iOS, Ionic's input shim swaps in a cloned input
                     for a field low on the page, which loses focus and stops Enter from submitting. */}
                 <form onSubmit={submitCode}>
-                  <Field label="Code manuell eingeben" value={code} autoComplete="off" autoCapitalize="off" onChange={setCode} />
+                  <Field boxed label="Code manuell eingeben" value={code} autoComplete="off" autoCapitalize="off" onChange={setCode} />
                 </form>
                 <Suggestions suggestions={searchItems(items, code, scanned.map((i) => i.id))} onPick={pick} />
                 <Scanner onCode={handleCode} active={step === 'scan'} />

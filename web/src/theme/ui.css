@@ -6,7 +6,8 @@
   --ui-muted: #636366;
   --ui-line: #d9d9de;
   --ui-ok: #1f7a4a;
-  --ui-warn: #b36b00;
+  /* iOS system orange: clearly a warning, stronger than the muted amber before. */
+  --ui-warn: #ff9500;
   --ui-radius: 12px;
   --ui-shadow: none;
 }
@@ -87,8 +88,8 @@
 }
 
 .ui-pill[data-tone='warn'] {
-  color: #8a5200;
-  background: rgba(179, 107, 0, 0.14);
+  color: #a85a00;
+  background: rgba(255, 149, 0, 0.2);
 }
 
 .ui-pill[data-tone='ok'] {
@@ -157,10 +158,11 @@
 /* The primary action stays at the bottom while the page scrolls: it is always one tap away. */
 .ui-actions {
   position: sticky;
+  /* The scroll container's own bottom padding already keeps the bar above the tab bar. */
   bottom: 0;
   z-index: 2;
-  margin: 0 -16px;
-  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  margin: 16px -16px 0;
+  padding: 12px 16px 12px;
   background: linear-gradient(to bottom, rgba(var(--app-light-rgb), 0), var(--app-light) 30%);
 }
 
@@ -516,7 +518,9 @@ a.tile {
 
 /* The shell: the page area scrolls, the tab bar stays at the bottom. */
 :root {
-  --tabs-height: 49px;
+  --tabs-height: 62px;
+  /* Space the content keeps free under the floating tab bar. */
+  --tabs-space: calc(var(--tabs-height) + 26px + env(safe-area-inset-bottom));
   --header-height: 44px;
 }
 
@@ -551,6 +555,7 @@ body {
 .app-shell {
   display: flex;
   flex-direction: column;
+  position: relative;
   height: 100dvh;
 }
 
@@ -559,6 +564,9 @@ body {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior-y: contain;
+  padding-bottom: var(--tabs-space);
+  /* Scrolling something into view keeps it clear of the sticky action bar and the tab bar. */
+  scroll-padding-bottom: calc(var(--tabs-space) + 96px);
 }
 
 /* The navigation bar: transparent over the large title, a blurred bar with a hairline once the title scrolled away. */
@@ -656,15 +664,23 @@ body {
   padding-inline: 20px;
 }
 
+/* The tab bar floats above the page as a rounded capsule, as in current iOS. */
 .app-tabs {
+  position: absolute;
+  inset-inline: 16px;
+  bottom: calc(10px + env(safe-area-inset-bottom));
+  z-index: 30;
   display: flex;
-  flex: none;
+  max-width: 460px;
   min-height: var(--tabs-height);
-  padding-bottom: env(safe-area-inset-bottom);
-  background: rgba(249, 249, 249, 0.92);
-  border-top: 0.5px solid rgba(60, 60, 67, 0.29);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  backdrop-filter: saturate(180%) blur(20px);
+  margin-inline: auto;
+  padding: 4px;
+  background: rgba(249, 249, 249, 0.8);
+  border: 0.5px solid rgba(60, 60, 67, 0.18);
+  border-radius: 999px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.16), 0 1px 3px rgba(0, 0, 0, 0.08);
+  -webkit-backdrop-filter: saturate(180%) blur(24px);
+  backdrop-filter: saturate(180%) blur(24px);
 }
 
 .app-tabs a {
@@ -675,7 +691,8 @@ body {
   justify-content: center;
   gap: 1px;
   min-width: 0;
-  padding: 5px 0 2px;
+  padding: 5px 0 3px;
+  border-radius: 999px;
   font-size: 0.625rem;
   font-weight: 500;
   letter-spacing: -0.01em;
@@ -694,8 +711,10 @@ body {
   white-space: nowrap;
 }
 
+/* The selected tab has its own capsule behind it. */
 .app-tabs a[aria-current='page'] {
   color: var(--app-primary);
+  background: rgba(60, 60, 67, 0.1);
 }
 
 /* Page changes: deeper slides in from the right, back from the left (a little, as iOS does). */

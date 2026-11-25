@@ -47,7 +47,9 @@ function LoginRedirect() {
 }
 
 interface Tab {
+  // Shown under the symbol; `label` names the link where it differs.
   name: string
+  label?: string
   to: string
   icon: PhosphorIcon
   // Whether the tab covers the page at this address.
@@ -55,7 +57,7 @@ interface Tab {
 }
 
 const startTab: Tab = { name: 'Start', to: paths.start, icon: House, covers: (p) => p === paths.start || p === paths.login || p === paths.setup }
-const documentTab: Tab = { name: 'Beförderungspapier', to: paths.transportDocument, icon: FileText, covers: (p) => p === paths.transportDocument }
+const documentTab: Tab = { name: 'ADR', label: 'ADR Beförderungspapier', to: paths.transportDocument, icon: FileText, covers: (p) => p === paths.transportDocument }
 const infoTab: Tab = { name: 'Info', to: paths.info, icon: Info, covers: (p) => p === paths.info || p.startsWith(`${paths.info}/`) }
 const materialTab: Tab = { name: 'Material', to: paths.dueList, icon: Wrench, covers: (p) => p === paths.dueList || p.startsWith(`${paths.dueList}/`) }
 const settingsTab: Tab = { name: 'Einstellungen', to: paths.settings, icon: GearSix, covers: (p) => p === paths.settings || p === paths.admin || p.startsWith(`${paths.admin}/`) }
@@ -66,10 +68,10 @@ function TabBar() {
   const tabs = user ? [startTab, documentTab, materialTab, settingsTab] : [startTab, documentTab, infoTab]
   return (
     <nav className="app-tabs" aria-label="Hauptmenü">
-      {tabs.map(({ name, to, icon: Icon, covers }) => {
+      {tabs.map(({ name, label, to, icon: Icon, covers }) => {
         const active = covers(pathname)
         return (
-          <Link key={to} to={to} data-slot="tab" aria-label={name} aria-current={active ? 'page' : undefined}>
+          <Link key={to} to={to} data-slot="tab" aria-label={label ?? name} aria-current={active ? 'page' : undefined}>
             {/* iOS shows the selected tab with the filled symbol. */}
             <Icon aria-hidden="true" weight={active ? 'fill' : 'regular'} />
             <span>{name}</span>
