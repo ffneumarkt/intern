@@ -1,5 +1,5 @@
-import { IonIcon, IonItem, IonLabel, IonList, IonNote } from '@ionic/react'
-import { addOutline, keyOutline, personCircleOutline, shieldCheckmarkOutline } from 'ionicons/icons'
+import { IonItem, IonLabel, IonList, IonNote } from '@ionic/react'
+import { CircleUser, KeyRound, Plus, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import { PasskeyCancelledError, PasskeyExistsError, TooManyAttemptsError, tooManyAttemptsMessage, WrongPasswordError } from '../api/errors'
 import {
@@ -101,7 +101,7 @@ export default function SettingsPage() {
     <Page title="Einstellungen" grouped>
       <IonList inset>
         <IonItem>
-          <IonIcon slot="start" icon={personCircleOutline} aria-hidden />
+          <CircleUser aria-hidden="true" />
           <IonLabel>
             <h3>{user?.name}</h3>
             <p>{user?.email}</p>
@@ -111,7 +111,7 @@ export default function SettingsPage() {
       {areas.length > 0 && (
         <IonList inset>
           <IonItem routerLink={paths.admin} detail>
-            <IonIcon slot="start" icon={shieldCheckmarkOutline} aria-hidden />
+            <ShieldCheck aria-hidden="true" />
             <IonLabel>Verwaltung</IonLabel>
           </IonItem>
         </IonList>
@@ -128,7 +128,7 @@ export default function SettingsPage() {
             ) : (
               keys.map((key) => (
                 <IonItem key={key.id}>
-                  <IonIcon slot="start" icon={keyOutline} aria-hidden />
+                  <KeyRound aria-hidden="true" />
                   <IonLabel>
                     {key.name}
                     <p>angelegt am {key.created}</p>
@@ -153,14 +153,14 @@ export default function SettingsPage() {
       <div className="ion-padding-horizontal">
         {canAdd && (
           <BlockButton fill="outline" disabled={busy || !name.trim()} onClick={() => once(add)}>
-            <IonIcon slot="start" icon={addOutline} aria-hidden />
+            <Plus aria-hidden="true" />
             Passkey hinzufügen
           </BlockButton>
         )}
         {needsConfirmation && (
           <>
             <BlockButton fill="outline" disabled={busy} onClick={() => once(confirm)}>
-              <IonIcon slot="start" icon={keyOutline} aria-hidden />
+              <KeyRound aria-hidden="true" />
               Mit Passkey bestätigen
             </BlockButton>
             <IonNote className="ion-text-center ion-margin-vertical" style={{ display: 'block' }}>

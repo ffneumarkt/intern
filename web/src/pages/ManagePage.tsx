@@ -1,6 +1,6 @@
-import { IonIcon, IonItem, IonLabel, IonList, IonListHeader } from '@ionic/react'
+import { IonItem, IonLabel, IonList, IonListHeader } from '@ionic/react'
+import { Plus } from 'lucide-react'
 import { Segment, SegmentButton } from '@/components/ui/segment'
-import { addOutline } from 'ionicons/icons'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { LocationInUseError, LocationNameTakenError } from '../api/errors'
@@ -102,7 +102,7 @@ function ItemsTab({ categoryId, items }: { categoryId: string; items: Item[] }) 
       </IonList>
       <ActionBar>
         <BlockButton routerLink={paths.itemNew(categoryId)}>
-          <IonIcon slot="start" icon={addOutline} aria-hidden />
+          <Plus aria-hidden="true" />
           Neues Gerät
         </BlockButton>
       </ActionBar>
@@ -136,7 +136,7 @@ function CheckTypesTab({ categoryId, checkTypes }: { categoryId: string; checkTy
       </IonList>
       <ActionBar>
         <BlockButton routerLink={paths.checkTypeNew(categoryId)}>
-          <IonIcon slot="start" icon={addOutline} aria-hidden />
+          <Plus aria-hidden="true" />
           Neue Prüfart
         </BlockButton>
       </ActionBar>
@@ -219,7 +219,7 @@ function LocationForm({ location, onDone }: { location?: Location; onDone(): voi
       <ErrorText>{error}</ErrorText>
       <ActionBar>
         <BlockButton disabled={busy} onClick={() => once(save)}>
-          {!location && <IonIcon slot="start" icon={addOutline} aria-hidden />}
+          {!location && <Plus aria-hidden="true" />}
           {location ? 'Speichern' : 'Standort anlegen'}
         </BlockButton>
         {location && !location.isDefault && (

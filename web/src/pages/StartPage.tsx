@@ -1,22 +1,22 @@
-import { IonCard, IonIcon } from '@ionic/react'
-import { chevronForward, constructOutline, documentTextOutline } from 'ionicons/icons'
+import { IonCard } from '@ionic/react'
+import { ChevronRight, FileText, Wrench, type LucideIcon } from 'lucide-react'
 import Page from '../components/Page'
 import { paths } from '../routes'
 import { useSession } from '../session'
 import { BlockButton, Hint } from '../components/ui'
 
-function Tile({ to, icon, title, subtitle }: { to: string; icon: string; title: string; subtitle: string }) {
+function Tile({ to, icon: Icon, title, subtitle }: { to: string; icon: LucideIcon; title: string; subtitle: string }) {
   return (
     <IonCard routerLink={to} button className="tile">
       <span className="tile-body">
         <span className="tile-icon">
-          <IonIcon icon={icon} aria-hidden="true" />
+          <Icon aria-hidden="true" />
         </span>
         <span className="tile-text">
           <strong>{title}</strong>
           <span>{subtitle}</span>
         </span>
-        <IonIcon className="tile-chevron" icon={chevronForward} aria-hidden="true" />
+        <ChevronRight className="tile-chevron" aria-hidden="true" />
       </span>
     </IonCard>
   )
@@ -26,9 +26,9 @@ export default function StartPage() {
   const { user } = useSession()
   return (
     <Page title="Start">
-      <Tile to={paths.transportDocument} icon={documentTextOutline} title="Beförderungspapier" subtitle="Druckluftflaschen, funktioniert offline" />
+      <Tile to={paths.transportDocument} icon={FileText} title="Beförderungspapier" subtitle="Druckluftflaschen, funktioniert offline" />
       {user ? (
-        <Tile to={paths.dueList} icon={constructOutline} title="Material" subtitle="Prüffristen und Verwendungen" />
+        <Tile to={paths.dueList} icon={Wrench} title="Material" subtitle="Prüffristen und Verwendungen" />
       ) : (
         <section className="ui-card" aria-label="Anmeldung">
           <h2>Materialverwaltung</h2>

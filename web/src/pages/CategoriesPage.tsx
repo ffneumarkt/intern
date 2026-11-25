@@ -1,5 +1,5 @@
-import { IonIcon, IonItem, IonLabel, IonList } from '@ionic/react'
-import { addOutline } from 'ionicons/icons'
+import { IonItem, IonLabel, IonList } from '@ionic/react'
+import { Plus } from 'lucide-react'
 import { listCategories } from '../api/material'
 import Loaded from '../components/Loaded'
 import Page from '../components/Page'
@@ -31,7 +31,7 @@ export default function CategoriesPage() {
               </IonList>
               <ActionBar>
                 <BlockButton routerLink={paths.adminCategoryNew}>
-                  <IonIcon slot="start" icon={addOutline} aria-hidden />
+                  <Plus aria-hidden="true" />
                   Neue Kategorie
                 </BlockButton>
               </ActionBar>

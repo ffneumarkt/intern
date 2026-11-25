@@ -1,5 +1,5 @@
-import { IonIcon, IonList } from '@ionic/react'
-import { addOutline } from 'ionicons/icons'
+import { IonList } from '@ionic/react'
+import { Plus } from 'lucide-react'
 import { useState } from 'react'
 import { BarcodeTakenError } from '../api/errors'
 import type { CheckType, Item, ItemInput, Location } from '../api/material'
@@ -82,7 +82,7 @@ export default function ItemForm({ item, locations, checkTypes = [], submitLabel
       {error && <ErrorText>{error}</ErrorText>}
       <ActionBar>
         <BlockButton disabled={busy} onClick={() => once(save)}>
-          {!item && <IonIcon slot="start" icon={addOutline} aria-hidden />}
+          {!item && <Plus aria-hidden="true" />}
           {submitLabel}
         </BlockButton>
       </ActionBar>

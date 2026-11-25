@@ -1,5 +1,5 @@
-import { IonIcon, IonList } from '@ionic/react'
-import { addOutline } from 'ionicons/icons'
+import { IonList } from '@ionic/react'
+import { Plus } from 'lucide-react'
 import { useState } from 'react'
 import { CheckTypeInUseError } from '../api/errors'
 import { createCheckType, deleteCheckType, updateCheckType, type CheckType } from '../api/material'
@@ -89,7 +89,7 @@ export default function CheckTypeForm({ categoryId, checkType, others, onDone }:
       {error && <ErrorText>{error}</ErrorText>}
       <ActionBar>
         <BlockButton disabled={busy} onClick={() => once(save)}>
-          {!checkType && <IonIcon slot="start" icon={addOutline} aria-hidden />}
+          {!checkType && <Plus aria-hidden="true" />}
           {checkType ? 'Speichern' : 'Prüfart anlegen'}
         </BlockButton>
         {checkType && (

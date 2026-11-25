@@ -1,8 +1,8 @@
 import { BlockButton } from '../components/ui'
+import { CircleAlert, CircleCheck, FileText, Minus, Plus, Repeat } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { IonAccordion, IonAccordionGroup, IonIcon, IonItem, IonLabel, IonList } from '@ionic/react'
-import { addOutline, alertCircleOutline, checkmarkCircle, documentTextOutline, removeOutline, repeatOutline } from 'ionicons/icons'
+import { IonAccordion, IonAccordionGroup, IonItem, IonLabel, IonList } from '@ionic/react'
 import { useState } from 'react'
 import { Field, SelectField } from '../components/Field'
 import type { TransportSettings } from '../api/transport'
@@ -176,7 +176,7 @@ export default function TransportDocumentForm({ settings }: { settings: Transpor
         <div className="td-route-head">
           <h2>Fahrt</h2>
           <span className="ui-pill">
-            <IonIcon icon={repeatOutline} aria-hidden="true" />
+            <Repeat aria-hidden="true" />
             Hin und zurück
           </span>
         </div>
@@ -194,7 +194,7 @@ export default function TransportDocumentForm({ settings }: { settings: Transpor
         <div className="td-count">
           <div className="td-stepper">
             <Button type="button" variant="ghost" className="td-step" aria-label="Eine Flasche weniger" disabled={(parseCount(outboundCount) ?? 0) === 0} onClick={() => step(-1)}>
-              <IonIcon icon={removeOutline} aria-hidden="true" />
+              <Minus aria-hidden="true" />
             </Button>
             <label className="td-count-field">
               <span className="td-count-label">{`Anzahl Flaschen à ${config.cylinder.label} l`}</span>
@@ -209,7 +209,7 @@ export default function TransportDocumentForm({ settings }: { settings: Transpor
               />
             </label>
             <Button type="button" variant="ghost" className="td-step" aria-label="Eine Flasche mehr" onClick={() => step(1)}>
-              <IonIcon icon={addOutline} aria-hidden="true" />
+              <Plus aria-hidden="true" />
             </Button>
           </div>
           <Gauge count={parseCount(outboundCount)} config={config} />
@@ -235,7 +235,7 @@ export default function TransportDocumentForm({ settings }: { settings: Transpor
 
       {errors.length > 0 && (
         <div className="ui-problems" aria-live="polite">
-          <IonIcon icon={alertCircleOutline} aria-hidden="true" />
+          <CircleAlert aria-hidden="true" />
           <ul>
             {errors.map((message) => (
               <li key={message}>{message}</li>
@@ -245,7 +245,7 @@ export default function TransportDocumentForm({ settings }: { settings: Transpor
       )}
       {downloadError && (
         <div className="ui-problems" role="alert">
-          <IonIcon icon={alertCircleOutline} aria-hidden="true" />
+          <CircleAlert aria-hidden="true" />
           <p style={{ margin: 0 }}>{downloadError}</p>
         </div>
       )}
@@ -255,7 +255,7 @@ export default function TransportDocumentForm({ settings }: { settings: Transpor
         <ul className="td-checklist">
           {checklist.map((item) => (
             <li key={item}>
-              <IonIcon icon={checkmarkCircle} aria-hidden="true" />
+              <CircleCheck aria-hidden="true" />
               <span>{item}</span>
             </li>
           ))}
@@ -269,7 +269,7 @@ export default function TransportDocumentForm({ settings }: { settings: Transpor
 
       <div className="ui-actions">
         <BlockButton type="submit" disabled={!result.valid || busy}>
-          <IonIcon slot="start" icon={documentTextOutline} aria-hidden="true" />
+          <FileText aria-hidden="true" />
           {busy ? 'PDF wird erstellt …' : 'PDF öffnen'}
         </BlockButton>
       </div>

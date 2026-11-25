@@ -1,7 +1,7 @@
-import { IonIcon, IonItem, IonLabel, IonList } from '@ionic/react'
+import { IonItem, IonLabel, IonList } from '@ionic/react'
+import { Bell, Check } from 'lucide-react'
 import { Chip } from '@/components/ui/chip'
 import { Switch } from '@/components/ui/switch'
-import { checkmark, notificationsOutline } from 'ionicons/icons'
 import { useRef, useState } from 'react'
 import { PushDeniedError, TooManyAttemptsError, tooManyAttemptsMessage } from '../api/errors'
 import { listCategories } from '../api/material'
@@ -236,7 +236,7 @@ function Push({
       <SettingsHeader>Dieses Gerät</SettingsHeader>
       <IonList inset>
         <IonItem>
-          <IonIcon slot="start" icon={notificationsOutline} aria-hidden />
+          <Bell aria-hidden="true" />
           <IonLabel>
             Push-Nachrichten
             <p className="settings-summary">{on ? 'Aktiv auf diesem Gerät' : 'Aus'}</p>
@@ -317,7 +317,7 @@ function Category({
                   }
                   return (
                     <Chip key={days} outline={!active} disabled={busy} aria-pressed={active ? 'true' : 'false'} onClick={toggle}>
-                      {active && <IonIcon icon={checkmark} aria-hidden />}
+                      {active && <Check aria-hidden="true" />}
                       {label}
                     </Chip>
                   )

@@ -4,7 +4,7 @@ import type { ComponentProps } from 'react'
 import { cn } from '@/lib/utils'
 
 export const buttonVariants = cva(
-  'inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors outline-offset-2 focus-visible:outline-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex shrink-0 items-center [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*="size-"])]:size-4 justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors outline-offset-2 focus-visible:outline-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {

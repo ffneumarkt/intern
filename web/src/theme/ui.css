@@ -97,8 +97,9 @@ ion-item ion-label p {
   border-radius: 999px;
 }
 
-.ui-pill ion-icon {
-  font-size: 15px;
+.ui-pill svg {
+  width: 15px;
+  height: 15px;
 }
 
 .ui-pill[data-tone='danger'] {
@@ -177,10 +178,11 @@ ion-content ion-text.ion-color-warning {
   border-radius: 14px;
 }
 
-.ui-problems ion-icon {
+.ui-problems svg {
   flex: none;
   margin-top: 1px;
-  font-size: 20px;
+  width: 20px;
+  height: 20px;
 }
 
 .ui-problems ul {
@@ -345,8 +347,9 @@ ion-card.tile {
   border-radius: 16px;
 }
 
-.tile-icon ion-icon {
-  font-size: 28px;
+.tile-icon svg {
+  width: 28px;
+  height: 28px;
 }
 
 .tile-text {
@@ -371,7 +374,8 @@ ion-card.tile {
 
 .tile-chevron {
   flex: none;
-  font-size: 20px;
+  width: 20px;
+  height: 20px;
   color: var(--ui-muted);
 }
 
