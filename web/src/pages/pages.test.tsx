@@ -5,7 +5,7 @@ import { today } from '../today'
 import { paths } from '../routes'
 import { levelsFailing, signInAs, type Level } from '../test/fakeAuth'
 import { calls, data, failing } from '../test/fakeMaterial'
-import { alertButton, choose, findIon, ionButton, ionChip, ionItem, ionSelect, ionTab, ionToggle, selectedText, typeInto } from '../test/ionic'
+import { alertButton, choose, findIon, ionButton, ionChip, ionItem, ionSegmentButton, ionSelect, ionTab, ionToggle, selectedText, typeInto } from '../test/ionic'
 import { notificationState } from '../test/fakeNotifications'
 import { pushState } from '../test/fakePush'
 import { scanCode, scannerActive } from '../test/fakeScanner'
@@ -1937,5 +1937,92 @@ describe('Verwalten: lists and the pages behind them', () => {
   it('offers no check type page below manage', async () => {
     renderAt(paths.checkTypeNew('masken'), 'check')
     expect(await screen.findByText('Keine Berechtigung.')).toBeInTheDocument()
+  })
+})
+
+describe('due list: nothing due', () => {
+  const nothingDue = () => {
+    data.items = data.items.map((i) => ({ ...i, dueState: 'ok' as const }))
+  }
+
+  it('offers a big button to record a use when nothing is due', async () => {
+    nothingDue()
+    renderAt(paths.dueList, 'use')
+    expect(await screen.findByText('Nichts fällig.')).toBeInTheDocument()
+    const button = await findIon(() => ionButton('Verwendung erfassen'))
+    expect(button).toHaveAttribute('size', 'large')
+    fireEvent.click(button)
+    expect(await screen.findByLabelText('Code manuell eingeben')).toBeInTheDocument()
+  })
+
+  it('shows no such card while something is due', async () => {
+    renderAt(paths.dueList, 'use')
+    await screen.findByRole('region', { name: 'Überfällig' })
+    expect(screen.queryByText('Nichts fällig.')).not.toBeInTheDocument()
+  })
+
+  it('looks only at the chosen category', async () => {
+    data.items = data.items.map((i) => (i.categoryId === 'lungenautomaten' ? { ...i, dueState: 'ok' as const } : i))
+    renderAt(paths.dueList, 'use')
+    await screen.findByRole('region', { name: 'Überfällig' })
+    fireEvent.click(await findIon(() => ionChip('Lungenautomaten')))
+    expect(await screen.findByText('Nichts fällig.')).toBeInTheDocument()
+  })
+
+  it('leaves a list filtered by a notification to its own message', async () => {
+    nothingDue()
+    renderAt(paths.dueListOf(['m04']), 'use')
+    expect(await screen.findByText('Alles aus dieser Benachrichtigung ist erledigt.')).toBeInTheDocument()
+    expect(screen.queryByText('Nichts fällig.')).not.toBeInTheDocument()
+  })
+})
+
+describe('due list: timeline', () => {
+  const openTimeline = async () => {
+    pinToday('2026-10-29')
+    renderAt(paths.dueList, 'check')
+    fireEvent.click(await findIon(() => ionSegmentButton('Zeitplan')))
+  }
+  const month = (name: string) => screen.findByRole('region', { name: `Zeitplan: ${name}` })
+
+  it('groups the due dates by month, what is overdue first', async () => {
+    await openTimeline()
+    const overdue = await month('Überfällig')
+    expect(within(overdue).getByText('Maske 01')).toBeInTheDocument()
+    expect(within(overdue).getByText('Maske 05')).toBeInTheDocument()
+    const november = await month('November 2026')
+    expect(within(november).getByText('Maske 03')).toBeInTheDocument()
+    expect(within(november).getByText('LA 01')).toBeInTheDocument()
+    expect(within(await month('Juni 2027')).getByText('Maske 04')).toBeInTheDocument()
+  })
+
+  it('names the check and the date in a row, and a row opens the device', async () => {
+    await openTimeline()
+    const november = await month('November 2026')
+    expect(within(november).getByText(/Maskenprüfung · 2026-11-08/)).toBeInTheDocument()
+    fireEvent.click(within(november).getByText('Maske 03'))
+    expect(await screen.findByRole('heading', { name: 'Maske 03' })).toBeInTheDocument()
+  })
+
+  it('shows later months only on request', async () => {
+    await openTimeline()
+    await month('Juni 2027')
+    expect(screen.queryByRole('region', { name: 'Zeitplan: Mai 2028' })).not.toBeInTheDocument()
+    fireEvent.click(await findIon(() => ionButton('Mehr anzeigen')))
+    expect(await month('Mai 2028')).toBeInTheDocument()
+  })
+
+  it('goes back to what is due now', async () => {
+    await openTimeline()
+    await month('Überfällig')
+    fireEvent.click(await findIon(() => ionSegmentButton('Fällig')))
+    expect(await screen.findByRole('region', { name: 'Überfällig' })).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Zeitplan: Überfällig' })).not.toBeInTheDocument()
+  })
+
+  it('is not offered on a list filtered by a notification', async () => {
+    renderAt(paths.dueListOf(['m01']), 'use')
+    await screen.findByRole('region', { name: 'Überfällig' })
+    expect(ionSegmentButton('Zeitplan')).toBeNull()
   })
 })
