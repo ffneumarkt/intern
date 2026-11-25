@@ -2069,3 +2069,16 @@ describe('due list: timeline', () => {
     expect(ionSegmentButton('Zeitplan')).toBeNull()
   })
 })
+
+describe('due list: title', () => {
+  it('follows the open view', async () => {
+    pinToday('2026-10-29')
+    renderAt(paths.dueList, 'check')
+    expect(await screen.findByRole('heading', { name: 'Fällig' })).toBeInTheDocument()
+    fireEvent.click(await findIon(() => ionSegmentButton('Zeitplan')))
+    expect(await screen.findByRole('heading', { name: 'Zeitplan' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Fällig' })).not.toBeInTheDocument()
+    fireEvent.click(ionSegmentButton('Fällig')!)
+    expect(await screen.findByRole('heading', { name: 'Fällig' })).toBeInTheDocument()
+  })
+})
