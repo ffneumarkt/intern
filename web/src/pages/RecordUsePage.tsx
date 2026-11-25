@@ -1,4 +1,4 @@
-import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonSelectOption, IonText, useIonViewWillEnter } from '@ionic/react'
+import { IonIcon, IonItem, IonLabel, IonList, IonSelectOption, IonText, useIonViewWillEnter } from '@ionic/react'
 import { closeCircleOutline } from 'ionicons/icons'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -14,7 +14,7 @@ import { useSession } from '../session'
 import { futureDateMessage, isFuture, today } from '../today'
 import { useBusy } from '../useBusy'
 import { useResource } from '../useResource'
-import { ActionBar, BlockButton, Card, ErrorText, Hint } from '../components/ui'
+import { ActionBar, AppButton, BlockButton, Card, ErrorText, Hint } from '../components/ui'
 
 // Remembered per account and device, so a second account on the same phone does not get the first one's name.
 const recordedByKey = (userId: string | undefined) => `intern.recordedBy:${userId ?? ''}`
@@ -143,14 +143,14 @@ export default function RecordUsePage() {
                 {scanned.map((i) => (
                   <IonItem key={i.id} role="listitem">
                     <IonLabel>{i.name}</IonLabel>
-                    <IonButton
+                    <AppButton
                       fill="clear"
                       slot="end"
                       aria-label={`${i.name} entfernen`}
                       onClick={() => setScanned((list) => list.filter((x) => x.id !== i.id))}
                     >
                       <IonIcon icon={closeCircleOutline} aria-hidden />
-                    </IonButton>
+                    </AppButton>
                   </IonItem>
                 ))}
               </IonList>

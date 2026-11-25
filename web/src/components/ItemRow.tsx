@@ -1,4 +1,5 @@
-import { IonButton, IonItem, IonLabel } from '@ionic/react'
+import { IonItem, IonLabel } from '@ionic/react'
+import { AppButton } from './ui'
 import { useNavigate } from 'react-router-dom'
 import type { Item } from '../api/material'
 import { paths } from '../routes'
@@ -23,7 +24,7 @@ export default function ItemRow({ item, categoryName, locationName, checkAction 
           {locationName ? ` · ${locationName}` : ''}
         </p>
         {canCheck && (
-          <IonButton
+          <AppButton
             size="small"
             fill="outline"
             className="item-row-check"
@@ -35,7 +36,7 @@ export default function ItemRow({ item, categoryName, locationName, checkAction 
             }}
           >
             Prüfen
-          </IonButton>
+          </AppButton>
         )}
       </IonLabel>
       {retired ? (

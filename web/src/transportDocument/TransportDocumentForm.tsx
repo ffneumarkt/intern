@@ -1,4 +1,6 @@
-import { IonAccordion, IonAccordionGroup, IonButton, IonIcon, IonInput, IonItem, IonLabel, IonList, IonSelectOption } from '@ionic/react'
+import { BlockButton } from '../components/ui'
+import { Button } from '@/components/ui/button'
+import { IonAccordion, IonAccordionGroup, IonIcon, IonInput, IonItem, IonLabel, IonList, IonSelectOption } from '@ionic/react'
 import { addOutline, alertCircleOutline, checkmarkCircle, documentTextOutline, removeOutline, repeatOutline } from 'ionicons/icons'
 import { useState } from 'react'
 import { Field, SelectField } from '../components/Field'
@@ -190,9 +192,9 @@ export default function TransportDocumentForm({ settings }: { settings: Transpor
 
         <div className="td-count">
           <div className="td-stepper">
-            <IonButton className="td-step" fill="solid" shape="round" aria-label="Eine Flasche weniger" disabled={(parseCount(outboundCount) ?? 0) === 0} onClick={() => step(-1)}>
-              <IonIcon slot="icon-only" icon={removeOutline} aria-hidden="true" />
-            </IonButton>
+            <Button type="button" variant="ghost" className="td-step" aria-label="Eine Flasche weniger" disabled={(parseCount(outboundCount) ?? 0) === 0} onClick={() => step(-1)}>
+              <IonIcon icon={removeOutline} aria-hidden="true" />
+            </Button>
             <IonInput
               label={`Anzahl Flaschen à ${config.cylinder.label} l`}
               labelPlacement="stacked"
@@ -203,9 +205,9 @@ export default function TransportDocumentForm({ settings }: { settings: Transpor
               value={outboundCount}
               onIonInput={(e) => setOutboundCount(e.detail.value ?? '')}
             />
-            <IonButton className="td-step" fill="solid" shape="round" aria-label="Eine Flasche mehr" onClick={() => step(1)}>
-              <IonIcon slot="icon-only" icon={addOutline} aria-hidden="true" />
-            </IonButton>
+            <Button type="button" variant="ghost" className="td-step" aria-label="Eine Flasche mehr" onClick={() => step(1)}>
+              <IonIcon icon={addOutline} aria-hidden="true" />
+            </Button>
           </div>
           <Gauge count={parseCount(outboundCount)} config={config} />
         </div>
@@ -263,10 +265,10 @@ export default function TransportDocumentForm({ settings }: { settings: Transpor
       </p>
 
       <div className="ui-actions">
-        <IonButton expand="block" type="submit" disabled={!result.valid || busy}>
+        <BlockButton type="submit" disabled={!result.valid || busy}>
           <IonIcon slot="start" icon={documentTextOutline} aria-hidden="true" />
           {busy ? 'PDF wird erstellt …' : 'PDF öffnen'}
-        </IonButton>
+        </BlockButton>
       </div>
     </form>
   )

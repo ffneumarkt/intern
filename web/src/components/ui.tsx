@@ -1,5 +1,8 @@
-import { IonButton, IonCard, IonCardContent, IonText } from '@ionic/react'
+import { IonCard, IonCardContent, IonText } from '@ionic/react'
 import type { ComponentProps, CSSProperties, ReactNode } from 'react'
+import { Link } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 // The building blocks the pages share, each defined once: the look lives in theme/ui.css, the markup
 // here. A page uses these instead of writing the Ionic element and its classes again.
@@ -38,7 +41,54 @@ export function Card({ children, tone }: { children: ReactNode; tone?: 'warning'
   )
 }
 
+interface AppButtonProps extends Omit<ComponentProps<'button'>, 'color'> {
+  fill?: 'solid' | 'outline' | 'clear'
+  color?: 'check' | 'danger' | 'medium'
+  size?: 'small' | 'large'
+  // 'block' makes the button as wide as its container.
+  expand?: 'block'
+  // Renders a link that looks like a button.
+  routerLink?: string
+}
+
+// The app's button: what a page asks for (fill, colour, size) mapped to the shadcn Button. A routerLink makes it a
+// link, which keeps Ctrl-click and the address visible.
+export function AppButton({ fill = 'solid', color, size, expand, routerLink, className, type = 'button', children, ...props }: AppButtonProps) {
+  const variant =
+    fill === 'outline'
+      ? 'outline'
+      : fill === 'clear'
+        ? 'ghost'
+        : color === 'check'
+          ? 'check'
+          : color === 'danger'
+            ? 'destructive'
+            : 'default'
+  const tone =
+    color === 'danger' && fill !== 'solid'
+      ? 'border-destructive text-destructive hover:bg-destructive/10'
+      : color === 'medium' && fill !== 'solid'
+        ? 'border-muted-foreground text-muted-foreground hover:bg-muted'
+        : undefined
+  const classes = cn(expand === 'block' && 'w-full', tone, className)
+  const sized = size === 'small' ? 'sm' : size === 'large' ? 'lg' : 'default'
+  if (routerLink) {
+    return (
+      <Button asChild variant={variant} size={sized} className={classes}>
+        <Link to={routerLink} {...(props as ComponentProps<'a'>)}>
+          {children}
+        </Link>
+      </Button>
+    )
+  }
+  return (
+    <Button type={type} variant={variant} size={sized} className={classes} {...props}>
+      {children}
+    </Button>
+  )
+}
+
 // A button as wide as its container, which is what every action on a phone wants.
-export function BlockButton(props: ComponentProps<typeof IonButton>) {
-  return <IonButton expand="block" {...props} />
+export function BlockButton(props: AppButtonProps) {
+  return <AppButton expand="block" {...props} />
 }

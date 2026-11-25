@@ -394,9 +394,9 @@ describe('passkeys in settings', () => {
     await screen.findByText('iPhone')
     fireEvent.click(await findIon(() => ionButton('Umbenennen')))
     expect(await screen.findByText('Passkey umbenennen')).toBeInTheDocument()
-    const input = await findIon(() => document.querySelector<HTMLInputElement>('ion-alert input'))
+    const input = await findIon(() => document.querySelector<HTMLInputElement>('[role="alertdialog"] input'))
     expect(input.value).toBe('iPhone')
-    fireEvent.input(input, { target: { value: 'Diensthandy' } })
+    fireEvent.change(input, { target: { value: 'Diensthandy' } })
     fireEvent.click(await findIon(() => alertButton('Speichern')))
     expect(await screen.findByText('Diensthandy')).toBeInTheDocument()
   })
@@ -408,11 +408,11 @@ describe('passkeys in settings', () => {
     fireEvent.click(await findIon(() => ionButton('Umbenennen')))
     if (answer === null) fireEvent.click(await findIon(() => alertButton('Abbrechen')))
     else {
-      const input = await findIon(() => document.querySelector<HTMLInputElement>('ion-alert input'))
-      fireEvent.input(input, { target: { value: answer } })
+      const input = await findIon(() => document.querySelector<HTMLInputElement>('[role="alertdialog"] input'))
+      fireEvent.change(input, { target: { value: answer } })
       fireEvent.click(await findIon(() => alertButton('Speichern')))
     }
-    await waitFor(() => expect(document.querySelector('ion-alert')).not.toBeInTheDocument())
+    await waitFor(() => expect(document.querySelector('[role="alertdialog"]')).not.toBeInTheDocument())
     expect(passkeyState.items[0].name).toBe('iPhone')
   })
 
@@ -432,7 +432,7 @@ describe('passkeys in settings', () => {
     await screen.findByText('iPhone')
     fireEvent.click(await findIon(() => ionButton('Entfernen')))
     fireEvent.click(await findIon(() => alertButton('Abbrechen')))
-    await waitFor(() => expect(document.querySelector('ion-alert')).not.toBeInTheDocument())
+    await waitFor(() => expect(document.querySelector('[role="alertdialog"]')).not.toBeInTheDocument())
     expect(passkeyState.items).toHaveLength(1)
   })
 

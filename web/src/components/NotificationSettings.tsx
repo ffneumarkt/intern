@@ -1,4 +1,6 @@
-import { IonChip, IonIcon, IonItem, IonLabel, IonList, IonToggle } from '@ionic/react'
+import { IonIcon, IonItem, IonLabel, IonList } from '@ionic/react'
+import { Chip } from '@/components/ui/chip'
+import { Switch } from '@/components/ui/switch'
 import { checkmark, notificationsOutline } from 'ionicons/icons'
 import { useRef, useState } from 'react'
 import { PushDeniedError, TooManyAttemptsError, tooManyAttemptsMessage } from '../api/errors'
@@ -183,13 +185,12 @@ function Content({ data, reload }: { data: LoadedAll; reload(): void }) {
             Nicht stören
             <p className="settings-summary">{quietSummary(data.quiet)}</p>
           </IonLabel>
-          <IonToggle
+          <Switch
             slot="end"
-            color="success"
             aria-label="Nicht stören"
             checked={shown('quiet', quietOn)}
             disabled={busy}
-            onIonChange={(e) => switchQuiet(e.detail.checked)}
+            onCheckedChange={switchQuiet}
           />
         </IonItem>
         {quietOn && (
@@ -240,13 +241,12 @@ function Push({
             Push-Nachrichten
             <p className="settings-summary">{on ? 'Aktiv auf diesem Gerät' : 'Aus'}</p>
           </IonLabel>
-          <IonToggle
+          <Switch
             slot="end"
-            color="success"
             aria-label="Push-Nachrichten"
             checked={shown('push', on)}
             disabled={busy || !push.available}
-            onIonChange={(e) => change(e.detail.checked)}
+            onCheckedChange={change}
           />
         </IonItem>
         {on && (
@@ -289,15 +289,14 @@ function Category({
           {name}
           <p className="settings-summary">{setting ? summarize(setting.timings, setting.weeklyOverdue) : 'Aus'}</p>
         </IonLabel>
-        <IonToggle
+        <Switch
           slot="end"
-          color="success"
           aria-label={name}
           checked={shown(`category:${id}`, setting !== undefined)}
           disabled={busy}
-          onIonChange={(e) => {
-            choose(`category:${id}`, e.detail.checked)
-            if (e.detail.checked) enable()
+          onCheckedChange={(checked) => {
+            choose(`category:${id}`, checked)
+            if (checked) enable()
             else if (setting) disable(setting)
           }}
         />
@@ -316,26 +315,11 @@ function Category({
                     choose(key, !active)
                     update(setting, { timings: toggleDay(setting.timings, days) })
                   }
-                  // ion-chip is a plain element: role, tab stop and keys make it a toggle button.
                   return (
-                    <IonChip
-                      key={days}
-                      role="button"
-                      tabIndex={busy ? -1 : 0}
-                      color={active ? 'primary' : undefined}
-                      outline={!active}
-                      disabled={busy}
-                      aria-pressed={active ? 'true' : 'false'}
-                      onClick={toggle}
-                      onKeyDown={(e) => {
-                        if (e.key !== 'Enter' && e.key !== ' ') return
-                        e.preventDefault()
-                        toggle()
-                      }}
-                    >
+                    <Chip key={days} outline={!active} disabled={busy} aria-pressed={active ? 'true' : 'false'} onClick={toggle}>
                       {active && <IonIcon icon={checkmark} aria-hidden />}
-                      <IonLabel>{label}</IonLabel>
-                    </IonChip>
+                      {label}
+                    </Chip>
                   )
                 })}
               </div>
@@ -343,15 +327,14 @@ function Category({
           </IonItem>
           <IonItem className="settings-detail" lines="full">
             <IonLabel>Wöchentlich bei Überfälligem</IonLabel>
-            <IonToggle
+            <Switch
               slot="end"
-              color="success"
               aria-label="Wöchentlich bei Überfälligem"
               checked={shown(`weekly:${setting.id}`, setting.weeklyOverdue)}
               disabled={busy}
-              onIonChange={(e) => {
-                choose(`weekly:${setting.id}`, e.detail.checked)
-                update(setting, { weeklyOverdue: e.detail.checked })
+              onCheckedChange={(checked) => {
+                choose(`weekly:${setting.id}`, checked)
+                update(setting, { weeklyOverdue: checked })
               }}
             />
           </IonItem>

@@ -1,4 +1,5 @@
-import { IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonSegment, IonSegmentButton, IonSelectOption } from '@ionic/react'
+import { IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonSelectOption } from '@ionic/react'
+import { Segment, SegmentButton } from '@/components/ui/segment'
 import { addOutline } from 'ionicons/icons'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -62,17 +63,17 @@ export default function ManagePage() {
                   </SelectField>
                 </IonList>
               )}
-              <IonSegment value={tab}>
-                <IonSegmentButton value="items" onClick={() => show(categoryId, 'items')}>
-                  <IonLabel>Geräte</IonLabel>
-                </IonSegmentButton>
-                <IonSegmentButton value="checkTypes" onClick={() => show(categoryId, 'checkTypes')}>
-                  <IonLabel>Prüfarten</IonLabel>
-                </IonSegmentButton>
-                <IonSegmentButton value="locations" onClick={() => show(categoryId, 'locations')}>
-                  <IonLabel>Standorte</IonLabel>
-                </IonSegmentButton>
-              </IonSegment>
+              <Segment value={tab}>
+                <SegmentButton value="items" onClick={() => show(categoryId, 'items')}>
+                  Geräte
+                </SegmentButton>
+                <SegmentButton value="checkTypes" onClick={() => show(categoryId, 'checkTypes')}>
+                  Prüfarten
+                </SegmentButton>
+                <SegmentButton value="locations" onClick={() => show(categoryId, 'locations')}>
+                  Standorte
+                </SegmentButton>
+              </Segment>
               {tab === 'items' ? (
                 <ItemsTab categoryId={categoryId} items={items.filter((i) => i.categoryId === categoryId)} />
               ) : tab === 'checkTypes' ? (

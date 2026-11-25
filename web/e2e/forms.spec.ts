@@ -99,7 +99,7 @@ test.describe('as verwaltung', () => {
 
   test('switches a check type toggle', async ({ page }) => {
     await page.goto('/material/verwalten')
-    await page.locator('ion-segment-button', { hasText: 'Prüfarten' }).click()
+    await page.getByRole('tab', { name: 'Prüfarten' }).click()
     await page.getByRole('link', { name: 'Neue Prüfart' }).click()
     const toggle = page.getByRole('switch', { name: 'nach Verwendung' }).filter({ visible: true })
     await expect(toggle).not.toBeChecked()

@@ -126,13 +126,13 @@ test.describe('forms', () => {
 
     test('check type form and its validation error', async ({ page }, info) => {
       await page.goto('/material/verwalten')
-      await page.locator('ion-segment-button', { hasText: 'Prüfarten' }).click()
+      await page.getByRole('tab', { name: 'Prüfarten' }).click()
       await page.locator('ion-item', { hasText: 'Maskenprüfung' }).filter({ visible: true }).first().click()
       await expect(page.getByText('Prüfart bearbeiten')).toBeVisible()
       await shoot(page, info.project.name, 'checktype-edit')
 
       await page.goto('/material/verwalten')
-      await page.locator('ion-segment-button', { hasText: 'Prüfarten' }).click()
+      await page.getByRole('tab', { name: 'Prüfarten' }).click()
       await page.getByRole('link', { name: 'Neue Prüfart' }).click()
       await field(page, 'Name').fill('Sichtprüfung')
       await page.getByRole('button', { name: 'Prüfart anlegen' }).click()

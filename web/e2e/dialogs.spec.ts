@@ -14,7 +14,7 @@ const token = (who: SeedUser): string => {
   return JSON.parse(entry.value).token
 }
 
-const alert = (page: Page) => page.locator('ion-alert')
+const alert = (page: Page) => page.locator('[role="alertdialog"]')
 const alertButton = (page: Page, name: string) => alert(page).getByRole('button', { name, exact: true })
 
 async function categoryId(request: APIRequestContext, name: string): Promise<string> {
@@ -129,7 +129,7 @@ test.describe('verwaltung', () => {
     })
     try {
       await page.goto(`/material/verwalten?kategorie=${category}`)
-      await page.locator('ion-segment-button', { hasText: 'Prüfarten' }).click()
+      await page.getByRole('tab', { name: 'Prüfarten' }).click()
       await page.locator('ion-item', { hasText: name }).first().click()
       await page.getByRole('button', { name: 'Prüfart löschen' }).click()
       await expect(alert(page).getByText(`${name} löschen?`)).toBeVisible()

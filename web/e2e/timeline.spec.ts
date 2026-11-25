@@ -8,11 +8,11 @@ test('shows the due dates by month and goes back to what is due now', async ({ p
   await page.goto('/material')
   await expect(page.getByRole('region', { name: 'Überfällig', exact: true })).toBeVisible()
 
-  await page.locator('ion-segment-button', { hasText: 'Zeitplan' }).click()
+  await page.getByRole('tab', { name: 'Zeitplan' }).click()
   await expect(page.getByRole('region', { name: 'Zeitplan: Überfällig' })).toBeVisible()
   // Later months follow with their own header; the seed has due dates in the coming year.
   await expect(page.locator('section[aria-label^="Zeitplan: "]').nth(1)).toBeVisible()
 
-  await page.locator('ion-segment-button', { hasText: 'Fällig' }).click()
+  await page.getByRole('tab', { name: 'Fällig' }).click()
   await expect(page.getByRole('region', { name: 'Überfällig', exact: true })).toBeVisible()
 })

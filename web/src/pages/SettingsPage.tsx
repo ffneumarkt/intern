@@ -1,4 +1,4 @@
-import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonNote } from '@ionic/react'
+import { IonIcon, IonItem, IonLabel, IonList, IonNote } from '@ionic/react'
 import { addOutline, keyOutline, personCircleOutline, shieldCheckmarkOutline } from 'ionicons/icons'
 import { useState } from 'react'
 import { PasskeyCancelledError, PasskeyExistsError, TooManyAttemptsError, tooManyAttemptsMessage, WrongPasswordError } from '../api/errors'
@@ -23,7 +23,7 @@ import { paths } from '../routes'
 import { useSession } from '../session'
 import { useBusy } from '../useBusy'
 import { useResource } from '../useResource'
-import { BlockButton } from '../components/ui'
+import { AppButton, BlockButton } from '../components/ui'
 
 export default function SettingsPage() {
   const { user, logout, areas } = useSession()
@@ -132,12 +132,12 @@ export default function SettingsPage() {
                   <IonLabel>
                     {key.name}
                     <p>angelegt am {key.created}</p>
-                    <IonButton fill="clear" size="small" onClick={() => rename(key)}>
+                    <AppButton fill="clear" size="small" onClick={() => rename(key)}>
                       Umbenennen
-                    </IonButton>
-                    <IonButton fill="clear" size="small" color="danger" onClick={() => remove(key)}>
+                    </AppButton>
+                    <AppButton fill="clear" size="small" color="danger" onClick={() => remove(key)}>
                       Entfernen
-                    </IonButton>
+                    </AppButton>
                   </IonLabel>
                 </IonItem>
               ))

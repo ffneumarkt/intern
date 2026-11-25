@@ -1,5 +1,6 @@
-import { IonInput, IonItem, IonSelect, IonTextarea, IonToggle } from '@ionic/react'
+import { IonInput, IonItem, IonSelect, IonTextarea } from '@ionic/react'
 import type { ReactNode } from 'react'
+import { Switch } from '@/components/ui/switch'
 
 // Form fields as Ionic controls. IonInput and IonTextarea render their native input in the light
 // DOM, so it stays inside the surrounding <form> (Enter submits) and password managers fill it.
@@ -67,13 +68,14 @@ export function TextAreaField({ label, value, onChange, required, error }: Pick<
   )
 }
 
-// The aria-label names the toggle itself: Ionic labels it through an element in its shadow DOM.
+// A switch with its label on the left. The aria-label names the switch itself.
 export function CheckboxField({ label, checked, onChange }: { label: string; checked: boolean; onChange(checked: boolean): void }) {
   return (
     <IonItem>
-      <IonToggle justify="space-between" aria-label={label} checked={checked} onIonChange={(e) => onChange(e.detail.checked)}>
-        {label}
-      </IonToggle>
+      <div className="flex w-full items-center justify-between py-2">
+        <span>{label}</span>
+        <Switch aria-label={label} checked={checked} onCheckedChange={onChange} />
+      </div>
     </IonItem>
   )
 }

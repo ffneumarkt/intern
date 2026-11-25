@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from '../App'
 import { today } from '../today'
@@ -102,7 +103,7 @@ describe('locations in the lists', () => {
 describe('due list', () => {
   describe('Prüfen on a row', () => {
     const checkButton = (itemName: string) =>
-      ionItem(itemName)?.querySelector<HTMLElement>('ion-button.item-row-check') ?? null
+      ionItem(itemName)?.querySelector<HTMLElement>('.item-row-check') ?? null
 
     it('is offered on every due row to someone who may check', async () => {
       renderAt(paths.dueList, 'check')
@@ -336,7 +337,7 @@ describe('item actions follow level', () => {
 
 describe('the two main actions of an item', () => {
   const bar = () => document.querySelector('.ui-actions')
-  const inBar = (text: string) => ([...(bar()?.querySelectorAll('ion-button') ?? [])] as HTMLElement[]).find((b) => b.textContent?.trim() === text)
+  const inBar = (text: string) => ([...(bar()?.querySelectorAll('[data-slot="button"]') ?? [])] as HTMLElement[]).find((b) => b.textContent?.trim() === text)
 
   it('sit together in the bottom bar, Prüfung above Verwendung, for someone who may check', async () => {
     renderAt(paths.item('m01'), 'check')
@@ -352,8 +353,8 @@ describe('the two main actions of an item', () => {
   it('differ in color, so they are easy to tell apart: Prüfung in the check green, Verwendung in the red of the app', async () => {
     renderAt(paths.item('m01'), 'check')
     await findIon(() => ionButton('Verwendung erfassen'))
-    expect(inBar('Prüfung erfassen')).toHaveProperty('color', 'check')
-    expect(inBar('Verwendung erfassen')?.getAttribute('color') ?? '').toBe('')
+    expect(inBar('Prüfung erfassen')).toHaveAttribute('data-variant', 'check')
+    expect(inBar('Verwendung erfassen')).toHaveAttribute('data-variant', 'default')
   })
 
   it('have the same weight: both are solid buttons', async () => {
@@ -361,9 +362,8 @@ describe('the two main actions of an item', () => {
     await findIon(() => ionButton('Verwendung erfassen'))
     for (const text of ['Prüfung erfassen', 'Verwendung erfassen']) {
       const el = inBar(text)!
-      expect(el.getAttribute('fill')).not.toBe('outline')
-      expect(el.getAttribute('fill')).not.toBe('clear')
-      expect(el).toHaveAttribute('expand', 'block')
+      expect(['outline', 'ghost']).not.toContain(el.getAttribute('data-variant'))
+      expect(el).toHaveClass('w-full')
     }
   })
 
@@ -885,7 +885,7 @@ describe('retiring', () => {
     renderAt(paths.item('m01'), 'check')
     fireEvent.click(await findIon(() => ionButton('Ausscheiden')))
     fireEvent.click(await findIon(() => alertButton('Abbrechen')))
-    await waitFor(() => expect(document.querySelector('ion-alert')).not.toBeInTheDocument())
+    await waitFor(() => expect(document.querySelector('[role="alertdialog"]')).not.toBeInTheDocument())
     expect(calls.retired).toEqual([])
   })
 
@@ -1372,7 +1372,7 @@ describe('manage', () => {
     renderAt(paths.itemEdit('m02'), 'manage')
     fireEvent.click(await findIon(() => ionButton('Gerät löschen')))
     fireEvent.click(await findIon(() => alertButton('Abbrechen')))
-    await waitFor(() => expect(document.querySelector('ion-alert')).not.toBeInTheDocument())
+    await waitFor(() => expect(document.querySelector('[role="alertdialog"]')).not.toBeInTheDocument())
     expect(calls.deletedItems).toEqual([])
   })
 
@@ -1577,7 +1577,7 @@ describe('notification settings', () => {
   }
   const chipActive = (text: string) => ionChip(text)!.getAttribute('aria-pressed') === 'true'
   const secondLine = (label: string) => ionItem(label)!.querySelector('p')!.textContent
-  const checked = (label: string) => (ionToggle(label) as HTMLInputElement).checked
+  const checked = (label: string) => ionToggle(label)!.getAttribute('aria-checked') === 'true'
   const flip = async (label: string) => fireEvent.click(await findIon(() => ionToggle(label)))
   const enabled = { id: 'n1', categoryId: 'masken', timings: [14, 3, 0], weeklyOverdue: true }
   // Every group has empty live regions from the start; the message goes into the matching one.
@@ -1627,7 +1627,7 @@ describe('notification settings', () => {
     expect(['30', '14', '7', '3', '1', 'Am Tag'].map(chipActive)).toEqual([false, true, false, true, false, true])
     expect(checked('Atemschutzmasken')).toBe(true)
     expect(checked('Wöchentlich bei Überfälligem')).toBe(true)
-    expect(document.querySelectorAll('ion-chip')).toHaveLength(6)
+    expect(document.querySelectorAll('[data-slot="chip"]')).toHaveLength(6)
   })
 
   it('turning a category on creates its setting with chips', async () => {
@@ -1692,11 +1692,14 @@ describe('notification settings', () => {
   it('offers the chips as toggle buttons that work with the keyboard', async () => {
     notificationState.settings = [enabled]
     await open()
+    const user = userEvent.setup()
     const chip = await screen.findByRole('button', { name: '7', pressed: false })
-    expect(chip).toHaveAttribute('tabindex', '0')
-    fireEvent.keyDown(chip, { key: 'Enter' })
+    chip.focus()
+    await user.keyboard('{Enter}')
     await waitFor(() => expect(notificationState.settings[0].timings).toEqual([14, 7, 3, 0]))
-    fireEvent.keyDown(await screen.findByRole('button', { name: '14', pressed: true }), { key: ' ' })
+    const second = await screen.findByRole('button', { name: '14', pressed: true })
+    second.focus()
+    await user.keyboard(' ')
     await waitFor(() => expect(notificationState.settings[0].timings).toEqual([7, 3, 0]))
   })
 
@@ -1950,7 +1953,7 @@ describe('due list: nothing due', () => {
     renderAt(paths.dueList, 'use')
     expect(await screen.findByText('Nichts fällig.')).toBeInTheDocument()
     const button = await findIon(() => ionButton('Verwendung erfassen'))
-    expect(button).toHaveAttribute('size', 'large')
+    expect(button).toHaveAttribute('data-size', 'lg')
     fireEvent.click(button)
     expect(await screen.findByLabelText('Code manuell eingeben')).toBeInTheDocument()
   })

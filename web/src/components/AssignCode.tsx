@@ -1,9 +1,9 @@
-import { IonButton, IonItem, IonLabel, IonList } from '@ionic/react'
+import { IonItem, IonLabel, IonList } from '@ionic/react'
 import { useState } from 'react'
 import { assignBarcode, type Item } from '../api/material'
 import { BarcodeTakenError } from '../api/errors'
 import { Field } from './Field'
-import { ErrorText } from './ui'
+import { AppButton, ErrorText } from './ui'
 
 interface Props {
   code: string
@@ -36,9 +36,9 @@ export default function AssignCode({ code, items, onAssigned }: Props) {
 
   if (!open) {
     return (
-      <IonButton size="small" fill="outline" onClick={() => setOpen(true)}>
+      <AppButton size="small" fill="outline" onClick={() => setOpen(true)}>
         Gerät zuordnen
-      </IonButton>
+      </AppButton>
     )
   }
   return (

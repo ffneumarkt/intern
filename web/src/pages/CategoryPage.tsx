@@ -1,4 +1,5 @@
-import { IonButton, IonList } from '@ionic/react'
+import { IonList } from '@ionic/react'
+import { AppButton } from '../components/ui'
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { listCategories, listItems, listLocations } from '../api/material'
@@ -34,13 +35,13 @@ export default function CategoryPage() {
           return (
             <>
               <div className="ui-actionrow">
-                <IonButton fill="outline" size="small" onClick={() => setShowRetired((v) => !v)}>
+                <AppButton fill="outline" size="small" onClick={() => setShowRetired((v) => !v)}>
                   {showRetired ? 'Ausgeschiedene ausblenden' : 'Ausgeschiedene anzeigen'}
-                </IonButton>
+                </AppButton>
                 {can(categoryId, 'manage') && (
-                  <IonButton fill="outline" size="small" routerLink={paths.manageCategory(categoryId)}>
+                  <AppButton fill="outline" size="small" routerLink={paths.manageCategory(categoryId)}>
                     Verwalten
-                  </IonButton>
+                  </AppButton>
                 )}
               </div>
               <LocationFilter locations={locations} value={location} onChange={setLocation} />
