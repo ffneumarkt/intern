@@ -156,9 +156,11 @@ No roles. Each user has at most one permission per category:
 | `manage` | `check` + create, edit and delete items (only without history) and check types |
 
 - No permission row means the category is invisible to that user.
-- The admin is a PocketBase **superuser** and manages users, categories, permissions, notification
-  settings of others and `transport_document_settings` in the PocketBase admin UI (`/_/`). There are no
-  admin screens and no admin flag in the app.
+- Administration is part of the permission model: rows of `admin_rights` (user, area `members` |
+  `categories` | `transport` | `corrections`) give a user an admin area. Design, rules and routes are in
+  `2026-11-25-admin-ui-design.md`; until its screens ship, users and notification settings of others are
+  still managed by a PocketBase **superuser** in `/_/`, which answers 404 from outside the machine. The
+  first admin is made with `intern admin grant`.
 - The shared station account has `use` level.
 - All rules are enforced by PocketBase collection rules, each with an API test, e.g. the permission
   part of the `checks` create rule:
@@ -368,8 +370,9 @@ and navigates it, otherwise it opens a new one.
 - Docker Compose project with services `intern` (volume `./data:/pb_data`) and its own `cloudflared`
   (tunnel token in `.env`). The tunnel's public hostname `intern.ffneumarkt.at` points to
   `http://intern:8090`.
-- `.env` on the VPS holds the tunnel token and VAPID keys. PocketBase creates its superuser and keys on
-  first start.
+- `.env` on the VPS holds the tunnel token and VAPID keys. PocketBase creates its keys on first start;
+  the superuser and the first admin come from `intern superuser upsert` and `intern admin grant`. The
+  dashboard and the admin API answer 404 unless the request is local or `ADMIN_API_ALLOW=true`.
 - A systemd timer runs `docker compose pull && docker compose up -d` every 5 minutes. Rollback: pin the
   previous SHA tag in `compose.yaml`.
 

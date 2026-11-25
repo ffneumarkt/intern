@@ -54,7 +54,7 @@ make dev-api   # backend on :8090, admin UI at /_/; passkeys need http://localho
 make dev-web   # Vite dev server, proxies /api and /_
 make debug     # dev-api and dev-web together with LOG_LEVEL=debug
 make seed      # sample data in backend/pb_data, users keine@, verwendung@, pruefung@,
-               # verwaltung@ffneumarkt.local, password intern-dev-1234
+               # verwaltung@ffneumarkt.local (also an admin in every area), password intern-dev-1234
 make test      # go vet + go test, tsc, vitest
 make e2e       # Playwright in Chromium, Firefox, WebKit against the built binary on :8099 with a
                # seeded temp data dir; once: cd web && npx playwright install chromium firefox webkit;

@@ -174,7 +174,7 @@ func TestManageLevel(t *testing.T) {
 	e.run(t, "no delete elsewhere", request{as: w.Manage, method: "DELETE", url: record("items", w.ItemB.Id), status: 404})
 
 	for _, collection := range []string{"categories", "permissions"} {
-		e.run(t, "no create in "+collection, request{as: w.Manage, method: "POST", url: records(collection), body: `{}`, status: 403})
+		e.run(t, "no create in "+collection, request{as: w.Manage, method: "POST", url: records(collection), body: `{}`, status: 400})
 	}
 }
 
@@ -287,7 +287,7 @@ func TestTransportDocumentSettingsArePublicToRead(t *testing.T) {
 
 func TestMigrationsRevert(t *testing.T) {
 	app := testenv.New(t)
-	if _, err := core.NewMigrationsRunner(app, core.AppMigrations).Down(10); err != nil {
+	if _, err := core.NewMigrationsRunner(app, core.AppMigrations).Down(30); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := app.FindCollectionByNameOrId("items"); err == nil {

@@ -52,6 +52,13 @@ Last updated: 2026-11-05. Read this first, then the spec
   `forms.spec.ts` (Enter submits the login, a use, a check and a new item are saved and show in the
   history; throwaway items are removed with their history through the e2e superuser); screenshots of
   every form in iOS and Material mode were checked.
+- **Admin rights (PR 1 of 3 of the admin UI, branch `feature/admin-rights`, PR pending)**: spec
+  `specs/2026-11-25-admin-ui-design.md`, plan `plans/2026-11-25-admin-rights.md`. `admin_rights` (areas
+  members, categories, transport, corrections) widen the rules of `permissions`, `categories` and
+  `transport_document_settings`; hooks keep the last members holder and refuse non-empty categories;
+  `admin_audit` records changes; a shield answers 404 to `/_/` and PocketBase's admin API unless the request
+  is local (`ADMIN_API_ALLOW=true` opens it); `intern admin grant|revoke|list`. Next: PR 2 (members routes and
+  one-time setup links) and PR 3 (screens, corrections), each with its own plan.
 - **Phase 6 done** (branch `feature/transport-document`, PR pending, no separate plan: the spec's §8 was
   the design): the Beförderungspapier page on `web/src/transportDocument/` (`calc.ts`, `fillForm.ts`,
   `formLayout.ts` and their tests copied from ffneumarkt-web; the fillForm test wraps the PDF bytes in a

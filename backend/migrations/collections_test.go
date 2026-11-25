@@ -12,7 +12,7 @@ func TestCollectionsExist(t *testing.T) {
 	app := testenv.New(t)
 	for _, name := range []string{
 		"users", "categories", "permissions", "check_types", "items", "uses", "checks", "notification_settings",
-		"push_subscriptions", "notification_preferences", "passkeys", "notification_log", "transport_document_settings",
+		"admin_rights", "push_subscriptions", "notification_preferences", "passkeys", "notification_log", "transport_document_settings",
 	} {
 		if _, err := app.FindCollectionByNameOrId(name); err != nil {
 			t.Errorf("%s: %v", name, err)

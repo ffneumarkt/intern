@@ -11,6 +11,7 @@ import (
 	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 	"github.com/spf13/cobra"
 
+	"github.com/ffneumarkt/intern/backend/internal/admin"
 	"github.com/ffneumarkt/intern/backend/internal/due"
 	"github.com/ffneumarkt/intern/backend/internal/logging"
 	"github.com/ffneumarkt/intern/backend/internal/material"
@@ -29,6 +30,7 @@ func main() {
 	app := pocketbase.New()
 
 	material.Register(app)
+	admin.Register(app)
 
 	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
 		TemplateLang: migratecmd.TemplateLangGo,
@@ -37,10 +39,12 @@ func main() {
 
 	app.RootCmd.AddCommand(vapidCommand())
 	app.RootCmd.AddCommand(snapshotCommand(app))
+	app.RootCmd.AddCommand(adminCommand(app))
 
 	keys, pushEnabled := push.KeysFromEnv()
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
+		server.ShieldAdminAPI(se)
 		material.RegisterRoutes(se, due.Today)
 		if err := passkey.Register(se, passkey.ConfigFromEnv(), logger); err != nil {
 			return err

@@ -8,6 +8,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
 
+	"github.com/ffneumarkt/intern/backend/internal/admin"
 	"github.com/ffneumarkt/intern/backend/internal/material"
 	_ "github.com/ffneumarkt/intern/backend/migrations"
 )
@@ -33,6 +34,7 @@ func New(t testing.TB) *tests.TestApp {
 	}
 	t.Cleanup(app.Cleanup)
 	material.Register(app)
+	admin.Register(app)
 	return app
 }
 
@@ -97,4 +99,13 @@ func Token(t testing.TB, user *core.Record) string {
 		t.Fatal(err)
 	}
 	return token
+}
+
+// Admin gives a user the admin rights for the areas and returns the user.
+func Admin(t testing.TB, app core.App, user *core.Record, areas ...string) *core.Record {
+	t.Helper()
+	for _, area := range areas {
+		Create(t, app, "admin_rights", map[string]any{"user": user.Id, "area": area})
+	}
+	return user
 }
