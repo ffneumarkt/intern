@@ -1,4 +1,4 @@
-import { IonIcon, IonItem, IonLabel, IonList, IonSelectOption, IonText, useIonViewWillEnter } from '@ionic/react'
+import { IonIcon, IonItem, IonLabel, IonList, IonText, useIonViewWillEnter } from '@ionic/react'
 import { closeCircleOutline } from 'ionicons/icons'
 import { useEffect, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -170,9 +170,9 @@ export default function RecordUsePage() {
               <IonList>
                 <Field label="Datum" type="date" max={today()} value={date} onChange={setDate} />
                 <SelectField label="Art" value={kind} onChange={(value) => setKind(value as UseInput['kind'])}>
-                  <IonSelectOption value="operation">Einsatz</IonSelectOption>
-                  <IonSelectOption value="exercise">Übung</IonSelectOption>
-                  <IonSelectOption value="other">Sonstiges</IonSelectOption>
+                  <option value="operation">Einsatz</option>
+                  <option value="exercise">Übung</option>
+                  <option value="other">Sonstiges</option>
                 </SelectField>
                 <Field label="Erfasst von" value={recordedBy} onChange={setRecordedBy} />
                 <TextAreaField label="Notiz" value={note} onChange={setNote} />

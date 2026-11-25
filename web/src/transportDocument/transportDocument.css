@@ -104,47 +104,36 @@
   font-size: 28px;
 }
 
-.td-stepper ion-input {
-  --padding-top: 0;
-  --padding-bottom: 0;
-  min-height: 84px;
-  text-align: center;
-  font-size: 2.5rem;
-  font-weight: 700;
-  --border-radius: 14px;
-  --highlight-color-focused: var(--ion-color-primary);
+.td-count-field {
+  display: grid;
 }
 
-.td-stepper ion-input input {
-  text-align: center;
-}
-
-/* Hides the browser's own spin buttons: the round buttons do that job. */
-.td-stepper ion-input input::-webkit-outer-spin-button,
-.td-stepper ion-input input::-webkit-inner-spin-button {
-  margin: 0;
-  -webkit-appearance: none;
-}
-
-.td-stepper ion-input input[type='number'] {
-  -moz-appearance: textfield;
-  appearance: textfield;
-}
-
-.td-stepper ion-input .label-text-wrapper {
-  /* Ionic scales a stacked label from its left edge with more specific rules; centred over the numeral it
-     reads better flat, hence the !important. */
-  align-self: stretch !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  transform: none !important;
-  display: flex !important;
-  justify-content: center !important;
+.td-count-label {
   margin-bottom: 6px;
   text-align: center;
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--ui-muted);
+}
+
+.td-count-input {
+  height: 84px;
+  border-radius: 14px;
+  text-align: center;
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+/* Hides the browser's own spin buttons: the round buttons do that job. */
+.td-count-input::-webkit-outer-spin-button,
+.td-count-input::-webkit-inner-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+.td-count-input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 /* How much of the limit the trip uses. */

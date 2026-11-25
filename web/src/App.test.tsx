@@ -149,14 +149,14 @@ describe('login', () => {
 
   it('marks E-Mail and Passwort as required, and both when the form is sent empty', async () => {
     renderAt(paths.login, null)
-    const email = (await screen.findByLabelText('E-Mail')).closest('ion-input')!
-    const password = screen.getByLabelText('Passwort').closest('ion-input')!
-    expect(email).toHaveClass('ui-required')
-    expect(password).toHaveClass('ui-required')
+    const email = (await screen.findByLabelText('E-Mail'))
+    const password = screen.getByLabelText('Passwort')
+    expect(email).toBeRequired()
+    expect(password).toBeRequired()
     fireEvent.submit(document.querySelector('form')!)
-    await waitFor(() => expect(email).toHaveClass('ion-invalid'))
-    expect(email).toHaveProperty('errorText', 'Bitte ausfüllen.')
-    expect(password).toHaveClass('ion-invalid')
+    await waitFor(() => expect(email).toHaveAttribute('aria-invalid', 'true'))
+    expect(email).toHaveAccessibleDescription('Bitte ausfüllen.')
+    expect(password).toHaveAttribute('aria-invalid', 'true')
     // No wrong-password message: nothing was sent.
     expect(screen.queryByText('Anmeldung fehlgeschlagen. E-Mail und Passwort prüfen.')).toBeNull()
   })
@@ -165,8 +165,8 @@ describe('login', () => {
     renderAt(paths.login, null)
     typeInto(await screen.findByLabelText('E-Mail'), 'test@example.com')
     fireEvent.submit(document.querySelector('form')!)
-    await waitFor(() => expect(screen.getByLabelText('Passwort').closest('ion-input')).toHaveClass('ion-invalid'))
-    expect(screen.getByLabelText('E-Mail').closest('ion-input')).not.toHaveClass('ion-invalid')
+    await waitFor(() => expect(screen.getByLabelText('Passwort')).toHaveAttribute('aria-invalid', 'true'))
+    expect(screen.getByLabelText('E-Mail')).not.toHaveAttribute('aria-invalid')
   })
 
   it('shows an error for wrong credentials', async () => {

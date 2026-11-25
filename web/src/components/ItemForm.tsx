@@ -1,4 +1,4 @@
-import { IonIcon, IonList, IonSelectOption } from '@ionic/react'
+import { IonIcon, IonList } from '@ionic/react'
 import { addOutline } from 'ionicons/icons'
 import { useState } from 'react'
 import { BarcodeTakenError } from '../api/errors'
@@ -62,9 +62,9 @@ export default function ItemForm({ item, locations, checkTypes = [], submitLabel
         <Field label="Hergestellt am" type="date" value={manufacturedOn} onChange={setManufacturedOn} />
         <SelectField label="Standort" value={locationId} onChange={setLocationId}>
           {locations.map((l) => (
-            <IonSelectOption key={l.id} value={l.id}>
+            <option key={l.id} value={l.id}>
               {l.name}
-            </IonSelectOption>
+            </option>
           ))}
         </SelectField>
         <TextAreaField label="Notiz" value={note} onChange={setNote} />

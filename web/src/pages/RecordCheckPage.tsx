@@ -1,4 +1,4 @@
-import { IonList, IonSelectOption, useIonRouter, useIonViewWillEnter, useIonViewWillLeave } from '@ionic/react'
+import { IonList, useIonRouter, useIonViewWillEnter, useIonViewWillLeave } from '@ionic/react'
 import { useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { listCheckTypes, listItems, listLocations, recordCheck, type CheckInput } from '../api/material'
@@ -116,9 +116,9 @@ export default function RecordCheckPage() {
               <IonList>
                 <SelectField label="Prüfart" value={checkTypeId} onChange={setSelectedType}>
                   {types.map((t) => (
-                    <IonSelectOption key={t.id} value={t.id}>
+                    <option key={t.id} value={t.id}>
                       {t.name}
-                    </IonSelectOption>
+                    </option>
                   ))}
                 </SelectField>
                 <Field label="Datum" type="date" max={today()} value={date} onChange={setDate} />
@@ -133,16 +133,16 @@ export default function RecordCheckPage() {
                     setResultPicked(true)
                   }}
                 >
-                  <IonSelectOption value="passed">Bestanden</IonSelectOption>
-                  <IonSelectOption value="defect">Mangel</IonSelectOption>
-                  <IonSelectOption value="retired">Ausgeschieden</IonSelectOption>
+                  <option value="passed">Bestanden</option>
+                  <option value="defect">Mangel</option>
+                  <option value="retired">Ausgeschieden</option>
                 </SelectField>
                 {shownResult === 'passed' && (
                   <SelectField label="Standort" value={chosenLocation} onChange={setLocationId}>
                     {locations.map((l) => (
-                      <IonSelectOption key={l.id} value={l.id}>
+                      <option key={l.id} value={l.id}>
                         {l.name}
-                      </IonSelectOption>
+                      </option>
                     ))}
                   </SelectField>
                 )}

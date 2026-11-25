@@ -11,14 +11,12 @@ afterEach(() => {
 })
 
 function field(parent: HTMLElement, id: string, invalid: boolean) {
-  const el = document.createElement('ion-input')
-  if (invalid) el.className = 'ion-invalid ion-touched'
   const input = document.createElement('input')
   input.id = id
-  el.appendChild(input)
-  el.scrollIntoView = vi.fn()
-  parent.appendChild(el)
-  return { el, input }
+  if (invalid) input.setAttribute('aria-invalid', 'true')
+  input.scrollIntoView = vi.fn()
+  parent.appendChild(input)
+  return { el: input, input }
 }
 
 describe('showFirstInvalid', () => {
@@ -35,7 +33,7 @@ describe('showFirstInvalid', () => {
     vi.runAllTimers()
     expect(first.el.scrollIntoView).toHaveBeenCalledWith({ block: 'center', behavior: 'smooth' })
     expect(second.el.scrollIntoView).not.toHaveBeenCalled()
-    // Taking the focus would start Ionic's iOS input shim, which swaps in a copy of the field.
+    // Taking the focus would pop up the keyboard before the message has been read.
     expect(document.activeElement).not.toBe(first.input)
     expect(document.activeElement).toBe(document.body)
   })

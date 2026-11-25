@@ -1,4 +1,4 @@
-import { IonList, IonListHeader, IonLabel, IonSelectOption } from '@ionic/react'
+import { IonList, IonListHeader, IonLabel } from '@ionic/react'
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
@@ -181,9 +181,9 @@ function MemberDetails({ member, data, onChange, onIssued }: DetailsProps) {
             }
           >
             {(Object.keys(levelLabels) as (Level | 'none')[]).map((level) => (
-              <IonSelectOption key={level} value={level}>
+              <option key={level} value={level}>
                 {levelLabels[level]}
-              </IonSelectOption>
+              </option>
             ))}
           </SelectField>
         ))}

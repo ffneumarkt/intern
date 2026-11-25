@@ -1,17 +1,15 @@
-import { IonSelectOption } from '@ionic/react'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
-import { choose, findIon, ionSelect, selectedText, setToggle, typeInto } from '../test/ionic'
+import { choose, ionSelect, selectedText, setToggle, typeInto } from '../test/ionic'
 import { CheckboxField, Field, SelectField, TextAreaField } from './Field'
 
 describe('Field', () => {
-  it('labels the inner input, passes type, autocomplete, required and max, and reports typing', async () => {
+  it('labels the input, passes type, autocomplete, required and max, and reports typing', () => {
     const onChange = vi.fn()
     render(<Field label="E-Mail" type="email" autoComplete="username" value="a@b.at" onChange={onChange} required max="9" />)
-    const input = await screen.findByLabelText('E-Mail')
+    const input = screen.getByLabelText('E-Mail')
     expect(input.tagName).toBe('INPUT')
-    expect(input.closest('ion-input')).not.toBeNull()
     expect(input).toHaveAttribute('type', 'email')
     expect(input).toHaveAttribute('autocomplete', 'username')
     expect(input).toBeRequired()
@@ -26,26 +24,25 @@ describe('Field', () => {
   const typingHints = (input: HTMLElement) => [
     input.getAttribute('autocapitalize'),
     input.getAttribute('autocorrect'),
-    // jsdom has no spellcheck property, so Stencil sets an attribute: present for true, absent for false.
-    input.hasAttribute('spellcheck'),
+    input.getAttribute('spellcheck'),
   ]
 
-  it('capitalises, corrects and spellchecks plain text by default', async () => {
+  it('capitalises, corrects and spellchecks plain text by default', () => {
     render(<Field label="Bezeichnung" value="" onChange={() => {}} />)
-    expect(typingHints(await screen.findByLabelText('Bezeichnung'))).toEqual(['sentences', 'on', true])
+    expect(typingHints(screen.getByLabelText('Bezeichnung'))).toEqual(['sentences', 'on', 'true'])
   })
 
-  it('turns the typing help off for code-like text', async () => {
+  it('turns the typing help off for code-like text', () => {
     render(<Field label="Code" value="" onChange={() => {}} autoCapitalize="off" />)
-    expect(typingHints(await screen.findByLabelText('Code'))).toEqual(['off', 'off', false])
+    expect(typingHints(screen.getByLabelText('Code'))).toEqual(['off', 'off', 'false'])
   })
 
-  it.each(['email', 'password', 'date', 'number'])('turns the typing help off for type %s', async (type) => {
+  it.each(['email', 'password', 'date', 'number'])('turns the typing help off for type %s', (type) => {
     render(<Field label="Feld" type={type} value="" onChange={() => {}} />)
-    expect(typingHints(await screen.findByLabelText('Feld'))).toEqual(['off', 'off', false])
+    expect(typingHints(screen.getByLabelText('Feld'))).toEqual(['off', 'off', 'false'])
   })
 
-  it('follows its controlled value', async () => {
+  it('follows its controlled value', () => {
     function Controlled() {
       const [value, setValue] = useState('alt')
       return (
@@ -56,31 +53,40 @@ describe('Field', () => {
       )
     }
     render(<Controlled />)
-    const input = await screen.findByLabelText('Name')
+    const input = screen.getByLabelText('Name')
     typeInto(input, 'neu')
     expect(input).toHaveValue('neu')
     fireEvent.click(screen.getByText('reset'))
-    await waitFor(() => expect(input).toHaveValue('vom Server'))
+    expect(input).toHaveValue('vom Server')
+  })
+
+  it('keeps two fields with the same label apart', () => {
+    render(
+      <>
+        <Field label="Name" value="eins" onChange={() => {}} />
+        <Field label="Name" value="zwei" onChange={() => {}} />
+      </>,
+    )
+    expect(screen.getAllByLabelText('Name').map((i) => (i as HTMLInputElement).value)).toEqual(['eins', 'zwei'])
   })
 })
 
 describe('TextAreaField', () => {
-  it('labels the inner textarea and reports typing', async () => {
+  it('labels the textarea and reports typing', () => {
     const onChange = vi.fn()
     render(<TextAreaField label="Notiz" value="alt" onChange={onChange} />)
-    const textarea = await screen.findByLabelText('Notiz')
+    const textarea = screen.getByLabelText('Notiz')
     expect(textarea.tagName).toBe('TEXTAREA')
-    expect(textarea.closest('ion-textarea')).not.toBeNull()
     expect(textarea).toHaveValue('alt')
     typeInto(textarea, 'Riss')
     expect(onChange).toHaveBeenLastCalledWith('Riss')
   })
 
-  it('capitalises and spellchecks like a native textarea', async () => {
+  it('capitalises and spellchecks like a native textarea', () => {
     render(<TextAreaField label="Notiz" value="" onChange={() => {}} />)
-    const textarea = await screen.findByLabelText('Notiz')
+    const textarea = screen.getByLabelText('Notiz')
     expect(textarea).toHaveAttribute('autocapitalize', 'sentences')
-    expect(textarea).toHaveAttribute('spellcheck')
+    expect(textarea).toHaveAttribute('spellcheck', 'true')
   })
 })
 
@@ -89,126 +95,116 @@ describe('SelectField', () => {
     const [value, setValue] = useState(initial)
     return (
       <SelectField label="Art" value={value} onChange={setValue}>
-        <IonSelectOption value="a">Alpha</IonSelectOption>
-        <IonSelectOption value="b">Beta</IonSelectOption>
+        <option value="a">Alpha</option>
+        <option value="b">Beta</option>
       </SelectField>
     )
   }
 
-  it('shows the label and the chosen option, and choosing changes it', async () => {
+  it('is a native select with its label, showing the chosen option, and choosing changes it', () => {
     render(<Controlled />)
-    const select = await findIon(() => ionSelect('Art'))
+    const select = ionSelect('Art')!
+    expect(select.tagName).toBe('SELECT')
     expect(select).toHaveValue('b')
-    await waitFor(() => expect(selectedText(select)).toBe('Beta'))
+    expect(selectedText(select)).toBe('Beta')
     choose(select, 'a')
     expect(select).toHaveValue('a')
-    await waitFor(() => expect(selectedText(select)).toBe('Alpha'))
+    expect(selectedText(select)).toBe('Alpha')
   })
 
-  it('opens a popover: one tap, anchored at the field', async () => {
+  it('is found by its label like any control', () => {
     render(<Controlled />)
-    const select = (await findIon(() => ionSelect('Art'))) as HTMLIonSelectElement
-    expect(select.interface).toBe('popover')
+    expect(screen.getByLabelText('Art')).toBe(ionSelect('Art'))
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual(['Alpha', 'Beta'])
   })
 
-  it('reports an empty value as an empty string, not "undefined"', async () => {
-    const onChange = vi.fn()
-    render(
-      <SelectField label="Art" value="a" onChange={onChange}>
-        <IonSelectOption value="a">Alpha</IonSelectOption>
-      </SelectField>,
-    )
-    const select = await findIon(() => ionSelect('Art'))
-    fireEvent(select, new CustomEvent('ionChange', { detail: { value: undefined } }))
-    expect(onChange).toHaveBeenLastCalledWith('')
-  })
-
-  it('shows no selection for a value that is not among the options', async () => {
+  it('shows no selection for a value that is not among the options', () => {
     render(<Controlled initial="geloescht" />)
-    const select = await findIon(() => ionSelect('Art'))
+    const select = ionSelect('Art')!
     expect(selectedText(select)).toBe('')
     choose(select, 'b')
-    await waitFor(() => expect(selectedText(select)).toBe('Beta'))
+    expect(selectedText(select)).toBe('Beta')
   })
 })
 
 describe('CheckboxField', () => {
-  it('is a labelled toggle whose checked state follows its prop, and a click reports the new state', async () => {
+  it('is a labelled switch whose checked state follows its prop, and a click reports the new state', () => {
     const onChange = vi.fn()
     const { rerender } = render(<CheckboxField label="nach Verwendung" checked={false} onChange={onChange} />)
-    const toggle = await screen.findByRole('switch', { name: 'nach Verwendung' })
+    const toggle = screen.getByRole('switch', { name: 'nach Verwendung' })
     expect(toggle).not.toBeChecked()
     rerender(<CheckboxField label="nach Verwendung" checked onChange={onChange} />)
-    await waitFor(() => expect(toggle).toBeChecked())
+    expect(toggle).toBeChecked()
     fireEvent.click(toggle)
     expect(onChange).toHaveBeenLastCalledWith(false)
     rerender(<CheckboxField label="nach Verwendung" checked={false} onChange={onChange} />)
     setToggle(toggle, false)
     expect(onChange).toHaveBeenCalledTimes(1)
     setToggle(toggle, true)
+    expect(onChange).toHaveBeenCalledTimes(2)
     expect(onChange).toHaveBeenLastCalledWith(true)
   })
 })
 
 describe('required fields', () => {
-  it('marks a required field so the label gets a red star, and leaves the others alone', async () => {
+  it('marks a required field and leaves the others alone', () => {
     render(
       <>
         <Field label="Bezeichnung" value="" onChange={() => {}} required />
         <Field label="Seriennummer" value="" onChange={() => {}} />
       </>,
     )
-    expect((await screen.findByLabelText('Bezeichnung')).closest('ion-input')).toHaveClass('ui-required')
-    expect(screen.getByLabelText('Seriennummer').closest('ion-input')).not.toHaveClass('ui-required')
+    expect(screen.getByLabelText('Bezeichnung')).toBeRequired()
+    expect(screen.getByLabelText('Seriennummer')).not.toBeRequired()
   })
 
-  it('does not change the label text, so fields are still found by it', async () => {
+  it('does not change the label text, so fields are still found by it', () => {
     render(<Field label="Bezeichnung" value="" onChange={() => {}} required />)
-    expect(await screen.findByLabelText('Bezeichnung')).toBeInTheDocument()
+    expect(screen.getByLabelText('Bezeichnung')).toBeInTheDocument()
     expect(screen.queryByText('*')).toBeNull()
   })
 
-  it('marks a required select and textarea the same way', async () => {
+  it('marks a required select and textarea the same way', () => {
     render(
       <>
         <SelectField label="Prüfart" value="" onChange={() => {}} required>
-          <IonSelectOption value="a">A</IonSelectOption>
+          <option value="a">A</option>
         </SelectField>
         <TextAreaField label="Notiz" value="" onChange={() => {}} required />
       </>,
     )
-    expect((await findIon(() => ionSelect('Prüfart')))).toHaveClass('ui-required')
-    expect(screen.getByLabelText('Notiz').closest('ion-textarea')).toHaveClass('ui-required')
+    expect(screen.getByLabelText('Prüfart')).toBeRequired()
+    expect(screen.getByLabelText('Notiz')).toBeRequired()
   })
 })
 
 describe('field errors', () => {
-  it('shows a message under an input and marks it invalid', async () => {
+  it('shows a message under an input and marks it invalid', () => {
     render(<Field label="Bezeichnung" value="" onChange={() => {}} required error="Bitte ausfüllen." />)
-    const wrapper = (await screen.findByLabelText('Bezeichnung')).closest('ion-input')!
-    expect(wrapper).toHaveClass('ion-invalid', 'ion-touched')
-    expect(wrapper).toHaveProperty('errorText', 'Bitte ausfüllen.')
+    const input = screen.getByLabelText('Bezeichnung')
+    expect(input).toBeInvalid()
+    expect(input).toHaveAccessibleDescription('Bitte ausfüllen.')
+    expect(screen.getByText('Bitte ausfüllen.')).toBeInTheDocument()
   })
 
-  it('does the same for a select and a textarea', async () => {
+  it('does the same for a select and a textarea', () => {
     render(
       <>
         <SelectField label="Prüfart" value="" onChange={() => {}} error="Bitte ausfüllen.">
-          <IonSelectOption value="a">A</IonSelectOption>
+          <option value="a">A</option>
         </SelectField>
         <TextAreaField label="Notiz" value="" onChange={() => {}} error="Bitte ausfüllen." />
       </>,
     )
-    const select = await findIon(() => ionSelect('Prüfart'))
-    expect(select).toHaveClass('ion-invalid', 'ion-touched')
-    expect(select).toHaveProperty('errorText', 'Bitte ausfüllen.')
-    const area = screen.getByLabelText('Notiz').closest('ion-textarea')!
-    expect(area).toHaveClass('ion-invalid', 'ion-touched')
-    expect(area).toHaveProperty('errorText', 'Bitte ausfüllen.')
+    for (const label of ['Prüfart', 'Notiz']) {
+      const control = screen.getByLabelText(label)
+      expect(control).toBeInvalid()
+      expect(control).toHaveAccessibleDescription('Bitte ausfüllen.')
+    }
   })
 
-  it('has no error state without a message', async () => {
+  it('has no error state without a message', () => {
     render(<Field label="Bezeichnung" value="" onChange={() => {}} required />)
-    expect((await screen.findByLabelText('Bezeichnung')).closest('ion-input')).not.toHaveClass('ion-invalid')
+    expect(screen.getByLabelText('Bezeichnung')).not.toHaveAttribute('aria-invalid')
   })
 })

@@ -1,4 +1,4 @@
-import { IonList, IonSelectOption } from '@ionic/react'
+import { IonList } from '@ionic/react'
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { correctCheck, correctUse, deleteCheck, deleteUse } from '../api/admin'
@@ -102,9 +102,9 @@ function CorrectionForm({ entry }: { entry: HistoryEntry }) {
           <>
             <SelectField label="Art" value={kind} onChange={(value) => setKind(value as UseInput['kind'])}>
               {(Object.keys(useKinds) as UseInput['kind'][]).map((k) => (
-                <IonSelectOption key={k} value={k}>
+                <option key={k} value={k}>
                   {useKinds[k]}
-                </IonSelectOption>
+                </option>
               ))}
             </SelectField>
             <Field label="Erfasst von" value={recordedBy} onChange={setRecordedBy} />
@@ -112,9 +112,9 @@ function CorrectionForm({ entry }: { entry: HistoryEntry }) {
         ) : (
           <SelectField label="Ergebnis" value={result} onChange={(value) => setResult(value as CheckInput['result'])}>
             {(Object.keys(results) as CheckInput['result'][]).map((r) => (
-              <IonSelectOption key={r} value={r}>
+              <option key={r} value={r}>
                 {results[r]}
-              </IonSelectOption>
+              </option>
             ))}
           </SelectField>
         )}

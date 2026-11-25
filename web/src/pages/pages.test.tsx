@@ -643,9 +643,9 @@ describe('recording a check with measurements', () => {
     await open()
     enter('-10', '-11', '5')
     expect(screen.queryByText(/Verlust/)).toBeNull()
-    const end = screen.getByLabelText('Druck nach 60 s (mbar)').closest('ion-input')!
-    await waitFor(() => expect(end).toHaveProperty('errorText', 'Nach 60 s kann der Druck nicht weiter von 0 entfernt sein als am Start.'))
-    expect(end).toHaveClass('ion-invalid')
+    const end = screen.getByLabelText('Druck nach 60 s (mbar)')
+    await waitFor(() => expect(end).toHaveAccessibleDescription('Nach 60 s kann der Druck nicht weiter von 0 entfernt sein als am Start.'))
+    expect(end).toHaveAttribute('aria-invalid', 'true')
   })
 
   it('does not save such a reading', async () => {
@@ -659,17 +659,17 @@ describe('recording a check with measurements', () => {
   it('refuses a reading on the other side of 0', async () => {
     await open()
     enter('-10', '2', '5')
-    const end = screen.getByLabelText('Druck nach 60 s (mbar)').closest('ion-input')!
-    await waitFor(() => expect(end).toHaveClass('ion-invalid'))
+    const end = screen.getByLabelText('Druck nach 60 s (mbar)')
+    await waitFor(() => expect(end).toHaveAttribute('aria-invalid', 'true'))
   })
 
   it('takes the error away when the reading is corrected', async () => {
     await open()
     enter('-10', '-11', '5')
-    const end = screen.getByLabelText('Druck nach 60 s (mbar)').closest('ion-input')!
-    await waitFor(() => expect(end).toHaveClass('ion-invalid'))
+    const end = screen.getByLabelText('Druck nach 60 s (mbar)')
+    await waitFor(() => expect(end).toHaveAttribute('aria-invalid', 'true'))
     typeInto(screen.getByLabelText('Druck nach 60 s (mbar)'), '-9')
-    await waitFor(() => expect(end).not.toHaveClass('ion-invalid'))
+    await waitFor(() => expect(end).not.toHaveAttribute('aria-invalid'))
     expect(screen.getByText('Verlust 1 mbar ✓')).toBeInTheDocument()
   })
 
@@ -678,7 +678,7 @@ describe('recording a check with measurements', () => {
     enter('10', '9', '5')
     expect(screen.getByText('Verlust 1 mbar ✓')).toBeInTheDocument()
     typeInto(screen.getByLabelText('Druck nach 60 s (mbar)'), '11')
-    await waitFor(() => expect(screen.getByLabelText('Druck nach 60 s (mbar)').closest('ion-input')).toHaveClass('ion-invalid'))
+    await waitFor(() => expect(screen.getByLabelText('Druck nach 60 s (mbar)')).toHaveAttribute('aria-invalid', 'true'))
   })
 
   it('names the opening pressure limit that was missed and suggests Mangel', async () => {
@@ -901,14 +901,14 @@ describe('retiring', () => {
 describe('required fields', () => {
   const message = 'Bitte ausfüllen.'
   const set = (label: string, value: string) => typeInto(screen.getByLabelText(label), value)
-  const field = (label: string) => screen.getByLabelText(label).closest('ion-input')!
+  const field = (label: string) => screen.getByLabelText(label)
 
   describe('item form', () => {
     it('marks Bezeichnung as required and the optional fields as not', async () => {
       renderAt(paths.itemNew('masken'), 'manage')
       await screen.findByLabelText('Bezeichnung')
-      expect(field('Bezeichnung')).toHaveClass('ui-required')
-      expect(field('Seriennummer')).not.toHaveClass('ui-required')
+      expect(field('Bezeichnung')).toBeRequired()
+      expect(field('Seriennummer')).not.toBeRequired()
     })
 
     it('shows no error before Speichern is pressed, and the button can be pressed', async () => {
@@ -922,8 +922,8 @@ describe('required fields', () => {
       renderAt(paths.itemNew('masken'), 'manage')
       await screen.findByLabelText('Bezeichnung')
       fireEvent.click(ionButton('Gerät anlegen')!)
-      await waitFor(() => expect(field('Bezeichnung')).toHaveClass('ion-invalid', 'ion-touched'))
-      expect(field('Bezeichnung')).toHaveProperty('errorText', message)
+      await waitFor(() => expect(field('Bezeichnung')).toHaveAttribute('aria-invalid', 'true'))
+      expect(field('Bezeichnung')).toHaveAccessibleDescription(message)
       expect(calls.createdItems).toEqual([])
     })
 
@@ -932,7 +932,7 @@ describe('required fields', () => {
       await screen.findByLabelText('Bezeichnung')
       set('Bezeichnung', '   ')
       fireEvent.click(ionButton('Gerät anlegen')!)
-      await waitFor(() => expect(field('Bezeichnung')).toHaveClass('ion-invalid'))
+      await waitFor(() => expect(field('Bezeichnung')).toHaveAttribute('aria-invalid', 'true'))
       expect(calls.createdItems).toEqual([])
     })
 
@@ -940,9 +940,9 @@ describe('required fields', () => {
       renderAt(paths.itemNew('masken'), 'manage')
       await screen.findByLabelText('Bezeichnung')
       fireEvent.click(ionButton('Gerät anlegen')!)
-      await waitFor(() => expect(field('Bezeichnung')).toHaveClass('ion-invalid'))
+      await waitFor(() => expect(field('Bezeichnung')).toHaveAttribute('aria-invalid', 'true'))
       set('Bezeichnung', 'Maske 07')
-      await waitFor(() => expect(field('Bezeichnung')).not.toHaveClass('ion-invalid'))
+      await waitFor(() => expect(field('Bezeichnung')).not.toHaveAttribute('aria-invalid'))
       fireEvent.click(ionButton('Gerät anlegen')!)
       await waitFor(() => expect(calls.createdItems).toHaveLength(1))
     })
@@ -952,7 +952,7 @@ describe('required fields', () => {
       await screen.findByLabelText('Bezeichnung')
       set('Bezeichnung', '')
       fireEvent.click(await findIon(() => ionButton('Speichern')))
-      await waitFor(() => expect(field('Bezeichnung')).toHaveClass('ion-invalid'))
+      await waitFor(() => expect(field('Bezeichnung')).toHaveAttribute('aria-invalid', 'true'))
       expect(calls.updatedItems).toEqual([])
     })
   })
@@ -965,15 +965,15 @@ describe('required fields', () => {
 
     it('marks Name as required', async () => {
       await open()
-      expect(field('Name')).toHaveClass('ui-required')
-      expect(field('Intervall in Monaten')).not.toHaveClass('ui-required')
+      expect(field('Name')).toBeRequired()
+      expect(field('Intervall in Monaten')).not.toBeRequired()
     })
 
     it('marks an empty Name and saves nothing', async () => {
       await open()
       fireEvent.click(ionButton('Prüfart anlegen')!)
-      await waitFor(() => expect(field('Name')).toHaveClass('ion-invalid'))
-      expect(field('Name')).toHaveProperty('errorText', message)
+      await waitFor(() => expect(field('Name')).toHaveAttribute('aria-invalid', 'true'))
+      expect(field('Name')).toHaveAccessibleDescription(message)
       expect(calls.createdCheckTypes).toEqual([])
     })
 
@@ -991,9 +991,9 @@ describe('required fields', () => {
       renderAt(paths.manage, 'manage')
       fireEvent.click(await screen.findByText('Standorte'))
       await findIon(() => ionButton('Standort anlegen'))
-      expect(field('Name')).toHaveClass('ui-required')
+      expect(field('Name')).toBeRequired()
       fireEvent.click(ionButton('Standort anlegen')!)
-      await waitFor(() => expect(field('Name')).toHaveClass('ion-invalid'))
+      await waitFor(() => expect(field('Name')).toHaveAttribute('aria-invalid', 'true'))
       expect(calls.createdLocations).toEqual([])
     })
   })
@@ -1008,7 +1008,7 @@ describe('required fields', () => {
 
     it('marks the three readings as required', async () => {
       await open()
-      for (const label of readings) expect(field(label)).toHaveClass('ui-required')
+      for (const label of readings) expect(field(label)).toBeRequired()
     })
 
     it('marks every empty reading when Speichern is pressed, keeps the filled one clean and saves nothing', async () => {
@@ -1016,10 +1016,10 @@ describe('required fields', () => {
       fireEvent.click(ionButton('Speichern')!)
       expect(await screen.findByText('Bitte alle Messwerte eintragen.')).toBeInTheDocument()
       // The start pressure has its default value of -10.
-      expect(field('Startdruck (mbar)')).not.toHaveClass('ion-invalid')
+      expect(field('Startdruck (mbar)')).not.toHaveAttribute('aria-invalid')
       for (const label of readings.slice(1)) {
-        await waitFor(() => expect(field(label)).toHaveClass('ion-invalid'))
-        expect(field(label)).toHaveProperty('errorText', message)
+        await waitFor(() => expect(field(label)).toHaveAttribute('aria-invalid', 'true'))
+        expect(field(label)).toHaveAccessibleDescription(message)
       }
       expect(calls.checks).toEqual([])
     })
@@ -1029,17 +1029,17 @@ describe('required fields', () => {
       set('Druck nach 60 s (mbar)', 'neun')
       set('Öffnungsdruck (mbar)', '5')
       fireEvent.click(ionButton('Speichern')!)
-      await waitFor(() => expect(field('Druck nach 60 s (mbar)')).toHaveProperty('errorText', 'Bitte eine Zahl eintragen.'))
+      await waitFor(() => expect(field('Druck nach 60 s (mbar)')).toHaveAccessibleDescription('Bitte eine Zahl eintragen.'))
     })
 
     it('shows no errors before Speichern, and takes each away as it is filled in', async () => {
       await open()
-      for (const label of readings) expect(field(label)).not.toHaveClass('ion-invalid')
+      for (const label of readings) expect(field(label)).not.toHaveAttribute('aria-invalid')
       fireEvent.click(ionButton('Speichern')!)
-      await waitFor(() => expect(field('Öffnungsdruck (mbar)')).toHaveClass('ion-invalid'))
+      await waitFor(() => expect(field('Öffnungsdruck (mbar)')).toHaveAttribute('aria-invalid', 'true'))
       set('Öffnungsdruck (mbar)', '5,1')
-      await waitFor(() => expect(field('Öffnungsdruck (mbar)')).not.toHaveClass('ion-invalid'))
-      expect(field('Druck nach 60 s (mbar)')).toHaveClass('ion-invalid')
+      await waitFor(() => expect(field('Öffnungsdruck (mbar)')).not.toHaveAttribute('aria-invalid'))
+      expect(field('Druck nach 60 s (mbar)')).toHaveAttribute('aria-invalid', 'true')
     })
 
     it('has no star on a check type without readings', async () => {
@@ -1052,7 +1052,7 @@ describe('required fields', () => {
 
 describe('locations in the forms', () => {
   const set = (label: string, value: string) => typeInto(screen.getByLabelText(label), value)
-  const optionTexts = (label: string) => [...ionSelect(label)!.querySelectorAll('ion-select-option')].map((o) => o.textContent)
+  const optionTexts = (label: string) => [...ionSelect(label)!.querySelectorAll('option:not([hidden])')].map((o) => o.textContent)
 
   describe('item form', () => {
     it('offers the locations, the workshop preselected for a new item', async () => {
