@@ -133,8 +133,30 @@ p.settings-summary {
 
 .day-chips {
   display: flex;
-  flex-wrap: wrap;
+  gap: 6px;
   margin-top: 4px;
+}
+
+/* One row, whatever the width: the number chips share it equally, „Am Tag“ gets a little more. The selected chips are
+   filled and bold (no check mark, which only took room). */
+.day-chips [data-slot='chip'] {
+  flex: 1 1 0;
+  min-width: 0;
+  justify-content: center;
+  padding-inline: 4px;
+}
+
+.day-chips [data-slot='chip'] {
+  white-space: nowrap;
+}
+
+.day-chips [data-slot='chip']:last-child {
+  flex: 0 0 auto;
+  padding-inline: 14px;
+}
+
+.day-chips [data-slot='chip']:not([data-outline='true']) {
+  font-weight: 700;
 }
 
 .time-input {

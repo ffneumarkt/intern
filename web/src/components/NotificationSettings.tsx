@@ -1,4 +1,4 @@
-import { Bell, Check } from 'lucide-react'
+import { Bell } from 'lucide-react'
 import { List, Row, RowLabel } from '@/components/ui/list'
 import { Chip } from '@/components/ui/chip'
 import { Switch } from '@/components/ui/switch'
@@ -317,7 +317,6 @@ function Category({
                   }
                   return (
                     <Chip key={days} outline={!active} disabled={busy} aria-pressed={active ? 'true' : 'false'} onClick={toggle}>
-                      {active && <Check aria-hidden="true" />}
                       {label}
                     </Chip>
                   )
