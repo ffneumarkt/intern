@@ -98,3 +98,12 @@ func Token(t testing.TB, user *core.Record) string {
 	}
 	return token
 }
+
+// Admin gives a user the admin rights for the areas and returns the user.
+func Admin(t testing.TB, app core.App, user *core.Record, areas ...string) *core.Record {
+	t.Helper()
+	for _, area := range areas {
+		Create(t, app, "admin_rights", map[string]any{"user": user.Id, "area": area})
+	}
+	return user
+}
