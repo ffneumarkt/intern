@@ -53,7 +53,8 @@ export default function DueListPage() {
   const only = param ? new Set(param.split(',').filter(Boolean)) : null
   return (
     <Page
-      title="Fällig"
+      // The title names the view that is open (the Fällig/Zeitplan control sits below it).
+      title={view === 'timeline' && !only ? 'Zeitplan' : 'Fällig'}
       fab={
         <Link to={paths.recordUse} className="app-fab" title="Verwendung erfassen" aria-label="Verwendung erfassen">
           <ScanBarcode aria-hidden="true" />

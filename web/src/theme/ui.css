@@ -941,3 +941,15 @@ body {
     --ui-hover: rgba(255, 255, 255, 0.06);
   }
 }
+
+/* Tailwind's reset gives buttons the plain arrow; everything that can be pressed shows the hand again. */
+button:not(:disabled),
+[role='button'],
+[role='tab'],
+[role='switch'],
+a[href],
+summary,
+select:not(:disabled),
+label[for] {
+  cursor: pointer;
+}
