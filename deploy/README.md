@@ -25,6 +25,9 @@ default setup, creates the first admin (all admin areas, manage on every categor
 set `ADMIN_PASSWORD`) and starts the app. Without `TUNNEL_TOKEN` there is no tunnel: the app is published on
 `127.0.0.1:8090` (`STAGING_PORT`) instead. Running it again keeps `.env` and the data and only adds what is missing.
 The same step without Docker or the admin: `intern bootstrap [--admin-email EMAIL --admin-name NAME]`.
+Or let the app do the default setup itself: `APPLY_DEFAULTS=true` in `.env` adds it on the first start of an empty database
+(no category yet); once a category exists it does nothing, so it can stay on. The first admin still needs
+`intern bootstrap --admin-email EMAIL`.
 
 The default setup is `backend/internal/defaults/defaults.json` (edit it to change the station's setup):
 Atemschutzmasken (15 years; Maskenprüfung every 12 months, after a use, default, with measurements; 5-Jahres-Prüfung

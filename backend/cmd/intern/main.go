@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ffneumarkt/intern/backend/internal/admin"
+	"github.com/ffneumarkt/intern/backend/internal/defaults"
 	"github.com/ffneumarkt/intern/backend/internal/due"
 	"github.com/ffneumarkt/intern/backend/internal/logging"
 	"github.com/ffneumarkt/intern/backend/internal/material"
@@ -45,6 +46,16 @@ func main() {
 	keys, pushEnabled := push.KeysFromEnv()
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
+		// The migrations have run by now. With APPLY_DEFAULTS=true an empty database gets the station's default setup.
+		if defaults.Enabled() {
+			summary, applied, err := defaults.ApplyIfEmpty(app)
+			if err != nil {
+				return err
+			}
+			if applied {
+				logger.Info("default setup applied", "categories", summary.Categories, "checkTypes", summary.CheckTypes, "locations", summary.Locations)
+			}
+		}
 		server.ShieldAdminAPI(se)
 		admin.RegisterRoutes(se, logger)
 		material.RegisterRoutes(se, due.Today)

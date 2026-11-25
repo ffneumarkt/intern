@@ -11,6 +11,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/pocketbase/pocketbase/core"
 
@@ -199,4 +201,25 @@ func grantAll(app core.App, email string) error {
 		}
 	}
 	return nil
+}
+
+// Enabled reports whether APPLY_DEFAULTS asks for the default setup on the first start.
+func Enabled() bool {
+	switch strings.ToLower(os.Getenv("APPLY_DEFAULTS")) {
+	case "true", "1", "yes":
+		return true
+	}
+	return false
+}
+
+// ApplyIfEmpty applies the defaults only when the database has no category yet, so it is safe to leave
+// APPLY_DEFAULTS on: a station that has its own categories (or deleted the defaults on purpose after the
+// first start and added its own) is never touched. It reports whether it applied them.
+func ApplyIfEmpty(app core.App) (Summary, bool, error) {
+	count, err := app.CountRecords("categories")
+	if err != nil || count > 0 {
+		return Summary{}, false, err
+	}
+	summary, err := Apply(app)
+	return summary, err == nil, err
 }

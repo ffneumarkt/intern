@@ -1,5 +1,6 @@
 # Reference for the VPS (/srv/intern). Secrets live in .env next to this file:
 #   TUNNEL_TOKEN, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT, LOG_LEVEL
+# Optional: APPLY_DEFAULTS=true adds the default categories, check types and locations on the first start of an empty database
 # Optional: ADMIN_API_ALLOW=true opens the dashboard and the admin API to requests through the tunnel (see deploy/README.md)
 services:
   intern:

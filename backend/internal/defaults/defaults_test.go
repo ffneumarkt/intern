@@ -137,3 +137,35 @@ func TestCreateAdminTakesAGivenPassword(t *testing.T) {
 		t.Fatal("the given password is used")
 	}
 }
+
+func TestApplyIfEmptyAppliesOnAnEmptyDatabase(t *testing.T) {
+	app := testenv.New(t)
+	summary, applied, err := defaults.ApplyIfEmpty(app)
+	if err != nil || !applied {
+		t.Fatalf("applied %v, err %v", applied, err)
+	}
+	if summary.Categories != 2 {
+		t.Fatalf("summary %+v", summary)
+	}
+}
+
+func TestApplyIfEmptyLeavesADatabaseWithCategoriesAlone(t *testing.T) {
+	app := testenv.New(t)
+	testenv.Create(t, app, "categories", map[string]any{"name": "Eigene"})
+	_, applied, err := defaults.ApplyIfEmpty(app)
+	if err != nil || applied {
+		t.Fatalf("applied %v, err %v", applied, err)
+	}
+	if n, _ := app.CountRecords("categories"); n != 1 {
+		t.Fatalf("categories: %d", n)
+	}
+}
+
+func TestEnabledReadsTheEnvironment(t *testing.T) {
+	for value, want := range map[string]bool{"true": true, "1": true, "TRUE": true, "false": false, "": false, "no": false} {
+		t.Setenv("APPLY_DEFAULTS", value)
+		if got := defaults.Enabled(); got != want {
+			t.Errorf("APPLY_DEFAULTS=%q: got %v, want %v", value, got, want)
+		}
+	}
+}
