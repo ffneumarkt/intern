@@ -1,6 +1,6 @@
-import { FileText, Home, Info, Settings, Wrench, type LucideIcon } from 'lucide-react'
+import { FileText, GearSix, House, Info, Wrench, type Icon as PhosphorIcon } from '@phosphor-icons/react'
 import { useEffect, useRef, type ReactElement, type ReactNode } from 'react'
-import { BrowserRouter, Link, MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Link, MemoryRouter, Route, Routes, useLocation, useNavigate, useNavigationType } from 'react-router-dom'
 import AdminPage from './pages/AdminPage'
 import CategoriesPage from './pages/CategoriesPage'
 import CategoryEditPage from './pages/CategoryEditPage'
@@ -25,6 +25,7 @@ import StartPage from './pages/StartPage'
 import TransportSettingsPage from './pages/TransportSettingsPage'
 import TransportDocumentPage from './pages/TransportDocumentPage'
 import { DialogProvider } from './components/useDialogs'
+import { useSwipeBack } from './components/useSwipeBack'
 import { paths, requiresLogin } from './routes'
 import { SessionProvider, useSession } from './session'
 
@@ -48,16 +49,16 @@ function LoginRedirect() {
 interface Tab {
   name: string
   to: string
-  icon: LucideIcon
+  icon: PhosphorIcon
   // Whether the tab covers the page at this address.
   covers(pathname: string): boolean
 }
 
-const startTab: Tab = { name: 'Start', to: paths.start, icon: Home, covers: (p) => p === paths.start || p === paths.login || p === paths.setup }
+const startTab: Tab = { name: 'Start', to: paths.start, icon: House, covers: (p) => p === paths.start || p === paths.login || p === paths.setup }
 const documentTab: Tab = { name: 'Beförderungspapier', to: paths.transportDocument, icon: FileText, covers: (p) => p === paths.transportDocument }
 const infoTab: Tab = { name: 'Info', to: paths.info, icon: Info, covers: (p) => p === paths.info || p.startsWith(`${paths.info}/`) }
 const materialTab: Tab = { name: 'Material', to: paths.dueList, icon: Wrench, covers: (p) => p === paths.dueList || p.startsWith(`${paths.dueList}/`) }
-const settingsTab: Tab = { name: 'Einstellungen', to: paths.settings, icon: Settings, covers: (p) => p === paths.settings || p === paths.admin || p.startsWith(`${paths.admin}/`) }
+const settingsTab: Tab = { name: 'Einstellungen', to: paths.settings, icon: GearSix, covers: (p) => p === paths.settings || p === paths.admin || p.startsWith(`${paths.admin}/`) }
 
 function TabBar() {
   const { user } = useSession()
@@ -69,8 +70,8 @@ function TabBar() {
         const active = covers(pathname)
         return (
           <Link key={to} to={to} data-slot="tab" aria-label={name} aria-current={active ? 'page' : undefined}>
-            {/* iOS shows the selected tab with a heavier symbol. */}
-            <Icon aria-hidden="true" strokeWidth={active ? 2.4 : 1.6} />
+            {/* iOS shows the selected tab with the filled symbol. */}
+            <Icon aria-hidden="true" weight={active ? 'fill' : 'regular'} />
             <span>{name}</span>
           </Link>
         )
@@ -82,14 +83,20 @@ function TabBar() {
 function Shell() {
   const material = (path: string, element: ReactElement) => <Route path={path} element={<RequireLogin>{element}</RequireLogin>} />
   const view = useRef<HTMLDivElement>(null)
-  const { pathname } = useLocation()
+  const { pathname, key } = useLocation()
+  const navigate = useNavigate()
+  const navigationType = useNavigationType()
+  // Going deeper slides the page in from the right, going back from the left; the tab roots just appear.
+  const roots: string[] = [paths.start, paths.transportDocument, paths.info, paths.dueList, paths.settings]
+  const motion = key === 'default' || roots.includes(pathname) ? '' : navigationType === 'PUSH' ? 'push' : navigationType === 'POP' ? 'pop' : ''
+  useSwipeBack(view, () => navigate(-1), key !== 'default')
   // A page change starts at the top, as a new page does.
   useEffect(() => {
     if (view.current) view.current.scrollTop = 0
   }, [pathname])
   return (
     <div className="app-shell">
-      <div className="app-view" ref={view}>
+      <div className="app-view" ref={view} data-motion={motion}>
         <Routes>
           <Route path={paths.start} element={<StartPage />} />
           <Route path={paths.login} element={<LoginPage />} />

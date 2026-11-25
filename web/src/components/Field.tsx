@@ -1,3 +1,4 @@
+import { ChevronsUpDown } from 'lucide-react'
 import { Children, isValidElement, useId, type ReactNode } from 'react'
 import { Row } from '@/components/ui/list'
 import { Input } from '@/components/ui/input'
@@ -26,19 +27,27 @@ interface FieldProps {
 
 // The label above, the control, and the error below. A required field gets a red star after its label; an invalid
 // control is marked with aria-invalid and described by its error.
-function FieldFrame({ label, required, error, children }: { label: string; required?: boolean; error?: string; children(props: ControlProps): ReactNode }) {
+function FieldFrame({ label, required, error, stacked, children }: { label: string; required?: boolean; error?: string; stacked?: boolean; children(props: ControlProps): ReactNode }) {
   const id = useId()
   const errorId = `${id}-error`
   return (
     <Row>
-      <div className="w-full py-2">
-        <label
-          htmlFor={id}
-          className={cn('mb-1.5 block text-[13px] font-medium text-muted-foreground', required && "after:ml-0.5 after:text-destructive after:content-['*']")}
-        >
-          {label}
-        </label>
-        {children({ id, required, 'aria-invalid': error ? true : undefined, 'aria-describedby': error ? errorId : undefined })}
+      <div className="w-full py-1">
+        {/* As in an iOS form: the label on the left, the value on the right; long text gets its own lines. */}
+        <div className={stacked ? undefined : 'flex items-center gap-3'}>
+          <label
+            htmlFor={id}
+            className={cn(
+              stacked ? 'mb-1 block pt-2 text-[13px] text-muted-foreground' : 'w-[40%] shrink-0 py-2 text-[17px] leading-snug',
+              required && "after:ml-0.5 after:text-destructive after:content-['*']",
+            )}
+          >
+            {label}
+          </label>
+          <div className={stacked ? undefined : 'min-w-0 flex-1'}>
+            {children({ id, required, className: stacked ? undefined : inline, 'aria-invalid': error ? true : undefined, 'aria-describedby': error ? errorId : undefined })}
+          </div>
+        </div>
         {error && (
           <p id={errorId} className="mt-1 text-sm text-destructive">
             {error}
@@ -49,8 +58,12 @@ function FieldFrame({ label, required, error, children }: { label: string; requi
   )
 }
 
+// A control inside a form row: no box of its own, the value right-aligned.
+const inline = 'h-11 rounded-none border-0 bg-transparent px-0 text-right'
+
 interface ControlProps {
   id: string
+  className?: string
   required?: boolean
   'aria-invalid'?: true
   'aria-describedby'?: string
@@ -64,6 +77,7 @@ export function Field({ label, value, onChange, type = 'text', autoComplete, req
         <Input
           {...control}
           type={type}
+          placeholder={required && type !== 'date' ? 'Erforderlich' : undefined}
           value={value}
           autoComplete={autoComplete}
           autoCapitalize={typingHelp ? 'sentences' : 'off'}
@@ -80,8 +94,8 @@ export function Field({ label, value, onChange, type = 'text', autoComplete, req
 
 export function TextAreaField({ label, value, onChange, required, error }: Pick<FieldProps, 'label' | 'value' | 'onChange' | 'required' | 'error'>) {
   return (
-    <FieldFrame label={label} required={required} error={error}>
-      {(control) => <Textarea {...control} autoCapitalize="sentences" spellCheck value={value} onChange={(e) => onChange(e.target.value)} />}
+    <FieldFrame label={label} required={required} error={error} stacked>
+      {(control) => <Textarea {...control} className="bg-muted" autoCapitalize="sentences" spellCheck value={value} onChange={(e) => onChange(e.target.value)} />}
     </FieldFrame>
   )
 }
@@ -104,10 +118,13 @@ export function SelectField({ label, value, onChange, required, error, children 
   return (
     <FieldFrame label={label} required={required} error={error}>
       {(control) => (
-        <NativeSelect {...control} value={known ? value : ''} onChange={(e) => onChange(e.target.value)}>
-          <option value="" disabled hidden />
-          {children}
-        </NativeSelect>
+        <div className="relative">
+          <NativeSelect {...control} className={cn(control.className, 'appearance-none pr-6 text-right text-muted-foreground [text-align-last:right]')} value={known ? value : ''} onChange={(e) => onChange(e.target.value)}>
+            <option value="" disabled hidden />
+            {children}
+          </NativeSelect>
+          <ChevronsUpDown className="pointer-events-none absolute top-1/2 right-0 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+        </div>
       )}
     </FieldFrame>
   )
