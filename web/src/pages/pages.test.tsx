@@ -2012,6 +2012,30 @@ describe('due list: timeline', () => {
     expect(await month('Mai 2028')).toBeInTheDocument()
   })
 
+  it('shows no category chips and no category list', async () => {
+    await openTimeline()
+    await month('Überfällig')
+    expect(ionChip('Alle')).toBeNull()
+    expect(ionChip('Atemschutzmasken')).toBeNull()
+    expect(screen.queryByText('Kategorien')).not.toBeInTheDocument()
+  })
+
+  it('shows every category, whatever chip was chosen before', async () => {
+    pinToday('2026-10-29')
+    renderAt(paths.dueList, 'check')
+    fireEvent.click(await findIon(() => ionChip('Atemschutzmasken')))
+    fireEvent.click(await findIon(() => ionSegmentButton('Zeitplan')))
+    expect(within(await month('November 2026')).getByText('LA 01')).toBeInTheDocument()
+  })
+
+  it('brings the chips and the category list back with the due view', async () => {
+    await openTimeline()
+    await month('Überfällig')
+    fireEvent.click(await findIon(() => ionSegmentButton('Fällig')))
+    expect(await findIon(() => ionChip('Alle'))).toBeInTheDocument()
+    expect(screen.getByText('Kategorien')).toBeInTheDocument()
+  })
+
   it('goes back to what is due now', async () => {
     await openTimeline()
     await month('Überfällig')
