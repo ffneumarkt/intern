@@ -178,8 +178,21 @@
   bottom: 0;
   z-index: 2;
   margin: 16px -16px 0;
-  padding: 28px 16px 12px;
-  background: linear-gradient(to bottom, rgba(var(--app-light-rgb), 0), var(--app-light) 45%);
+  padding: 28px 16px 4px;
+}
+
+/* Behind the buttons: the page colour fading in, with a light blur, so content scrolls away under the buttons softly. */
+.ui-actions::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(to bottom, rgba(var(--app-light-rgb), 0), rgba(var(--app-light-rgb), 0.85) 45%);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 40%);
+  mask-image: linear-gradient(to bottom, transparent, #000 40%);
+  pointer-events: none;
 }
 
 .ui-actions [data-slot='button'],
@@ -536,7 +549,7 @@ a.tile {
 :root {
   --tabs-height: 62px;
   /* Space the content keeps free under the floating tab bar. */
-  --tabs-space: calc(var(--tabs-height) + 26px + env(safe-area-inset-bottom));
+  --tabs-space: calc(var(--tabs-height) + 18px + env(safe-area-inset-bottom));
   --header-height: 44px;
 }
 
