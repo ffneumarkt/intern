@@ -100,6 +100,7 @@ test.describe('as verwaltung', () => {
   test('switches a check type toggle', async ({ page }) => {
     await page.goto('/material/verwalten')
     await page.locator('ion-segment-button', { hasText: 'Prüfarten' }).click()
+    await page.getByRole('link', { name: 'Neue Prüfart' }).click()
     const toggle = page.getByRole('switch', { name: 'nach Verwendung' }).filter({ visible: true })
     await expect(toggle).not.toBeChecked()
     await toggle.click()
@@ -171,6 +172,7 @@ test.describe('as verwaltung, creating', () => {
     try {
       await page.goto('/material/verwalten')
       await choose(page, 'Kategorie', 'Lungenautomaten')
+      await page.getByRole('link', { name: 'Neues Gerät' }).click()
       await field(page, 'Bezeichnung').fill(name)
       await field(page, 'Seriennummer').fill(serial)
       await field(page, 'Code').fill(`E2E-${randomBytes(6).toString('hex')}`)

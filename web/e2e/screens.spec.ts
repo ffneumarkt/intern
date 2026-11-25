@@ -119,6 +119,7 @@ test.describe('forms', () => {
 
     test('item form', async ({ page }, info) => {
       await page.goto('/material/verwalten')
+      await page.getByRole('link', { name: 'Neues Gerät' }).click()
       await expect(field(page, 'Bezeichnung')).toBeVisible()
       await shoot(page, info.project.name, 'item-form')
     })
@@ -132,6 +133,7 @@ test.describe('forms', () => {
 
       await page.goto('/material/verwalten')
       await page.locator('ion-segment-button', { hasText: 'Prüfarten' }).click()
+      await page.getByRole('link', { name: 'Neue Prüfart' }).click()
       await field(page, 'Name').fill('Sichtprüfung')
       await page.getByRole('button', { name: 'Prüfart anlegen' }).click()
       await expect(page.getByText('Intervall oder „nach Verwendung“ angeben.')).toBeVisible()
