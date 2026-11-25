@@ -10,7 +10,7 @@ import ItemRow from '../components/ItemRow'
 import Loaded from '../components/Loaded'
 import { maxLeadDays } from '../components/notificationText'
 import { locationName } from '../material/locations'
-import { groupTimeline, type Entry } from '../material/timeline'
+import { groupTimeline, monthsToReveal, type Entry } from '../material/timeline'
 import Page from '../components/Page'
 import { paths } from '../routes'
 import { addDays, today } from '../today'
@@ -88,7 +88,7 @@ export default function DueListPage() {
               {only && upcoming.length === 0 && !visible.some((i) => groups.includes(i.dueState)) && (
                 <p className="ui-empty">Alles aus dieser Benachrichtigung ist erledigt.</p>
               )}
-              {timeline && <Timeline items={items} months={months} onMore={() => setMonths((m) => m + timelineMonths)} />}
+              {timeline && <Timeline items={items} months={months} onMore={() => setMonths((m) => monthsToReveal(items, today(), m, timelineMonths))} />}
               {!only && view === 'due' && !visible.some((i) => groups.includes(i.dueState)) && (
                 <Card>
                   <Hint center>

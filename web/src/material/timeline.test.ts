@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Due, Item } from '../api/material'
-import { groupTimeline } from './timeline'
+import { groupTimeline, monthsToReveal } from './timeline'
 
 const due = (label: string, date: string, state: Due['state'] = 'ok'): Due => ({ kind: 'check', label, date, state })
 const item = (name: string, dues: Due[], extra: Partial<Item> = {}): Item => ({
@@ -68,5 +68,15 @@ describe('groupTimeline', () => {
   it('skips months with nothing due', () => {
     const items = [item('A', [due('Prüfung', '2026-11-08')]), item('B', [due('Prüfung', '2027-03-08')])]
     expect(groupTimeline(items, today, 12).months.map((m) => m.key)).toEqual(['2026-11', '2027-03'])
+  })
+
+  it('reaches the next month with a due date when pressing more, however far away it is', () => {
+    // From October 2026, a due date in March 2030 is month 41 of the timeline.
+    const items = [item('Near', [due('Prüfung', '2026-11-08')]), item('Far', [due('Prüfung', '2030-03-08')])]
+    const more = monthsToReveal(items, today, 12, 12)
+    expect(groupTimeline(items, today, more).months.map((m) => m.key)).toEqual(['2026-11', '2030-03'])
+    // Close by, a press adds the usual step.
+    const close = [item('A', [due('Prüfung', '2027-12-08')])]
+    expect(monthsToReveal(close, today, 12, 12)).toBe(24)
   })
 })
