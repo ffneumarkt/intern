@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
 
@@ -113,5 +114,29 @@ func TestChangeIsRolledBackWhenTheAuditCannotBeWritten(t *testing.T) {
 	do(t, app, call{cats, "POST", "/api/collections/categories/records", `{"name":"Neu"}`, http.StatusNotFound, ""}) // PocketBase maps the missing collection to 404
 	if n, _ := app.CountRecords("categories"); n != 0 {
 		t.Fatalf("the category stayed although its audit row failed: %d", n)
+	}
+}
+
+// The PocketBase admin UI works as a superuser, who is not in the users collection the audit row points to.
+func TestSuperuserChangeIsAllowedWithoutAnAuditRow(t *testing.T) {
+	app := testenv.New(t)
+	w := testenv.Seed(t, app)
+	supers, err := app.FindCollectionByNameOrId(core.CollectionNameSuperusers)
+	if err != nil {
+		t.Fatal(err)
+	}
+	su := core.NewRecord(supers)
+	su.SetEmail("root@example.com")
+	su.SetPassword("password-1234")
+	if err := app.Save(su); err != nil {
+		t.Fatal(err)
+	}
+	grant := fmt.Sprintf(`{"user":%q,"category":%q,"level":"manage"}`, w.None.Id, w.CategoryB.Id)
+	do(t, app, call{su, "POST", "/api/collections/permissions/records", grant, http.StatusOK, ""})
+	if n, _ := app.CountRecords("permissions", dbx.HashExp{"user": w.None.Id}); n != 1 {
+		t.Fatalf("the permission was not saved: %d", n)
+	}
+	if rows := auditRows(t, app); len(rows) != 0 {
+		t.Fatalf("a superuser change must not leave an audit row, got %d", len(rows))
 	}
 }
