@@ -99,3 +99,19 @@ func TestAuditIsReadableByMembersOnly(t *testing.T) {
 	do(t, app, call{members, "POST", "/api/collections/admin_audit/records",
 		fmt.Sprintf(`{"admin":%q,"action":"create","collection":"x","record":"y"}`, members.Id), http.StatusForbidden, ""})
 }
+
+func TestChangeIsRolledBackWhenTheAuditCannotBeWritten(t *testing.T) {
+	app := testenv.New(t)
+	cats := testenv.Admin(t, app, testenv.User(t, app, "c@example.com", "C"), admin.Categories)
+	audit, err := app.FindCollectionByNameOrId("admin_audit")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := app.Delete(audit); err != nil {
+		t.Fatal(err)
+	}
+	do(t, app, call{cats, "POST", "/api/collections/categories/records", `{"name":"Neu"}`, http.StatusNotFound, ""}) // PocketBase maps the missing collection to 404
+	if n, _ := app.CountRecords("categories"); n != 0 {
+		t.Fatalf("the category stayed although its audit row failed: %d", n)
+	}
+}
