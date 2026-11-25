@@ -381,12 +381,11 @@ describe('the two main actions of an item', () => {
     expect(await screen.findByRole('heading', { name: 'Prüfung erfassen' })).toBeInTheDocument()
   })
 
-  it('open the use form with the item already in the list', async () => {
+  it('open the use form for the item directly', async () => {
     renderAt(paths.item('m01'), 'check')
     await findIon(() => ionButton('Verwendung erfassen'))
     fireEvent.click(inBar('Verwendung erfassen')!)
-    const list = await screen.findByRole('list', { name: 'Gescannte Geräte' })
-    await waitFor(() => expect(within(list).getByText('Maske 01')).toBeInTheDocument())
+    expect(await screen.findByLabelText('Datum')).toBeInTheDocument()
   })
 
   it('show only Verwendung to someone who may not check', async () => {
@@ -1492,17 +1491,31 @@ describe('manage', () => {
 })
 
 describe('record use from item detail', () => {
-  it('opens record use with the item preselected', async () => {
+  it('opens the form for the item without the scan step', async () => {
     renderAt(paths.item('m01'), 'use')
     fireEvent.click(await findIon(() => ionButton('Verwendung erfassen')))
-    const list = await screen.findByRole('list', { name: 'Gescannte Geräte' })
-    await waitFor(() => expect(within(list).getByText('Maske 01')).toBeInTheDocument())
+    expect(await screen.findByLabelText('Datum')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Code manuell eingeben')).not.toBeInTheDocument()
   })
 
-  it('starts with the preselected item in the list', async () => {
+  it('goes straight to the form when opened with a preselected item', async () => {
     renderAt(paths.recordUseFor('m03'), 'use')
-    const list = await screen.findByRole('list', { name: 'Gescannte Geräte' })
-    await waitFor(() => expect(within(list).getByText('Maske 03')).toBeInTheDocument())
+    expect(await screen.findByLabelText('Datum')).toBeInTheDocument()
+    expect(screen.getByText('Maske 03')).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Gescannte Geräte' })).not.toBeInTheDocument()
+  })
+
+  it('goes back to the scan step to add another device', async () => {
+    renderAt(paths.recordUseFor('m03'), 'use')
+    await screen.findByLabelText('Datum')
+    fireEvent.click(await findIon(() => ionButton('Weiteres Gerät hinzufügen')))
+    expect(await screen.findByLabelText('Code manuell eingeben')).toBeInTheDocument()
+    expect(within(screen.getByRole('list', { name: 'Gescannte Geräte' })).getByText('Maske 03')).toBeInTheDocument()
+  })
+
+  it('still starts with the scan step without a preselected item', async () => {
+    renderAt(paths.recordUse, 'use')
+    expect(await screen.findByLabelText('Code manuell eingeben')).toBeInTheDocument()
   })
 })
 
@@ -1528,14 +1541,6 @@ describe('code suggestions', () => {
     await waitFor(() => expect(within(list).getByText('Maske 03')).toBeInTheDocument())
     expect(input).toHaveValue('')
     expect(screen.queryByRole('list', { name: 'Vorschläge' })).not.toBeInTheDocument()
-  })
-
-  it('does not suggest items already in the list', async () => {
-    renderAt(paths.recordUseFor('m01'), 'use')
-    const input = await screen.findByLabelText('Code manuell eingeben')
-    typeInto(input, 'M-00')
-    const suggestions = await screen.findByRole('list', { name: 'Vorschläge' })
-    expect(within(suggestions).queryByText('Maske 01')).not.toBeInTheDocument()
   })
 })
 

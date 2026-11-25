@@ -61,10 +61,12 @@ export default function RecordUsePage() {
   // Ionic keeps the page mounted, possibly past midnight.
   useIonViewWillEnter(() => setDate(today()))
 
-  // Opened from an item's detail page: start with that item in the list.
+  // Opened from an item's detail page: that item is the one to record, so skip the scan step.
   useEffect(() => {
     const item = items?.find((i) => i.id === preselectedId)
-    if (item) add(item)
+    if (!item) return
+    add(item)
+    setStep('form')
   }, [preselectedId, items])
 
   const pick = (item: Item) => {
@@ -162,6 +164,9 @@ export default function RecordUsePage() {
           ) : (
             <>
               <Hint><strong>{scanned.map((i) => i.name).join(', ')}</strong></Hint>
+              <BlockButton fill="outline" onClick={() => setStep('scan')}>
+                Weiteres Gerät hinzufügen
+              </BlockButton>
               <IonList>
                 <Field label="Datum" type="date" max={today()} value={date} onChange={setDate} />
                 <SelectField label="Art" value={kind} onChange={(value) => setKind(value as UseInput['kind'])}>
