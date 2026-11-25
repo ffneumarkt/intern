@@ -6,7 +6,7 @@ test.describe('signed in with the use level', () => {
   test('shows all four tabs', async ({ page }) => {
     await page.goto('/')
     for (const name of ['Start', 'Beförderungspapier', 'Material', 'Einstellungen']) {
-      await expect(page.getByRole('link', { name }), name).toBeVisible()
+      await expect(page.getByRole('navigation', { name: 'Hauptmenü' }).getByRole('link', { name }), name).toBeVisible()
     }
   })
 
