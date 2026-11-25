@@ -7,6 +7,7 @@ const byText = (selector: string, text: string) =>
 
 export const ionButton = (text: string) => byText('ion-button', text)
 export const ionTab = (text: string) => byText('ion-tab-button', text)
+export const ionSegmentButton = (text: string) => byText('ion-segment-button', text)
 
 export const findIon = <T,>(get: () => T | null) =>
   waitFor(() => {

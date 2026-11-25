@@ -1,19 +1,24 @@
-import { IonChip, IonFab, IonFabButton, IonIcon, IonItem, IonLabel, IonList, IonListHeader } from '@ionic/react'
+import { IonChip, IonFab, IonFabButton, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonSegment, IonSegmentButton } from '@ionic/react'
 import { barcodeOutline } from 'ionicons/icons'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { listCategories, listItems, listLocations } from '../api/material'
-import { dueStateLabel, type DueState } from '../components/DueStateBadge'
+import { listCategories, listItems, listLocations, type Item } from '../api/material'
+import DueStateBadge, { dueStateLabel, type DueState } from '../components/DueStateBadge'
 import ItemRow from '../components/ItemRow'
 import Loaded from '../components/Loaded'
 import { maxLeadDays } from '../components/notificationText'
 import { locationName } from '../material/locations'
+import { groupTimeline, type Entry } from '../material/timeline'
 import Page from '../components/Page'
 import { paths } from '../routes'
 import { addDays, today } from '../today'
 import { useResource } from '../useResource'
+import { BlockButton, Card, Hint } from '../components/ui'
 
 const groups: DueState[] = ['overdue', 'dueToday', 'dueSoon']
+
+// How many months the timeline shows at first, and how many each press of „Mehr anzeigen“ adds.
+const timelineMonths = 12
 
 const load = async () => {
   const [categories, items, locations] = await Promise.all([listCategories(), listItems(), listLocations()])
@@ -22,6 +27,8 @@ const load = async () => {
 
 export default function DueListPage() {
   const [category, setCategory] = useState<string | null>(null)
+  const [view, setView] = useState<'due' | 'timeline'>('due')
+  const [months, setMonths] = useState(timelineMonths)
   const resource = useResource(load)
   const navigate = useNavigate()
   // The filter lives in the URL, so a notification tap on the open list changes it too.
@@ -49,6 +56,16 @@ export default function DueListPage() {
           const upcoming = only ? visible.filter((i) => i.dueState === 'ok' && (i.dues[0]?.date ?? '9999') <= horizon) : []
           return (
             <>
+              {!only && (
+                <IonSegment value={view}>
+                  <IonSegmentButton value="due" onClick={() => setView('due')}>
+                    <IonLabel>Fällig</IonLabel>
+                  </IonSegmentButton>
+                  <IonSegmentButton value="timeline" onClick={() => setView('timeline')}>
+                    <IonLabel>Zeitplan</IonLabel>
+                  </IonSegmentButton>
+                </IonSegment>
+              )}
               <div className="ui-chips">
                 <IonChip outline={category !== null} onClick={() => setCategory(null)}>
                   Alle
@@ -67,7 +84,19 @@ export default function DueListPage() {
               {only && upcoming.length === 0 && !visible.some((i) => groups.includes(i.dueState)) && (
                 <p className="ui-empty">Alles aus dieser Benachrichtigung ist erledigt.</p>
               )}
-              {groups.map((state) => {
+              {!only && view === 'timeline' && <Timeline items={visible} months={months} onMore={() => setMonths((m) => m + timelineMonths)} />}
+              {!only && view === 'due' && !visible.some((i) => groups.includes(i.dueState)) && (
+                <Card>
+                  <Hint center>
+                    <strong>Nichts fällig.</strong>
+                  </Hint>
+                  <BlockButton size="large" routerLink={paths.recordUse}>
+                    <IonIcon slot="start" icon={barcodeOutline} aria-hidden />
+                    Verwendung erfassen
+                  </BlockButton>
+                </Card>
+              )}
+              {view === 'due' && groups.map((state) => {
                 const inGroup = visible.filter((i) => i.dueState === state)
                 if (inGroup.length === 0) return null
                 return (
@@ -83,7 +112,7 @@ export default function DueListPage() {
                   </section>
                 )
               })}
-              {upcoming.length > 0 && (
+              {view === 'due' && upcoming.length > 0 && (
                 <section aria-label="Demnächst" data-state="upcoming">
                   <IonList>
                     <IonListHeader>
@@ -110,5 +139,44 @@ export default function DueListPage() {
         }}
       </Loaded>
     </Page>
+  )
+}
+
+// All due dates of the shown items, what is overdue first and then month by month.
+function Timeline({ items, months, onMore }: { items: Item[]; months: number; onMore(): void }) {
+  const timeline = groupTimeline(items, today(), months)
+  const section = (name: string, entries: Entry[]) => (
+    <section key={name} aria-label={`Zeitplan: ${name}`}>
+      <IonList>
+        <IonListHeader>
+          <IonLabel>{name}</IonLabel>
+        </IonListHeader>
+        {entries.map(({ item, due }) => (
+          <IonItem key={`${item.id}-${due.kind}-${due.checkTypeId ?? ''}`} routerLink={paths.item(item.id)} detail>
+            <IonLabel>
+              <h2>{item.name}</h2>
+              <p>
+                {due.label} · {due.date}
+              </p>
+            </IonLabel>
+            <DueStateBadge state={due.state} />
+          </IonItem>
+        ))}
+      </IonList>
+    </section>
+  )
+  if (timeline.overdue.length === 0 && timeline.months.length === 0 && !timeline.hasMore) {
+    return <p className="ui-empty">Keine Fälligkeiten.</p>
+  }
+  return (
+    <>
+      {timeline.overdue.length > 0 && section('Überfällig', timeline.overdue)}
+      {timeline.months.map((m) => section(m.label, m.entries))}
+      {timeline.hasMore && (
+        <BlockButton fill="outline" onClick={onMore}>
+          Mehr anzeigen
+        </BlockButton>
+      )}
+    </>
   )
 }
