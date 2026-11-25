@@ -631,9 +631,8 @@ body {
 
 .app-tabs a span {
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-align: center;
+  hyphens: auto;
 }
 
 .app-tabs a[aria-current='page'] {

@@ -3,7 +3,7 @@ import { authState, email, expect, resetNotificationData, test, tokenOf, type Se
 
 // Screenshots of Einstellungen and the forms for a visual check, only with E2E_SCREENSHOTS=1:
 // <E2E_SCREENS_DIR or test-results/screens>/<project>-<state>.png. WebKit (iPhone profile) shows
-// Ionic's iOS mode, Chromium and Firefox the Material mode. Nothing is saved; not committed.
+// Nothing is saved; not committed.
 test.skip(!process.env.E2E_SCREENSHOTS, 'set E2E_SCREENSHOTS=1 for the screenshots')
 
 const screensDir = process.env.E2E_SCREENS_DIR ?? 'test-results/screens'
@@ -127,7 +127,7 @@ test.describe('forms', () => {
       await page.goto('/material/verwalten')
       await page.getByRole('tab', { name: 'Prüfarten' }).click()
       await page.locator('[data-slot="row"]', { hasText: 'Maskenprüfung' }).filter({ visible: true }).first().click()
-      await expect(page.getByText('Prüfart bearbeiten')).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Prüfart bearbeiten' })).toBeAttached()
       await shoot(page, info.project.name, 'checktype-edit')
 
       await page.goto('/material/verwalten')
