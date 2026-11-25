@@ -16,13 +16,14 @@ program and the database migrations, and the database is created in `./data` on 
    example `/opt/ff`. Set at least `TUNNEL_TOKEN`, the three `VAPID_*` values (`docker run --rm
    ghcr.io/ffneumarkt/intern vapid` makes a key pair) and `APPLY_DEFAULTS=true`; for another domain than
    `intern.ffneumarkt.at` also `PASSKEY_RP_ID` and `PASSKEY_ORIGIN`.
-2. Start it and always take the newest image:
+2. Start it and always take the newest image (later: `make update` with `deploy/Makefile`):
 
    ```sh
    docker compose up -d --pull always
    ```
 
-3. Create the first user, an admin of everything, inside the running container:
+3. Create the first user, an admin of everything, inside the running container (or `make first-user ADMIN_EMAIL=...` with
+   `deploy/Makefile` next to `compose.yaml`):
 
    ```sh
    docker compose exec intern /intern bootstrap --admin-email you@example.com --admin-name "Your Name"
