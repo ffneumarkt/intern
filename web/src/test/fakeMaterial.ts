@@ -94,6 +94,8 @@ export async function recordCheck(itemId: string, input: CheckInput) {
   if (input.locationId) data.items = data.items.map((i) => (i.id === itemId ? { ...i, locationId: input.locationId } : i))
   const where = data.locations.find((l) => l.id === (input.locationId ?? data.items.find((i) => i.id === itemId)?.locationId))
   data.history.unshift({
+    id: `check${data.history.length + 100}`,
+    check: { result: input.result, note: input.note ?? '' },
     itemId,
     date: input.date,
     kind: 'check',

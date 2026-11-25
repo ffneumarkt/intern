@@ -56,11 +56,16 @@ export interface Item {
 }
 
 export interface HistoryEntry {
+  // The id of the use or check, for a correction.
+  id: string
   itemId: string
   date: string
   kind: 'use' | 'check'
   title: string
   detail: string
+  // What a correction can change.
+  use?: { kind: UseInput['kind']; recordedByName: string; note: string }
+  check?: { result: CheckInput['result']; note: string }
 }
 
 interface DueResponse {
@@ -154,6 +159,8 @@ export async function listHistory(itemId: string): Promise<HistoryEntry[]> {
   ])
   const entries: (HistoryEntry & { created: string })[] = [
     ...uses.map((u) => ({
+      id: u.id,
+      use: { kind: u.kind as UseInput['kind'], recordedByName: u.recorded_by_name ?? '', note: u.note ?? '' },
       itemId,
       created: u.created,
       date: calendarDate(u.date),
@@ -162,6 +169,8 @@ export async function listHistory(itemId: string): Promise<HistoryEntry[]> {
       detail: joined(`Erfasst von ${u.recorded_by_name || u.expand?.created_by?.name}`, place(u.expand?.location?.name), u.note),
     })),
     ...checks.map((c) => ({
+      id: c.id,
+      check: { result: c.result as CheckInput['result'], note: c.note ?? '' },
       itemId,
       created: c.created,
       date: calendarDate(c.date),

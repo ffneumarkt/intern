@@ -3,7 +3,11 @@ import { IonReactMemoryRouter, IonReactRouter } from '@ionic/react-router'
 import { constructOutline, documentTextOutline, homeOutline, informationCircleOutline, settingsOutline } from 'ionicons/icons'
 import { useEffect, type ReactElement, type ReactNode } from 'react'
 import { Route, useLocation } from 'react-router-dom'
+import AdminPage from './pages/AdminPage'
+import CategoriesPage from './pages/CategoriesPage'
+import CategoryEditPage from './pages/CategoryEditPage'
 import CategoryPage from './pages/CategoryPage'
+import CorrectionPage from './pages/CorrectionPage'
 import DueListPage from './pages/DueListPage'
 import ImprintPage from './pages/ImprintPage'
 import InfoPage from './pages/InfoPage'
@@ -12,12 +16,15 @@ import ItemEditPage from './pages/ItemEditPage'
 import ItemPage from './pages/ItemPage'
 import LoginPage from './pages/LoginPage'
 import ManagePage from './pages/ManagePage'
+import MemberEditPage from './pages/MemberEditPage'
+import MembersPage from './pages/MembersPage'
 import PrivacyPage from './pages/PrivacyPage'
 import RecordCheckPage from './pages/RecordCheckPage'
 import RecordUsePage from './pages/RecordUsePage'
 import SettingsPage from './pages/SettingsPage'
 import SetupPage from './pages/SetupPage'
 import StartPage from './pages/StartPage'
+import TransportSettingsPage from './pages/TransportSettingsPage'
 import TransportDocumentPage from './pages/TransportDocumentPage'
 import { paths, requiresLogin } from './routes'
 import { SessionProvider, useSession } from './session'
@@ -67,6 +74,15 @@ function Tabs() {
         {material(paths.recordCheck(), <RecordCheckPage />)}
         {material(paths.manage, <ManagePage />)}
         {material(paths.settings, <SettingsPage />)}
+        {material(paths.correction(), <CorrectionPage />)}
+        {material(paths.admin, <AdminPage />)}
+        {material(paths.adminMembers, <MembersPage />)}
+        {material(paths.adminMemberNew, <MemberEditPage />)}
+        {material(paths.adminMember(), <MemberEditPage />)}
+        {material(paths.adminCategories, <CategoriesPage />)}
+        {material(paths.adminCategoryNew, <CategoryEditPage />)}
+        {material(paths.adminCategory(), <CategoryEditPage />)}
+        {material(paths.adminTransport, <TransportSettingsPage />)}
       </IonRouterOutlet>
       <IonTabBar slot="bottom">
         <IonTabButton tab="start" href={paths.start} aria-label="Start">

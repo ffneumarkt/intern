@@ -2,6 +2,7 @@ import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
 import { setupIonicReact } from '@ionic/react'
 import { afterEach, beforeEach, vi } from 'vitest'
+import { resetAdmin } from './fakeAdmin'
 import { resetMaterial } from './fakeMaterial'
 import { resetNotifications } from './fakeNotifications'
 import { resetPasskeys } from './fakePasskeys'
@@ -34,6 +35,7 @@ beforeEach(() => {
   resetTransport()
   resetScanner()
   resetSetup()
+  resetAdmin()
 })
 
 afterEach(() => {

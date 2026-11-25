@@ -16,7 +16,7 @@ Internal tools for FF Neumarkt at `intern.ffneumarkt.at`. Start with `docs/super
   jsdom does not model Ionic's shadow DOM roles or focus. Ionic controls can be tested in jsdom (props such
   as `checked` reach the element, a click on an `ion-toggle` fires `onIonChange`) thanks to the `@lit/react`
   alias in `web/vite.config.ts`; real-browser behaviour is covered by `make e2e`. `web/src/api/` is replaced by `test/fakeAuth.ts`,
-  `test/fakeMaterial.ts`, `test/fakePasskeys.ts`, `test/fakeNotifications.ts`, `test/fakePush.ts` and `test/fakeTransport.ts`.
+  `test/fakeAdmin.ts`, `test/fakeSetup.ts`, `test/fakeMaterial.ts`, `test/fakePasskeys.ts`, `test/fakeNotifications.ts`, `test/fakePush.ts` and `test/fakeTransport.ts`.
 - Form fields go through `web/src/components/Field.tsx`, which wraps `IonInput`, `IonTextarea`, `IonSelect`
   and `IonToggle`; tests drive them with `typeInto` (`fireEvent.change` does not reach Ionic inputs),
   `choose` (find selects with `ionSelect`, their text with `selectedText`) and `setToggle` from

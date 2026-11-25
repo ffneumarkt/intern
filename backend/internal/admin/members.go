@@ -36,6 +36,13 @@ func RegisterRoutes(se *core.ServeEvent, logger *log.Logger) {
 	members.PATCH("/{id}", a.patch)
 	members.POST("/{id}/setup-link", a.setupLink)
 
+	corrections := se.Router.Group("/api/admin")
+	corrections.Bind(apis.RequireAuth("users"))
+	corrections.PATCH("/uses/{id}", a.editUse)
+	corrections.DELETE("/uses/{id}", a.deleteUse)
+	corrections.PATCH("/checks/{id}", a.editCheck)
+	corrections.DELETE("/checks/{id}", a.deleteCheck)
+
 	setup := se.Router.Group("/api/setup")
 	setup.BindFunc(noReferrer)
 	setup.POST("/check", a.checkLink)

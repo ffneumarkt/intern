@@ -49,7 +49,7 @@ func applyCheckResult(e *core.RecordEvent) error {
 			return err
 		}
 		changed := false
-		if status := statusAfterCheck(item.GetString("status"), e.Record.GetString("result")); status != item.GetString("status") {
+		if status := StatusAfterCheck(item.GetString("status"), e.Record.GetString("result")); status != item.GetString("status") {
 			item.Set("status", status)
 			changed = true
 		}
@@ -70,7 +70,8 @@ func applyCheckResult(e *core.RecordEvent) error {
 	})
 }
 
-func statusAfterCheck(status, result string) string {
+// StatusAfterCheck is the status of an item after a check with the result, given its status before.
+func StatusAfterCheck(status, result string) string {
 	switch {
 	case result == "defect":
 		return "defective"

@@ -65,9 +65,18 @@ const items = (): Item[] => [
 ]
 
 const history: HistoryEntry[] = [
-  { itemId: 'm01', date: '2026-10-21', kind: 'use', title: 'Einsatz', detail: 'Erfasst von Stationsrechner · Brand Wohnhaus' },
-  { itemId: 'm01', date: '2025-11-03', kind: 'check', title: 'Maskenprüfung: bestanden', detail: 'R. Loisinger' },
-  { itemId: 'm01', date: '2023-05-12', kind: 'check', title: '5-Jahres-Prüfung: bestanden', detail: 'Prüfstelle' },
+  {
+    id: 'use1', itemId: 'm01', date: '2026-10-21', kind: 'use', title: 'Einsatz', detail: 'Erfasst von Stationsrechner · Brand Wohnhaus',
+    use: { kind: 'operation', recordedByName: 'Stationsrechner', note: 'Brand Wohnhaus' },
+  },
+  {
+    id: 'check1', itemId: 'm01', date: '2025-11-03', kind: 'check', title: 'Maskenprüfung: bestanden', detail: 'R. Loisinger',
+    check: { result: 'passed', note: '' },
+  },
+  {
+    id: 'check2', itemId: 'm01', date: '2023-05-12', kind: 'check', title: '5-Jahres-Prüfung: bestanden', detail: 'Prüfstelle',
+    check: { result: 'passed', note: '' },
+  },
 ]
 
 // Copies, so a test that changes a check type does not change the next test's data.

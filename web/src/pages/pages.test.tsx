@@ -10,6 +10,7 @@ import { notificationState } from '../test/fakeNotifications'
 import { pushState } from '../test/fakePush'
 import { scanCode, scannerActive } from '../test/fakeScanner'
 
+vi.mock('../api/admin', () => import('../test/fakeAdmin'))
 vi.mock('../api/auth', () => import('../test/fakeAuth'))
 vi.mock('../api/material', () => import('../test/fakeMaterial'))
 vi.mock('../api/notifications', () => import('../test/fakeNotifications'))
