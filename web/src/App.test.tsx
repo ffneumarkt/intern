@@ -32,7 +32,7 @@ describe('App shell', () => {
   it('shows public tabs only', async () => {
     renderAt(paths.start, null)
     expect(await findTab('Start')).toBeInTheDocument()
-    expect(tab('Beförderungspapier')).toBeInTheDocument()
+    expect(tab('ADR')).toBeInTheDocument()
     expect(tab('Material')).not.toBeInTheDocument()
     expect(tab('Einstellungen')).not.toBeInTheDocument()
   })
@@ -41,7 +41,7 @@ describe('App shell', () => {
     renderAt(paths.start, 'use')
     expect(await findTab('Material')).toBeInTheDocument()
     expect(tab('Start')).toBeInTheDocument()
-    expect(tab('Beförderungspapier')).toBeInTheDocument()
+    expect(tab('ADR')).toBeInTheDocument()
     expect(tab('Einstellungen')).toBeInTheDocument()
   })
 

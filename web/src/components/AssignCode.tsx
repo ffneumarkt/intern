@@ -43,7 +43,7 @@ export default function AssignCode({ code, items, onAssigned }: Props) {
   }
   return (
     <div>
-      <Field label="Gerät suchen" value={text} autoComplete="off" onChange={setText} />
+      <Field boxed label="Gerät suchen" value={text} autoComplete="off" onChange={setText} />
       {error && <ErrorText>{error}</ErrorText>}
       <List role="list" aria-label="Geräte" className="suggestions">
         {candidates.map((i) => (

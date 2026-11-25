@@ -4,17 +4,18 @@ import type { ComponentProps } from 'react'
 import { cn } from '@/lib/utils'
 
 export const buttonVariants = cva(
-  'inline-flex shrink-0 items-center [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*="size-"])]:size-4 justify-center gap-2 rounded-xl text-[17px] font-semibold whitespace-nowrap transition-opacity outline-offset-2 focus-visible:outline-2 focus-visible:outline-primary active:opacity-60 disabled:pointer-events-none disabled:opacity-40',
+  'inline-flex shrink-0 items-center [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*="size-"])]:size-4 justify-center gap-2 rounded-xl text-[17px] font-semibold whitespace-nowrap transition-opacity outline-offset-2 focus-visible:outline-2 focus-visible:outline-primary active:opacity-60 disabled:pointer-events-none',
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground',
+        // A disabled button is solid grey, not see-through: it sits over the content in the sticky action bar.
+        default: 'bg-primary text-primary-foreground disabled:bg-[#d1d1d6] disabled:text-[#8e8e93]',
         // Prüfung erfassen: the green of the OK badges, next to the red use action.
-        check: 'bg-check text-check-foreground',
-        destructive: 'bg-destructive text-primary-foreground',
+        check: 'bg-check text-check-foreground disabled:bg-[#d1d1d6] disabled:text-[#8e8e93]',
+        destructive: 'bg-destructive text-primary-foreground disabled:bg-[#d1d1d6] disabled:text-[#8e8e93]',
         // iOS "tinted" button: the tint at low opacity behind the text.
-        outline: 'bg-primary/10 text-primary',
-        ghost: 'bg-transparent text-primary',
+        outline: 'bg-primary/10 text-primary disabled:bg-[#ececf0] disabled:text-[#aeaeb2]',
+        ghost: 'bg-transparent text-primary disabled:text-[#aeaeb2]',
       },
       size: {
         default: 'h-11 px-4',

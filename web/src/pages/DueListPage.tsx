@@ -4,7 +4,7 @@ import { Chip } from '@/components/ui/chip'
 import { Segment, SegmentButton } from '@/components/ui/segment'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { listCategories, listItems, listLocations, type Item } from '../api/material'
+import { listCategories, listItems, listLocations, type Due, type Item } from '../api/material'
 import DueStateBadge, { dueStateLabel, type DueState } from '../components/DueStateBadge'
 import ItemRow from '../components/ItemRow'
 import Loaded from '../components/Loaded'
@@ -22,6 +22,19 @@ const groups: DueState[] = ['overdue', 'dueToday', 'dueSoon']
 // How many months the timeline shows at first, and how many each press of „Mehr anzeigen“ adds.
 const timelineMonths = 12
 
+// What a due date belongs to: its check type, or the end of life.
+const dueKeyOf = (d: Due) => d.checkTypeId ?? d.kind
+
+// One chip per kind of due date among the active items, check types by name.
+function dueKinds(items: Item[]): { key: string; label: string }[] {
+  const kinds = new Map<string, string>()
+  for (const item of items) {
+    if (item.status === 'retired') continue
+    for (const d of item.dues) kinds.set(dueKeyOf(d), d.label)
+  }
+  return [...kinds].map(([key, label]) => ({ key, label })).sort((a, b) => a.label.localeCompare(b.label, 'de'))
+}
+
 const load = async () => {
   const [categories, items, locations] = await Promise.all([listCategories(), listItems(), listLocations()])
   return { categories, items, locations }
@@ -31,6 +44,8 @@ export default function DueListPage() {
   const [category, setCategory] = useState<string | null>(null)
   const [view, setView] = useState<'due' | 'timeline'>('due')
   const [months, setMonths] = useState(timelineMonths)
+  // The timeline's filter: a check type id, 'endOfLife', or null for everything.
+  const [dueKey, setDueKey] = useState<string | null>(null)
   const resource = useResource(load)
   const navigate = useNavigate()
   // The filter lives in the URL, so a notification tap on the open list changes it too.
@@ -88,7 +103,25 @@ export default function DueListPage() {
               {only && upcoming.length === 0 && !visible.some((i) => groups.includes(i.dueState)) && (
                 <p className="ui-empty">Alles aus dieser Benachrichtigung ist erledigt.</p>
               )}
-              {timeline && <Timeline items={items} months={months} onMore={() => setMonths((m) => monthsToReveal(items, today(), m, timelineMonths))} />}
+              {timeline && (
+                <>
+                  <div className="ui-chips" role="group" aria-label="Art der Fälligkeit">
+                    <Chip outline={dueKey !== null} onClick={() => setDueKey(null)}>
+                      Alle
+                    </Chip>
+                    {dueKinds(items).map(({ key, label }) => (
+                      <Chip key={key} outline={dueKey !== key} onClick={() => setDueKey(key)}>
+                        {label}
+                      </Chip>
+                    ))}
+                  </div>
+                  <Timeline
+                    items={dueKey ? items.map((i) => ({ ...i, dues: i.dues.filter((d) => dueKeyOf(d) === dueKey) })) : items}
+                    months={months}
+                    onMore={(shown) => setMonths((m) => monthsToReveal(shown, today(), m, timelineMonths))}
+                  />
+                </>
+              )}
               {!only && view === 'due' && !visible.some((i) => groups.includes(i.dueState)) && (
                 <Card>
                   <Hint center>
@@ -143,7 +176,7 @@ export default function DueListPage() {
 }
 
 // All due dates of the shown items, what is overdue first and then month by month.
-function Timeline({ items, months, onMore }: { items: Item[]; months: number; onMore(): void }) {
+function Timeline({ items, months, onMore }: { items: Item[]; months: number; onMore(shown: Item[]): void }) {
   const timeline = groupTimeline(items, today(), months)
   const section = (name: string, entries: Entry[]) => (
     <section key={name} aria-label={`Zeitplan: ${name}`}>
@@ -171,7 +204,7 @@ function Timeline({ items, months, onMore }: { items: Item[]; months: number; on
       {timeline.overdue.length > 0 && section('Überfällig', timeline.overdue)}
       {timeline.months.map((m) => section(m.label, m.entries))}
       {timeline.hasMore && (
-        <BlockButton fill="outline" onClick={onMore}>
+        <BlockButton fill="outline" onClick={() => onMore(items)}>
           Mehr anzeigen
         </BlockButton>
       )}

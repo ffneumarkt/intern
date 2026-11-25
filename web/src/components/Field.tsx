@@ -23,6 +23,8 @@ interface FieldProps {
   inputMode?: 'numeric'
   // Shown under the field in red.
   error?: string
+  // A box of its own with the label above, for a field that is a search or entry on its own rather than a form row.
+  boxed?: boolean
 }
 
 // The label above, the control, and the error below. A required field gets a red star after its label; an invalid
@@ -69,15 +71,16 @@ interface ControlProps {
   'aria-describedby'?: string
 }
 
-export function Field({ label, value, onChange, type = 'text', autoComplete, required, max, autoCapitalize, inputMode, error }: FieldProps) {
+export function Field({ label, value, onChange, type = 'text', autoComplete, required, max, autoCapitalize, inputMode, error, boxed }: FieldProps) {
   const typingHelp = (autoCapitalize ?? (type === 'text' ? 'sentences' : 'off')) !== 'off'
   return (
-    <FieldFrame label={label} required={required} error={error}>
+    <FieldFrame label={label} required={required} error={error} stacked={boxed}>
       {(control) => (
         <Input
           {...control}
           type={type}
-          placeholder={required && type !== 'date' ? 'Erforderlich' : undefined}
+          placeholder={type === 'date' ? undefined : boxed ? 'Eingeben' : required ? 'Erforderlich' : undefined}
+          className={boxed ? 'border-border bg-muted' : control.className}
           value={value}
           autoComplete={autoComplete}
           autoCapitalize={typingHelp ? 'sentences' : 'off'}

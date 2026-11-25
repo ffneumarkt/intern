@@ -1988,6 +1988,23 @@ describe('due list: timeline', () => {
   }
   const month = (name: string) => screen.findByRole('region', { name: `Zeitplan: ${name}` })
 
+  it('filters by a check type, or by the end of life', async () => {
+    await openTimeline()
+    await month('November 2026')
+    for (const name of ['Alle', 'Maskenprüfung', '5-Jahres-Prüfung', 'Jahresprüfung', 'Lebensdauer']) expect(ionChip(name)).not.toBeNull()
+    fireEvent.click(ionChip('Jahresprüfung')!)
+    const november = await month('November 2026')
+    expect(within(november).getByText('LA 01')).toBeInTheDocument()
+    expect(within(november).queryByText('Maske 03')).not.toBeInTheDocument()
+    fireEvent.click(ionChip('Lebensdauer')!)
+    // The end of life is years away: one press of Mehr anzeigen reaches it.
+    fireEvent.click(await findIon(() => ionButton('Mehr anzeigen')))
+    expect(await month('März 2031')).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Zeitplan: November 2026' })).not.toBeInTheDocument()
+    fireEvent.click(ionChip('Alle')!)
+    expect(await month('November 2026')).toBeInTheDocument()
+  })
+
   it('groups the due dates by month, what is overdue first', async () => {
     await openTimeline()
     const overdue = await month('Überfällig')
@@ -2018,7 +2035,6 @@ describe('due list: timeline', () => {
   it('shows no category chips and no category list', async () => {
     await openTimeline()
     await month('Überfällig')
-    expect(ionChip('Alle')).toBeNull()
     expect(ionChip('Atemschutzmasken')).toBeNull()
     expect(screen.queryByText('Kategorien')).not.toBeInTheDocument()
   })
