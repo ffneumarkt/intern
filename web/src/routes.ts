@@ -1,3 +1,7 @@
+// The tabs of the Verwalten page and how they appear in the address.
+export type ManageTab = 'items' | 'checkTypes' | 'locations'
+export const manageTabParam: Record<ManageTab, string> = { items: 'geraete', checkTypes: 'pruefarten', locations: 'standorte' }
+
 export const paths = {
   start: '/',
   login: '/login',
@@ -12,8 +16,13 @@ export const paths = {
   // Opened from a row of the due list: back and saving lead to the list, not to the item page.
   recordCheckFromList: (id: string) => `/material/geraete/${id}/pruefung?von=liste`,
   manage: '/material/verwalten',
-  manageCategory: (categoryId: string) => `/material/verwalten?kategorie=${categoryId}`,
+  manageCategory: (categoryId: string, tab: ManageTab = 'items') =>
+    `/material/verwalten?kategorie=${categoryId}${tab === 'items' ? '' : `&tab=${manageTabParam[tab]}`}`,
   itemEdit: (id = ':itemId') => `/material/geraete/${id}/bearbeiten`,
+  // The new-item and new-check-type pages are the edit pages without an id; the category comes as a query value.
+  itemNew: (categoryId?: string) => `/material/verwalten/geraete/neu${categoryId ? `?kategorie=${categoryId}` : ''}`,
+  checkTypeNew: (categoryId?: string) => `/material/verwalten/pruefarten/neu${categoryId ? `?kategorie=${categoryId}` : ''}`,
+  checkTypeEdit: (id = ':checkTypeId') => `/material/verwalten/pruefart/${id}`,
   settings: '/einstellungen',
   info: '/info',
   imprint: '/info/impressum',
