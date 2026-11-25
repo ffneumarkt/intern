@@ -697,3 +697,54 @@ body {
 .app-tabs a[aria-current='page'] {
   color: var(--app-primary);
 }
+
+/* Page changes: deeper slides in from the right, back from the left (a little, as iOS does). */
+@media (prefers-reduced-motion: no-preference) {
+  .app-view[data-motion='push'] > .app-page {
+    animation: page-push 0.34s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .app-view[data-motion='pop'] > .app-page {
+    animation: page-pop 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  [data-slot='alert-overlay'][data-state='open'] {
+    animation: fade-in 0.2s ease-out;
+  }
+
+  [data-slot='alert-content'][data-state='open'] {
+    animation: alert-in 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+  }
+}
+
+@keyframes page-push {
+  from {
+    transform: translateX(100%);
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.18);
+  }
+}
+
+@keyframes page-pop {
+  from {
+    transform: translateX(-30%);
+    opacity: 0.6;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes alert-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.12);
+  }
+}
+
+.app-page {
+  background: var(--app-light);
+  min-height: 100%;
+}

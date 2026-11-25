@@ -28,7 +28,7 @@ export default defineConfig({
         lang: 'de',
         start_url: '/',
         display: 'standalone',
-        theme_color: '#AF2B1E',
+        theme_color: '#F2F2F7',
         background_color: '#ffffff',
         icons: [
           { src: '/icons/intern-192.png', sizes: '192x192', type: 'image/png' },
