@@ -29,6 +29,22 @@ function addMonths(date: string, months: number): string {
   return `${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, '0')}`
 }
 
+// How many months to show after pressing „Mehr anzeigen“: `step` more, or as many as it takes to reach the next due
+// date beyond the horizon, whichever is more (months with nothing due are not shown, so a plain step could change nothing).
+export function monthsToReveal(items: Item[], today: string, months: number, step: number): number {
+  const horizon = addMonths(today, months)
+  const next = items
+    .filter((i) => i.status !== 'retired')
+    .flatMap((i) => i.dues)
+    .filter((d) => d.state !== 'overdue' && monthOf(d.date) >= horizon)
+    .map((d) => monthOf(d.date))
+    .sort()[0]
+  if (!next) return months + step
+  const [ty, tm] = monthOf(today).split('-').map(Number)
+  const [ny, nm] = next.split('-').map(Number)
+  return Math.max(months + step, (ny - ty) * 12 + (nm - tm) + 1)
+}
+
 const byDate = (a: Entry, b: Entry) => a.due.date.localeCompare(b.due.date) || a.item.name.localeCompare(b.item.name, 'de')
 
 // Every due date of the active items: what is overdue first, then the months from today on, each with its
