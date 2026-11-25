@@ -54,6 +54,8 @@ export default function DueListPage() {
           // is filtered by a notification; later due dates, such as after a check, count as done.
           const horizon = addDays(today(), maxLeadDays)
           const upcoming = only ? visible.filter((i) => i.dueState === 'ok' && (i.dues[0]?.date ?? '9999') <= horizon) : []
+          // The timeline is of everything: the category chips and the category list belong to the due view.
+          const timeline = !only && view === 'timeline'
           return (
             <>
               {!only && (
@@ -66,16 +68,18 @@ export default function DueListPage() {
                   </IonSegmentButton>
                 </IonSegment>
               )}
-              <div className="ui-chips">
-                <IonChip outline={category !== null} onClick={() => setCategory(null)}>
-                  Alle
-                </IonChip>
-                {categories.map((c) => (
-                  <IonChip key={c.id} outline={category !== c.id} onClick={() => setCategory(c.id)}>
-                    {c.name}
+              {!timeline && (
+                <div className="ui-chips">
+                  <IonChip outline={category !== null} onClick={() => setCategory(null)}>
+                    Alle
                   </IonChip>
-                ))}
-              </div>
+                  {categories.map((c) => (
+                    <IonChip key={c.id} outline={category !== c.id} onClick={() => setCategory(c.id)}>
+                      {c.name}
+                    </IonChip>
+                  ))}
+                </div>
+              )}
               {only && (
                 <div className="ui-chips">
                   <IonChip onClick={() => navigate(paths.dueList, { replace: true })}>Alle anzeigen</IonChip>
@@ -84,7 +88,7 @@ export default function DueListPage() {
               {only && upcoming.length === 0 && !visible.some((i) => groups.includes(i.dueState)) && (
                 <p className="ui-empty">Alles aus dieser Benachrichtigung ist erledigt.</p>
               )}
-              {!only && view === 'timeline' && <Timeline items={visible} months={months} onMore={() => setMonths((m) => m + timelineMonths)} />}
+              {timeline && <Timeline items={items} months={months} onMore={() => setMonths((m) => m + timelineMonths)} />}
               {!only && view === 'due' && !visible.some((i) => groups.includes(i.dueState)) && (
                 <Card>
                   <Hint center>
@@ -124,16 +128,18 @@ export default function DueListPage() {
                   </IonList>
                 </section>
               )}
-              <IonList>
-                <IonListHeader>
-                  <IonLabel>Kategorien</IonLabel>
-                </IonListHeader>
-                {categories.map((c) => (
-                  <IonItem key={c.id} routerLink={paths.category(c.id)} detail>
-                    <IonLabel>{c.name}</IonLabel>
-                  </IonItem>
-                ))}
-              </IonList>
+              {!timeline && (
+                <IonList>
+                  <IonListHeader>
+                    <IonLabel>Kategorien</IonLabel>
+                  </IonListHeader>
+                  {categories.map((c) => (
+                    <IonItem key={c.id} routerLink={paths.category(c.id)} detail>
+                      <IonLabel>{c.name}</IonLabel>
+                    </IonItem>
+                  ))}
+                </IonList>
+              )}
             </>
           )
         }}
