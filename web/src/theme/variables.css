@@ -56,7 +56,7 @@
   color: var(--ion-text-color);
 }
 
-.settings-header + ion-list.list-inset {
+.settings-header + [data-slot='list'] {
   margin-top: 6px;
 }
 
@@ -66,35 +66,30 @@
 }
 
 /* Footer text and messages as blocks; the live regions stay in place even when empty. */
-.settings-footer ion-note {
+.settings-footer [data-slot='note'] {
   display: block;
   font-size: 0.8125rem;
 }
 
-.settings-footer [role] ion-note {
+.settings-footer [role] [data-slot='note'] {
   margin-top: 4px;
 }
 
 /* Darker than Ionic's iOS note grey (#a6a6a6, 2.2:1 on the grey page), for WCAG AA. */
-.settings-footer > ion-note {
-  --color: var(--ion-color-medium-shade);
+.settings-footer > [data-slot='note'] {
+  color: var(--ion-color-medium-shade);
 }
 
 /* The second line of a settings row („Aus“ or the summary) is the on/off cue: AA contrast. Beats
    Ionic's scoped `.sc-ion-label-ios-s > p` (#999). */
-ion-label > p.settings-summary {
+p.settings-summary {
   color: var(--ion-color-medium-shade);
 }
 
 /* Rows that belong to the category above: indented, a little smaller. */
-ion-item.settings-detail {
-  --padding-start: 32px;
+[data-slot='row'].settings-detail {
+  padding-inline-start: 32px;
   font-size: 0.9375rem;
-}
-
-ion-chip:focus-visible {
-  outline: 2px solid var(--ion-color-primary);
-  outline-offset: 2px;
 }
 
 /* A note in place of the group (no list in between): it would overlap the header otherwise. */

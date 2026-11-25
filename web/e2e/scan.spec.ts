@@ -61,7 +61,7 @@ test.describe('as verwaltung', () => {
       await expect(page.getByText(`Nicht gefunden: ${scanCode}`)).toBeVisible({ timeout: 20_000 })
       await page.getByRole('button', { name: 'Gerät zuordnen' }).click()
       await field(page, 'Gerät suchen').fill(name)
-      await page.locator('ion-item').filter({ visible: true, hasText: name }).click()
+      await page.locator('[data-slot="row"]').filter({ visible: true, hasText: name }).click()
       await expect(scanned(page).getByText(name)).toBeVisible()
       const saved = await request.get(`/api/collections/items/records/${id}`, { headers: { Authorization: tokenOf('verwaltung') } })
       expect((await saved.json()).barcode).toBe(scanCode)

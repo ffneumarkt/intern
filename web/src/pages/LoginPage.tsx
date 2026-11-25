@@ -1,5 +1,5 @@
-import { IonList } from '@ionic/react'
 import { KeyRound } from 'lucide-react'
+import { List } from '@/components/ui/list'
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PasskeyCancelledError, TooManyAttemptsError, tooManyAttemptsMessage } from '../api/errors'
@@ -75,7 +75,7 @@ export default function LoginPage() {
           `required`. The browser's validation then refuses the submit without a word, so Enter does nothing.
           The server rejects an empty or wrong login anyway. */}
       <form noValidate onSubmit={submit}>
-        <IonList>
+        <List>
           <Field
             label="E-Mail"
             type="email"
@@ -94,7 +94,7 @@ export default function LoginPage() {
             required
             error={tried && !password ? requiredMessage : undefined}
           />
-        </IonList>
+        </List>
         {failed && <ErrorText>Anmeldung fehlgeschlagen. E-Mail und Passwort prüfen.</ErrorText>}
         {tooMany && <ErrorText>{tooManyAttemptsMessage}</ErrorText>}
         {/* Enter submits through the form's default button. Ionic's button adds its own hidden one only after

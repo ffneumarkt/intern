@@ -1,5 +1,5 @@
-import { IonItem, IonLabel, IonList } from '@ionic/react'
 import { useState } from 'react'
+import { List, Row, RowLabel } from '@/components/ui/list'
 import { assignBarcode, type Item } from '../api/material'
 import { BarcodeTakenError } from '../api/errors'
 import { Field } from './Field'
@@ -45,16 +45,16 @@ export default function AssignCode({ code, items, onAssigned }: Props) {
     <div>
       <Field label="Gerät suchen" value={text} autoComplete="off" onChange={setText} />
       {error && <ErrorText>{error}</ErrorText>}
-      <IonList aria-label="Geräte" className="suggestions">
+      <List role="list" aria-label="Geräte" className="suggestions">
         {candidates.map((i) => (
-          <IonItem key={i.id} role="listitem" button detail={false} onClick={() => assign(i)}>
-            <IonLabel>
+          <Row key={i.id} role="listitem" detail={false} onClick={() => assign(i)}>
+            <RowLabel>
               {i.name}
               <p>{i.barcode ?? 'ohne Code'}</p>
-            </IonLabel>
-          </IonItem>
+            </RowLabel>
+          </Row>
         ))}
-      </IonList>
+      </List>
     </div>
   )
 }

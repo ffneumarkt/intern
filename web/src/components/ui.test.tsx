@@ -6,19 +6,19 @@ import { ActionBar, BlockButton, Card, ErrorText, Hint } from './ui'
 describe('ErrorText', () => {
   it('shows the message as danger text', () => {
     const { container } = render(<ErrorText>Speichern fehlgeschlagen.</ErrorText>)
-    const text = container.querySelector('ion-text')!
+    const text = container.querySelector('p')!
     expect(text).toHaveTextContent('Speichern fehlgeschlagen.')
-    expect(text).toHaveProperty('color', 'danger')
+    expect(text).toHaveClass('text-destructive')
   })
 
   it.each([undefined, null, '', false])('shows nothing for %j', (message) => {
     const { container } = render(<ErrorText>{message}</ErrorText>)
-    expect(container.querySelector('ion-text')).toBeNull()
+    expect(container.firstChild).toBeNull()
   })
 
   it('passes a role on, for messages that should be announced', () => {
     const { container } = render(<ErrorText role="status">Kamerazugriff verweigert</ErrorText>)
-    expect(container.querySelector('ion-text')).toHaveAttribute('role', 'status')
+    expect(container.querySelector('p')).toHaveAttribute('role', 'status')
   })
 })
 
@@ -54,14 +54,15 @@ describe('Hint', () => {
 })
 
 describe('Card', () => {
-  it('wraps its content in an Ionic card', () => {
+  it('is a white card around its content', () => {
     const { container } = render(<Card>Inhalt</Card>)
-    expect(container.querySelector('ion-card > ion-card-content')).toHaveTextContent('Inhalt')
+    expect(container.firstElementChild).toHaveTextContent('Inhalt')
+    expect(container.firstElementChild).toHaveClass('bg-background')
   })
 
   it('can be a warning card', () => {
     const { container } = render(<Card tone="warning">Nicht gefunden</Card>)
-    expect(container.querySelector('ion-card')).toHaveAttribute('color', 'warning')
+    expect(container.firstElementChild).toHaveClass('bg-amber-100')
   })
 })
 

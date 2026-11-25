@@ -1,5 +1,5 @@
-import { IonList, IonListHeader, IonLabel } from '@ionic/react'
 import { useState } from 'react'
+import { List, ListHeader } from '@/components/ui/list'
 import { loadTransportSettings, updateTransportSettings, type TransportSettings } from '../api/transport'
 import { Field, TextAreaField } from '../components/Field'
 import Loaded from '../components/Loaded'
@@ -69,39 +69,31 @@ function SettingsForm({ settings }: { settings: TransportSettings }) {
 
   return (
     <>
-      <IonList>
-        <IonListHeader>
-          <IonLabel>Station</IonLabel>
-        </IonListHeader>
+      <List>
+        <ListHeader>Station</ListHeader>
         <Field label="Name der Station" value={station.name} onChange={(name) => setStation({ ...station, name })} required error={tried && !station.name.trim() ? requiredMessage : undefined} />
         <Field label="Straße" value={station.street} onChange={(street) => setStation({ ...station, street })} />
         <Field label="Postleitzahl" value={station.postalCode} inputMode="numeric" autoCapitalize="off" onChange={(postalCode) => setStation({ ...station, postalCode })} />
         <Field label="Ort" value={station.town} onChange={(town) => setStation({ ...station, town })} />
-      </IonList>
-      <IonList>
-        <IonListHeader>
-          <IonLabel>Flasche</IonLabel>
-        </IonListHeader>
+      </List>
+      <List>
+        <ListHeader>Flasche</ListHeader>
         <Field label="Bezeichnung der Flasche" value={label} onChange={setLabel} required error={tried && !label.trim() ? requiredMessage : undefined} />
         <Field label="Volumen in Zehntelliter" type="number" inputMode="numeric" value={tenths} onChange={setTenths} required error={tried && !Number(tenths) ? requiredMessage : undefined} />
         <Field label="Punktegrenze" type="number" inputMode="numeric" value={limit} onChange={setLimit} required error={tried && !Number(limit) ? requiredMessage : undefined} />
-      </IonList>
-      <IonList>
-        <IonListHeader>
-          <IonLabel>Abfüllstation</IonLabel>
-        </IonListHeader>
+      </List>
+      <List>
+        <ListHeader>Abfüllstation</ListHeader>
         <Field label="Name der Abfüllstation" value={fill.name} onChange={(name) => setFill({ ...fill, name })} />
         <Field label="Straße der Abfüllstation" value={fill.street} onChange={(street) => setFill({ ...fill, street })} />
         <Field label="Postleitzahl der Abfüllstation" value={fill.postalCode} inputMode="numeric" autoCapitalize="off" onChange={(postalCode) => setFill({ ...fill, postalCode })} />
         <Field label="Ort der Abfüllstation" value={fill.town} onChange={(town) => setFill({ ...fill, town })} />
-      </IonList>
+      </List>
       <Hint>Ohne Namen ist keine Abfüllstation hinterlegt.</Hint>
-      <IonList>
-        <IonListHeader>
-          <IonLabel>Checkliste</IonLabel>
-        </IonListHeader>
+      <List>
+        <ListHeader>Checkliste</ListHeader>
         <TextAreaField label="Eine Zeile pro Punkt" value={checklist} onChange={setChecklist} />
-      </IonList>
+      </List>
       {saved && <Hint>Gespeichert.</Hint>}
       <ErrorText>{error}</ErrorText>
       <ActionBar>

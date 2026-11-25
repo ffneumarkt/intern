@@ -1,4 +1,5 @@
-import { IonList, useIonRouter, useIonViewWillEnter, useIonViewWillLeave } from '@ionic/react'
+import { useIonRouter, useIonViewWillEnter, useIonViewWillLeave } from '@ionic/react'
+import { List } from '@/components/ui/list'
 import { useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { listCheckTypes, listItems, listLocations, recordCheck, type CheckInput } from '../api/material'
@@ -113,7 +114,7 @@ export default function RecordCheckPage() {
           return (
             <>
               <Hint><strong>{item?.name}</strong></Hint>
-              <IonList>
+              <List>
                 <SelectField label="Prüfart" value={checkTypeId} onChange={setSelectedType}>
                   {types.map((t) => (
                     <option key={t.id} value={t.id}>
@@ -122,9 +123,9 @@ export default function RecordCheckPage() {
                   ))}
                 </SelectField>
                 <Field label="Datum" type="date" max={today()} value={date} onChange={setDate} />
-              </IonList>
+              </List>
               {measured && <Measurements key={`${checkTypeId}:${readingsKey}`} onChange={setReadings} showErrors={triedSave} />}
-              <IonList>
+              <List>
                 <SelectField
                   label="Ergebnis"
                   value={shownResult}
@@ -147,7 +148,7 @@ export default function RecordCheckPage() {
                   </SelectField>
                 )}
                 <TextAreaField label="Notiz" value={note} onChange={setNote} />
-              </IonList>
+              </List>
               {error && <ErrorText>{error}</ErrorText>}
               <ActionBar>
                 <BlockButton disabled={busy} onClick={() => once(save)}>

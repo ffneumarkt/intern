@@ -1,5 +1,5 @@
-import { IonList } from '@ionic/react'
 import { useState } from 'react'
+import { List } from '@/components/ui/list'
 import { useLocation } from 'react-router-dom'
 import { SetupLinkInvalidError, TooManyAttemptsError, tooManyAttemptsMessage } from '../api/errors'
 import { checkSetupLink, completeSetup } from '../api/setup'
@@ -78,7 +78,7 @@ function SetupForm({ token, name }: { token: string; name: string }) {
       <Hint>
         Willkommen, <strong>{name}</strong>. Lege ein Passwort mit mindestens {minLength} Zeichen fest.
       </Hint>
-      <IonList>
+      <List>
         <Field
           label="Passwort"
           type="password"
@@ -97,7 +97,7 @@ function SetupForm({ token, name }: { token: string; name: string }) {
           required
           error={tried ? (!repeat ? requiredMessage : differs ? 'Die Passwörter stimmen nicht überein.' : undefined) : undefined}
         />
-      </IonList>
+      </List>
       {error && <ErrorText>{error}</ErrorText>}
       <BlockButton disabled={busy} onClick={() => once(save)}>
         Passwort setzen

@@ -45,7 +45,7 @@ async function scan(code: string) {
 }
 
 describe('locations in the lists', () => {
-  const visibleNames = () => [...document.querySelectorAll('ion-item.item-row h2')].map((h) => h.textContent)
+  const visibleNames = () => [...document.querySelectorAll('[data-slot="row"].item-row h2')].map((h) => h.textContent)
 
   it('shows where an item is in its row', async () => {
     renderAt(paths.dueList, 'use')
@@ -605,16 +605,16 @@ describe('recording a check with measurements', () => {
     expect(field('Startdruck (mbar)')).toHaveValue('-10')
   })
 
-  it('sets the criteria and verdicts as Ionic items, so they follow the list padding like the header and fields', async () => {
+  it('sets the criteria and verdicts as rows, so they follow the list padding like the header and fields', async () => {
     await open()
     const items = [
       screen.getByText(/−10 mbar → höchstens 1 mbar in 60 s/),
       screen.getByText(/4,2–6,0 mbar bei 10 l\/min/),
-    ].map((el) => el.closest('ion-item'))
+    ].map((el) => el.closest('[data-slot="row"]'))
     expect(items.every(Boolean)).toBe(true)
     enter('-10', '-9,5', '5,1')
-    expect(screen.getByText('Verlust 0,5 mbar ✓').closest('ion-item')).not.toBeNull()
-    expect(screen.getByText('Öffnungsdruck 5,1 mbar ✓').closest('ion-item')).not.toBeNull()
+    expect(screen.getByText('Verlust 0,5 mbar ✓').closest('[data-slot="row"]')).not.toBeNull()
+    expect(screen.getByText('Öffnungsdruck 5,1 mbar ✓').closest('[data-slot="row"]')).not.toBeNull()
   })
 
   it('stays as it was for a check type without measurements', async () => {

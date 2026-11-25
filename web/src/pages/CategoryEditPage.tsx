@@ -1,5 +1,5 @@
-import { IonList } from '@ionic/react'
 import { useState } from 'react'
+import { List } from '@/components/ui/list'
 import { useNavigate, useParams } from 'react-router-dom'
 import { createCategory, deleteCategory, updateCategory } from '../api/admin'
 import { AdminRefusedError } from '../api/errors'
@@ -77,10 +77,10 @@ function CategoryForm({ category }: { category?: Category }) {
 
   return (
     <>
-      <IonList>
+      <List>
         <Field label="Name" value={name} onChange={setName} required error={tried && !name.trim() ? requiredMessage : undefined} />
         <Field label="Höchste Lebensdauer in Jahren" type="number" inputMode="numeric" value={years} onChange={setYears} />
-      </IonList>
+      </List>
       <ErrorText>{error}</ErrorText>
       <ActionBar>
         <BlockButton disabled={busy} onClick={save}>

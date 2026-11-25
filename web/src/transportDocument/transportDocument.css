@@ -249,3 +249,21 @@
 .td-checklist-title {
   margin-bottom: 4px;
 }
+
+/* The optional route: a summary line that opens the fields below it. */
+.td-details {
+  margin-top: 16px;
+}
+
+.td-details > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--ion-color-primary);
+}
+
+.td-details[open] > summary {
+  margin-bottom: 8px;
+}

@@ -1,5 +1,5 @@
-import { IonList } from '@ionic/react'
 import { AppButton } from '../components/ui'
+import { List } from '@/components/ui/list'
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { listCategories, listItems, listLocations } from '../api/material'
@@ -46,11 +46,11 @@ export default function CategoryPage() {
               </div>
               <LocationFilter locations={locations} value={location} onChange={setLocation} />
               {location !== null && shown.length === 0 && <p className="ui-empty">Nichts in diesem Standort.</p>}
-              <IonList>
+              <List>
                 {shown.map((i) => (
                   <ItemRow key={i.id} item={i} locationName={locationName(locations, i.locationId)} />
                 ))}
-              </IonList>
+              </List>
             </>
           )
         }}

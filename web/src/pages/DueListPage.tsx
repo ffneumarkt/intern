@@ -1,4 +1,5 @@
-import { IonFab, IonFabButton, IonIcon, IonItem, IonLabel, IonList, IonListHeader } from '@ionic/react'
+import { IonFab, IonFabButton, IonIcon } from '@ionic/react'
+import { List, ListHeader, Row, RowLabel } from '@/components/ui/list'
 import { ScanBarcode } from 'lucide-react'
 import { Chip } from '@/components/ui/chip'
 import { Segment, SegmentButton } from '@/components/ui/segment'
@@ -108,40 +109,34 @@ export default function DueListPage() {
                 if (inGroup.length === 0) return null
                 return (
                   <section key={state} aria-label={dueStateLabel(state)} data-state={state}>
-                    <IonList>
-                      <IonListHeader>
-                        <IonLabel>{dueStateLabel(state)}</IonLabel>
-                      </IonListHeader>
+                    <List>
+                      <ListHeader>{dueStateLabel(state)}</ListHeader>
                       {inGroup.map((i) => (
                         <ItemRow key={i.id} item={i} categoryName={categoryName(i.categoryId)} locationName={locationName(locations, i.locationId)} checkAction />
                       ))}
-                    </IonList>
+                    </List>
                   </section>
                 )
               })}
               {view === 'due' && upcoming.length > 0 && (
                 <section aria-label="Demnächst" data-state="upcoming">
-                  <IonList>
-                    <IonListHeader>
-                      <IonLabel>Demnächst</IonLabel>
-                    </IonListHeader>
+                  <List>
+                    <ListHeader>Demnächst</ListHeader>
                     {upcoming.map((i) => (
                       <ItemRow key={i.id} item={i} categoryName={categoryName(i.categoryId)} locationName={locationName(locations, i.locationId)} checkAction />
                     ))}
-                  </IonList>
+                  </List>
                 </section>
               )}
               {!timeline && (
-                <IonList>
-                  <IonListHeader>
-                    <IonLabel>Kategorien</IonLabel>
-                  </IonListHeader>
+                <List>
+                  <ListHeader>Kategorien</ListHeader>
                   {categories.map((c) => (
-                    <IonItem key={c.id} routerLink={paths.category(c.id)} detail>
-                      <IonLabel>{c.name}</IonLabel>
-                    </IonItem>
+                    <Row key={c.id} to={paths.category(c.id)} detail>
+                      <RowLabel>{c.name}</RowLabel>
+                    </Row>
                   ))}
-                </IonList>
+                </List>
               )}
             </>
           )
@@ -156,22 +151,20 @@ function Timeline({ items, months, onMore }: { items: Item[]; months: number; on
   const timeline = groupTimeline(items, today(), months)
   const section = (name: string, entries: Entry[]) => (
     <section key={name} aria-label={`Zeitplan: ${name}`}>
-      <IonList>
-        <IonListHeader>
-          <IonLabel>{name}</IonLabel>
-        </IonListHeader>
+      <List>
+        <ListHeader>{name}</ListHeader>
         {entries.map(({ item, due }) => (
-          <IonItem key={`${item.id}-${due.kind}-${due.checkTypeId ?? ''}`} routerLink={paths.item(item.id)} detail>
-            <IonLabel>
+          <Row key={`${item.id}-${due.kind}-${due.checkTypeId ?? ''}`} to={paths.item(item.id)} detail>
+            <RowLabel>
               <h2>{item.name}</h2>
               <p>
                 {due.label} · {due.date}
               </p>
-            </IonLabel>
+            </RowLabel>
             <DueStateBadge state={due.state} />
-          </IonItem>
+          </Row>
         ))}
-      </IonList>
+      </List>
     </section>
   )
   if (timeline.overdue.length === 0 && timeline.months.length === 0 && !timeline.hasMore) {

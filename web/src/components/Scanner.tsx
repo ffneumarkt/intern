@@ -1,4 +1,5 @@
-import { IonSelect, useIonViewWillEnter, useIonViewWillLeave } from '@ionic/react'
+import { useIonViewWillEnter, useIonViewWillLeave } from '@ionic/react'
+import { NativeSelect } from '@/components/ui/native-select'
 import { useEffect, useRef, useState } from 'react'
 import { loadDetector } from '../scan/detector'
 import { useCamera } from '../scan/useCamera'
@@ -66,13 +67,12 @@ export default function Scanner({ onCode, active = true }: Props) {
       )}
       {camera.devices.length > 1 && (
         // A compact control under the preview, not a full-width form field: only its own area is tappable.
-        <IonSelect
+        <NativeSelect
           className="scanner-camera"
           aria-label="Kamera wählen"
-          interface="popover"
           value={camera.deviceId ?? ''}
-          onIonChange={(e) => {
-            const id: string = e.detail.value ?? ''
+          onChange={(e) => {
+            const id = e.target.value
             if (id && id !== camera.deviceId) camera.selectDevice(id)
           }}
         >
@@ -81,7 +81,7 @@ export default function Scanner({ onCode, active = true }: Props) {
               {d.label || `Kamera ${i + 1}`}
             </option>
           ))}
-        </IonSelect>
+        </NativeSelect>
       )}
       {camera.torch.supported && <CheckboxField label="Taschenlampe" checked={camera.torch.on} onChange={camera.torch.toggle} />}
     </div>

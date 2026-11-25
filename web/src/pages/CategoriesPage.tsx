@@ -1,5 +1,5 @@
-import { IonItem, IonLabel, IonList } from '@ionic/react'
 import { Plus } from 'lucide-react'
+import { List, Row, RowLabel } from '@/components/ui/list'
 import { listCategories } from '../api/material'
 import Loaded from '../components/Loaded'
 import Page from '../components/Page'
@@ -19,16 +19,16 @@ export default function CategoriesPage() {
         <Loaded resource={resource}>
           {(categories) => (
             <>
-              <IonList>
+              <List>
                 {categories.map((c) => (
-                  <IonItem key={c.id} routerLink={paths.adminCategory(c.id)} detail>
-                    <IonLabel>
+                  <Row key={c.id} to={paths.adminCategory(c.id)} detail>
+                    <RowLabel>
                       {c.name}
                       {c.maxServiceLifeYears && <p>Lebensdauer {c.maxServiceLifeYears} Jahre</p>}
-                    </IonLabel>
-                  </IonItem>
+                    </RowLabel>
+                  </Row>
                 ))}
-              </IonList>
+              </List>
               <ActionBar>
                 <BlockButton routerLink={paths.adminCategoryNew}>
                   <Plus aria-hidden="true" />

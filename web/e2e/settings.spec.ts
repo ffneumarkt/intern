@@ -7,7 +7,7 @@ import { authState, expect, resetNotificationData, test } from './fixtures.ts'
 const toggle = (page: Page, name: string) => page.getByRole('switch', { name, exact: true })
 // The item of a switch; its second line is the summary or „Aus“.
 const secondLine = (page: Page, name: string) =>
-  page.locator('ion-item').filter({ has: toggle(page, name) }).locator('p')
+  page.locator('[data-slot="row"]').filter({ has: toggle(page, name) }).locator('p')
 const chip = (page: Page, name: string) => page.getByRole('button', { name, exact: true })
 // Every group has an empty alert region from the start; the message is the one with text.
 const announced = (page: Page) => page.getByRole('alert').filter({ hasText: /\S/ })

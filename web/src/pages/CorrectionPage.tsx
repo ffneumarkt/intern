@@ -1,5 +1,5 @@
-import { IonList } from '@ionic/react'
 import { useState } from 'react'
+import { List } from '@/components/ui/list'
 import { useNavigate, useParams } from 'react-router-dom'
 import { correctCheck, correctUse, deleteCheck, deleteUse } from '../api/admin'
 import { AdminRefusedError } from '../api/errors'
@@ -96,7 +96,7 @@ function CorrectionForm({ entry }: { entry: HistoryEntry }) {
       <Hint>
         <strong>{entry.title}</strong>
       </Hint>
-      <IonList>
+      <List>
         <Field label="Datum" type="date" max={today()} value={date} onChange={setDate} required error={tried && !date ? requiredMessage : undefined} />
         {isUse ? (
           <>
@@ -119,7 +119,7 @@ function CorrectionForm({ entry }: { entry: HistoryEntry }) {
           </SelectField>
         )}
         <TextAreaField label="Notiz" value={note} onChange={setNote} />
-      </IonList>
+      </List>
       <ErrorText>{error}</ErrorText>
       <ActionBar>
         <BlockButton disabled={busy} onClick={save}>

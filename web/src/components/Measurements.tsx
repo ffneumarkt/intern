@@ -1,5 +1,5 @@
-import { IonLabel, IonList, IonListHeader } from '@ionic/react'
 import { AppButton } from './ui'
+import { List, ListHeader } from '@/components/ui/list'
 import { useEffect, useRef, useState } from 'react'
 import {
   formatMbar,
@@ -55,10 +55,8 @@ export default function Measurements({ onChange, showErrors }: { onChange(readin
 
   return (
     <>
-      <IonList>
-        <IonListHeader>
-          <IonLabel>Dichtprüfung</IonLabel>
-        </IonListHeader>
+      <List>
+        <ListHeader>Dichtprüfung</ListHeader>
         <ListNote>−10 mbar → höchstens {leakLimitMbar} mbar in {leakSeconds} s, trocken</ListNote>
         <Field label="Startdruck (mbar)" value={startText} autoComplete="off" autoCapitalize="off" onChange={setStartText} required error={problem(startText, start)} />
         <div className="ui-countdown">
@@ -89,12 +87,10 @@ export default function Measurements({ onChange, showErrors }: { onChange(readin
             {leakOk(loss) ? `Verlust ${formatMbar(loss)} mbar ✓` : `Verlust ${formatMbar(loss)} mbar: mehr als ${leakLimitMbar} mbar`}
           </ListNote>
         )}
-      </IonList>
+      </List>
 
-      <IonList>
-        <IonListHeader>
-          <IonLabel>Öffnungsdruck Ausatemventil</IonLabel>
-        </IonListHeader>
+      <List>
+        <ListHeader>Öffnungsdruck Ausatemventil</ListHeader>
         <ListNote>4,2–6,0 mbar bei 10 l/min (EN 137)</ListNote>
         <Field label="Öffnungsdruck (mbar)" value={openingText} autoComplete="off" autoCapitalize="off" onChange={setOpeningText} required error={problem(openingText, opening)} />
         {opening !== null && (
@@ -104,7 +100,7 @@ export default function Measurements({ onChange, showErrors }: { onChange(readin
               : `Öffnungsdruck ${formatMbar(opening)} mbar: ${openingMessage}`}
           </ListNote>
         )}
-      </IonList>
+      </List>
     </>
   )
 }

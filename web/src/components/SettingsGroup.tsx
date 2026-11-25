@@ -1,5 +1,5 @@
-import { IonLabel, IonListHeader, IonNote } from '@ionic/react'
 import type { ReactNode } from 'react'
+import { ListHeader, Note } from '@/components/ui/list'
 
 // A message about the last action in a group: `status` for success, `alert` for a failure.
 export interface Message {
@@ -10,9 +10,7 @@ export interface Message {
 // The small header above an inset group, as in the iOS settings.
 export function SettingsHeader({ children }: { children: ReactNode }) {
   return (
-    <IonListHeader className="settings-header">
-      <IonLabel>{children}</IonLabel>
-    </IonListHeader>
+    <ListHeader className="settings-header">{children}</ListHeader>
   )
 }
 
@@ -21,10 +19,10 @@ export function SettingsHeader({ children }: { children: ReactNode }) {
 // that is inserted together with its text.
 export function SettingsFooter({ text, message }: { text?: string; message?: Message | null }) {
   const note = (role: Message['role']) =>
-    message?.role === role && <IonNote color={role === 'alert' ? 'danger' : 'success'}>{message.text}</IonNote>
+    message?.role === role && <Note className={role === 'alert' ? 'text-destructive' : 'text-check'}>{message.text}</Note>
   return (
     <div className="settings-footer">
-      {text && <IonNote>{text}</IonNote>}
+      {text && <Note>{text}</Note>}
       <div role="status">{note('status')}</div>
       <div role="alert">{note('alert')}</div>
     </div>
