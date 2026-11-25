@@ -36,7 +36,7 @@ export function Card({ children, tone }: { children: ReactNode; tone?: 'warning'
   return (
     <div
       className={cn(
-        'mx-4 my-3 rounded-xl p-4',
+        'mb-4 rounded-xl p-4',
         tone === 'warning' ? 'border border-amber-300 bg-amber-100 text-amber-950' : 'bg-background text-foreground',
       )}
     >
