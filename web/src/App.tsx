@@ -65,12 +65,16 @@ function TabBar() {
   const tabs = user ? [startTab, documentTab, materialTab, settingsTab] : [startTab, documentTab, infoTab]
   return (
     <nav className="app-tabs" aria-label="Hauptmenü">
-      {tabs.map(({ name, to, icon: Icon, covers }) => (
-        <Link key={to} to={to} data-slot="tab" aria-label={name} aria-current={covers(pathname) ? 'page' : undefined}>
-          <Icon aria-hidden="true" />
-          <span>{name}</span>
-        </Link>
-      ))}
+      {tabs.map(({ name, to, icon: Icon, covers }) => {
+        const active = covers(pathname)
+        return (
+          <Link key={to} to={to} data-slot="tab" aria-label={name} aria-current={active ? 'page' : undefined}>
+            {/* iOS shows the selected tab with a heavier symbol. */}
+            <Icon aria-hidden="true" strokeWidth={active ? 2.4 : 1.6} />
+            <span>{name}</span>
+          </Link>
+        )
+      })}
     </nav>
   )
 }
