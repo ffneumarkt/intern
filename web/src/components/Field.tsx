@@ -34,7 +34,7 @@ function FieldFrame({ label, required, error, children }: { label: string; requi
       <div className="w-full py-2">
         <label
           htmlFor={id}
-          className={cn('mb-1 block text-sm font-medium text-muted-foreground', required && "after:ml-0.5 after:text-destructive after:content-['*']")}
+          className={cn('mb-1.5 block text-[13px] font-medium text-muted-foreground', required && "after:ml-0.5 after:text-destructive after:content-['*']")}
         >
           {label}
         </label>

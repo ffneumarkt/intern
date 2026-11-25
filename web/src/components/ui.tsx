@@ -36,7 +36,7 @@ export function Card({ children, tone }: { children: ReactNode; tone?: 'warning'
   return (
     <div
       className={cn(
-        'mx-4 my-3 rounded-2xl p-4 shadow-sm',
+        'mx-4 my-3 rounded-xl p-4',
         tone === 'warning' ? 'border border-amber-300 bg-amber-100 text-amber-950' : 'bg-background text-foreground',
       )}
     >
@@ -69,10 +69,12 @@ export function AppButton({ fill = 'solid', color, size, expand, routerLink, cla
             ? 'destructive'
             : 'default'
   const tone =
-    color === 'danger' && fill !== 'solid'
-      ? 'border-destructive text-destructive hover:bg-destructive/10'
+    color === 'danger' && fill === 'clear'
+      ? 'bg-transparent text-destructive'
+      : color === 'danger' && fill !== 'solid'
+        ? 'bg-destructive/10 text-destructive'
       : color === 'medium' && fill !== 'solid'
-        ? 'border-muted-foreground text-muted-foreground hover:bg-muted'
+        ? 'bg-muted-foreground/10 text-muted-foreground'
         : undefined
   const classes = cn(expand === 'block' && 'w-full', tone, className)
   const sized = size === 'small' ? 'sm' : size === 'large' ? 'lg' : 'default'
